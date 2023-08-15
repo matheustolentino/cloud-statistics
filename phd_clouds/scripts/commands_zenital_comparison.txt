@@ -1,0 +1,40 @@
+d4before = xr.open_dataset("./test_nc_2/zen_before_scan.nc")
+d4after  = xr.open_dataset("./test_nc_2/zen_after_scan.nc")
+
+for varname in d4before:
+    print(varname, d4before[varname].dims)
+    print("dims wivern:", d4before.dims)
+    print("dims cloudnet:", d4before.dims)
+    print( np.all(d4before[varname].values == d4after[varname].values) )
+    print("\n")
+
+for varname in d4before:
+    if np.all(d4before[varname].values == d4after[varname].values) == False:
+        print(varname, d4before[varname].dims)
+        print("dims before scan:", d4before.dims)
+        print("dims after scan:", d4after.dims)
+        print("d4before:",d4before[varname].values)
+        print("d4afeter:",d4after[varname].values)
+        print("\n")
+
+
+dwivern = xr.open_dataset("./test_nc/radar_zen_wivern.nc")
+dwivern = xr.open_dataset("./test_nc/radar_zen_wivern.nc")
+
+for varname in dwivern:
+    print(varname, dwivern[varname].dims)
+    print("dims wivern:", dwivern.dims)
+    print("dims cloudnet:", dcloudnet.dims)
+    print( np.all(dwivern[varname].values == dcloudnet[varname].values) )
+    print("\n")
+    
+for varname in dwivern:
+   if np.all(dwivern[varname].values == dcloudnet[varname].values) == False:
+      print(varname, dwivern[varname].dims)
+      print("dims wivern:", dwivern.dims)
+      print("dims cloudnet:", dcloudnet.dims)
+      print("dwivern:",dwivern[varname].values)
+      print("dcloudnet:",dcloudnet[varname].values)
+      print("\n")
+
+
