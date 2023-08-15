@@ -9,13 +9,9 @@ import matplotlib.pyplot as plt
 import netCDF4 as nc
 from datetime import timedelta
 import matplotlib.dates as mdates
-from scipy import interpolate, integrate
-from pandas.tseries.frequencies import to_offset
-from itertools import groupby
 import datetime
-import matplotlib as mpl
 import pandas as pd
-from pandas import DataFrame, Series
+from pandas import DataFrame
 import os
 from functools import reduce
 import operator
@@ -31,20 +27,20 @@ from cloudnetpy.products import generate_iwc
 from cloudnetpy.products import generate_der
 from cloudnetpy.products.der import Parameters
 #-------------------------------------------------------------------------------------------------------
-# plt.ion()
+plt.ion()
 plt.close('all')
 
 #from cloud_classes import Intersection_products, HMmodel, Cloud_filters
 #-------------------------------------------------------------------------------------------------------
 # paths
 #-------------------------------------------------------------------------------------------------------
-PATH_CLASS        = '../data/classification/'
-PATH_CATE         = '../data/categorize/'
-PATH_RADAR        = '../data/radar/'
+PATH_CLASS        = '../../../data/classification/'
+PATH_CATE         = '../../../data/categorize/'
+PATH_RADAR        = '../../../data/radar/'
 PATH_FIG          = '../figures/'
-PATH_CLOUDNET_LWC = '../output_retrievals/lwc/'
-PATH_CLOUDNET_IWC = '../output_retrievals/iwc/'
-PATH_CLOUDNET_DER = '../output_retrievals/der/'
+PATH_CLOUDNET_LWC = '../../tests/output_retrievals/lwc/'
+PATH_CLOUDNET_IWC = '../../tests/output_retrievals/iwc/'
+PATH_CLOUDNET_DER = '../../tests/output_retrievals/der/'
 #-------------------------------------------------------------------------------------------------------
 # constants
 #-------------------------------------------------------------------------------------------------------
@@ -222,6 +218,12 @@ def compare_radar_chirp_configurations(start_date: datetime,
     end_chirp.append(end_date)  
     return start_chirp, end_chirp, chirp_zres, height
 
+# Define a function to handle serialization of individual columns
+def handle_serialization(column):
+    if isinstance(column, np.ma.MaskedArray):
+        return column.filled(np.nan).tolist()
+    return column
+
 def plot_cloud_type(df_complete, df_cloud, df_ze, cloud_filter, name_title, z_min, z_max, color_names):
     
     # List of manually specified colors (replace these with your desired colors)
@@ -229,7 +231,7 @@ def plot_cloud_type(df_complete, df_cloud, df_ze, cloud_filter, name_title, z_mi
                       "#D05BAC", "#BFBD8D", "#118527","#8794B3", "#DA6F49", "#88183E"]
     ncolors = len(color_names)
     # Create a figure and an array of subplots
-    fig, axs = plt.subplots(3, sharex=True, sharey=True, figsize=(18, 10))
+    fig, axs = plt.subplots(3, sharex=True, sharey=True, figsize=(15, 10))
 
     # Create a ListedColormap using the manual colors
     manual_cmap = plt.cm.colors.ListedColormap(manual_colors)
@@ -840,7 +842,7 @@ for nchirp in range(number_chirp_config):
     os.system("rm "+PATH_CLOUDNET_DER+"*der.nc") # remove all der files from der path
     os.system("rm "+PATH_CLOUDNET_IWC+"*iwc.nc") # remove all der files from der path
     print("\nAll file removed")
-    date_test = [database_intersection.date[0]]
+    date_test = [database_intersection.date[20]]
     #----------------------------------------------------------------------------------------------------
     # uncomment the following line for a complet time series analysis
     print("\nComputating cloud microphysics for liquid clouds")
@@ -878,7 +880,7 @@ for nchirp in range(number_chirp_config):
             for h in categorize['time']:
                 time_auxiliary.append( date.strftime('%Y%m%d')\
                                         + ' ' + str(timedelta(hours=float(h))) )
-            time = round_datetimeindex_to_seconds( pd.to_datetime(time_auxiliary, format = "%Y%m%d %H:%M:%S" ) )
+            time = round_datetimeindex_to_seconds( pd.to_datetime(time_auxiliary, format='mixed', dayfirst=True) )
         else:
             print("Red flag: classification and categorize files with diferent time resolution - ",
                     time.date())
@@ -1289,33 +1291,37 @@ for nchirp in range(number_chirp_config):
     #------------------------------------------------------------------------------------------------
     # Save the data as a NetCDF file
     #------------------------------------------------------------------------------------------------
-    # concatenated_ze = xr.concat(dataframes_list_ze, dim='time')
-    # concatenated_vd = xr.concat(dataframes_list_vd, dim='time')
-    # ds_radar = xr.merge([concatenated_ze, concatenated_vd])
-    # folder_name = f"../processed_data/chirp_{nchirp}"
-    # if not os.path.exists(folder_name):
-    #     os.makedirs(folder_name)
+    concatenated_ze = xr.concat(dataframes_list_ze, dim='time')
+    concatenated_vd = xr.concat(dataframes_list_vd, dim='time')
+    ds_radar = xr.merge([concatenated_ze, concatenated_vd])
+    folder_name = f"../../../processed_data/chirp_{nchirp}"
+    if not os.path.exists(folder_name):
+        os.makedirs(folder_name)
     
-    # number_of_layers.index.name = 'time'
-    # ds_layers                   = xr.Dataset.from_dataframe(number_of_layers)
-    # liquid_water_path.index.name= 'time'
-    # ds_lwp                      = xr.Dataset.from_dataframe(liquid_water_path)
+    number_of_layers.index.name = 'time'
+    ds_layers                   = xr.Dataset.from_dataframe(number_of_layers)
+    liquid_water_path.index.name= 'time'
+    ds_lwp                      = xr.Dataset.from_dataframe(liquid_water_path)
 
-    # # Save the dataset as a NetCDF file inside the folder
-    # for ds, name in zip([ds_layers, ds_hydrometeor, ds_lwp, ds_radar], 
-    #                     ["number_of_layers", "hydrometeor", "lwp", "radar"]): 
-    #     print(f"Saving {name}...")
-    #     output_path = os.path.join(folder_name, f"chirp_{nchirp}_{name}.nc")
-    #     ds.to_netcdf(output_path)
-    # # ------------------------------------------------------------------------------------------------
-    # height_cloud_base.index.name = 'time'
-    # height_cloud_top.index.name = 'time'
-    # height_cloud_mean.index.name = 'time'
-    # geometric_cloud_thickness.index.name = 'time'
+    # Save the dataset as a NetCDF file inside the folder
+    for ds, name in zip([ds_layers, ds_hydrometeor, ds_lwp, ds_radar], 
+                        ["number_of_layers", "hydrometeor", "lwp", "radar"]): 
+        print(f"Saving {name}...")
+        output_path = os.path.join(folder_name, f"chirp_{nchirp}_{name}.nc")
+        ds.to_netcdf(output_path)
+    # ------------------------------------------------------------------------------------------------
+    height_cloud_base.index.name = 'time'
+    height_cloud_top.index.name = 'time'
+    height_cloud_mean.index.name = 'time'
+    geometric_cloud_thickness.index.name = 'time'
     
-    # # Save the DataFrame to a JSON file
-    # for df, name in zip([height_cloud_base, height_cloud_top, height_cloud_mean, geometric_cloud_thickness],
-    #                     ["height_cloud_base", "height_cloud_top", "height_cloud_mean", "geometric_cloud_thickness"]):
-    #     print(f"Saving {name}...")
-    #     df.to_json(f"{folder_name}/chirp_{nchirp}_{name}.json", orient='index')
+    for df, name in zip([height_cloud_base, height_cloud_top, height_cloud_mean, geometric_cloud_thickness],
+                    ["height_cloud_base", "height_cloud_top", "height_cloud_mean", "geometric_cloud_thickness"]):
+        print(f"Saving {name}...")
+        try:
+            # Convert columns to serializable format
+            df_serializable = df.applymap(handle_serialization)
+            df_serializable.to_json(f"{folder_name}/chirp_{nchirp}_{name}.json", orient='index')
+        except Exception as e:
+            print(f"Error while saving {name}: {e}")
     #------------------------------------------------------------------------------------------------

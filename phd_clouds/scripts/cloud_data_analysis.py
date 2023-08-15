@@ -3,22 +3,12 @@
 #-------------------------------------------------------------------------------------------------------
 import numpy as np
 import matplotlib.pyplot as plt
-import netCDF4 as nc
-from datetime import timedelta
 import matplotlib.dates as mdates
-from scipy import interpolate, integrate
-from pandas.tseries.frequencies import to_offset
-from itertools import groupby
-import datetime
 import matplotlib as mpl
 from matplotlib import gridspec
 import matplotlib.ticker as ticker
 import pandas as pd
 import os
-from functools import reduce
-import operator
-from typing import List, Tuple
-import itertools
 import xarray as xr
 from scipy.stats import gaussian_kde
 import locale
@@ -322,7 +312,7 @@ def flatten_array(dataset):
 # TODO: def merge_xarray_datasets_by_prefix(data_dict):
     
 # Specify the folder path where the files are located
-root_folder    = '../processed_data/'
+root_folder    = '../../../processed_data/'
 processed_data = read_files_and_convert(root_folder)
 
 df_layers = processed_data['chirp_0_number_of_layers'].to_dataframe()
@@ -335,10 +325,10 @@ end_time   = '2021-04-22T00:00:00'  # Replace with your desired end time
 
 # Slice the data
 
-flatten_cloudtop = flatten_array(processed_data["chirp_0_height_cloud_top"].sel(time=slice(start_time, end_time)))
-flatten_cloudbase = flatten_array(processed_data["chirp_0_height_cloud_base"].sel(time=slice(start_time, end_time)))
-flatten_cloudmean = flatten_array(processed_data["chirp_0_height_cloud_mean"].sel(time=slice(start_time, end_time)))
-flatten_cloudthickness = flatten_array(processed_data["chirp_0_geometric_cloud_thickness"].sel(time=slice(start_time, end_time)))
+# flatten_cloudtop = flatten_array(processed_data["chirp_0_height_cloud_top"].sel(time=slice(start_time, end_time)))
+# flatten_cloudbase = flatten_array(processed_data["chirp_0_height_cloud_base"].sel(time=slice(start_time, end_time)))
+# flatten_cloudmean = flatten_array(processed_data["chirp_0_height_cloud_mean"].sel(time=slice(start_time, end_time)))
+# flatten_cloudthickness = flatten_array(processed_data["chirp_0_geometric_cloud_thickness"].sel(time=slice(start_time, end_time)))
 
 with sns.axes_style("ticks"):
     # Call the function to plot CFADs
