@@ -4,7 +4,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-import matplotlib as mpl
 from matplotlib import gridspec
 import matplotlib.ticker as ticker
 import pandas as pd
@@ -14,6 +13,7 @@ from scipy.stats import gaussian_kde
 import locale
 import seaborn as sns
 from pdb import set_trace
+from typing import Dict, Union, Any, List
 # import seaborn as sns
 
 plt.ion()
@@ -83,12 +83,12 @@ def create_data_availability_plot(data, freq_str):
     data_availability_lab = ["Hydrometeors", "Clear Sky", "No Data"]
     
     # Create a subplot
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(8, 6))
     
     # Initialize variables for stacking bars
     bot = np.zeros(data_availability[0].shape[0])
-    width = 1.
-    colors = ["#1f77b4", "#ff7f0e", "#2ca02c"]  # Improved color scheme
+    width = 1.  # Bar width
+    colors = ["#28fc21", "#07a8e3", "#ffffff"]  # Improved color scheme
     
     # Loop over each data availability category
     for i, freq in enumerate(data_availability):
@@ -102,12 +102,17 @@ def create_data_availability_plot(data, freq_str):
         bot += 100*freq
     
     # Format the x-axis date labels
-    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%y/%m/%d'))
+    ax.set_xlabel("Time")
+    ax.set_ylabel("Frequency [%]")
+    # Add a legend above the figure, out of the graph, and spread
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15), ncol=len(data_availability_lab), frameon=False)
     # ax.xaxis.set_major_locator(mdates.MonthLocator())  # Set tick frequency to months
     plt.xticks(rotation=45)  # Rotate x-axis labels for better visibility
-    
-    # Add a legend
-    ax.legend()
+
+    # Remove top and right spines
+    # ax.spines['top'].set_visible(False)
+    # ax.spines['right'].set_visible(False)
     
     # Display the plot
     plt.tight_layout()  # Improve layout spacing
@@ -288,7 +293,7 @@ def plot_histograms(flatten_cloudtop, title):
     fig, ax = plt.subplots(figsize=(9, 5))
 
     for var_name, flattened_array in flatten_cloudtop.items():
-        ax.hist(flattened_array, bins=15, label=var_name, histtype='step', linewidth=2, density=True)
+        ax.hist(flattened_array, bins=15, label=var_name, histtype='step')
 
     ax.set_title(title)
     ax.set_xlabel("Value")
@@ -298,13 +303,85 @@ def plot_histograms(flatten_cloudtop, title):
     plt.tight_layout()
     plt.show()
 
-def flatten_array(dataset):
-    flattened_arrays = {}
+def plot_histograms_with_profiles(datasets: list, bin_width: float,
+                                  labels: list, x_label: str, y_label: str,
+                                  xticks_resolution: float = 1.0) -> None:
+    """
+    Plot histograms for multiple xarray DataArrays, with labeled bars indicating the number of profiles.
+
+    Parameters:
+        datasets (list of xr.DataArray): List of xarray DataArray objects.
+        bin_width (float): Width of histogram bins.
+        labels (list of str): List of labels for each dataset in the legend.
+        x_label (str): Label for the x-axis.
+        y_label (str): Label for the y-axis.
+
+    Returns:
+        None: Displays the histogram plot.
+    """
+    # Calculate histograms and shared bin edges
+    min_value = min(np.nanmin(data) for data in datasets)
+    max_value = max(np.nanmax(data) for data in datasets)
+    bin_edges = np.arange(min_value, max_value + bin_width, bin_width)
     
+    # Calculate histograms for each dataset
+    histograms = [np.histogram(data, bins=bin_edges)[0] for data in datasets]
+    
+    # Get the number of profiles for each dataset
+    num_profiles = [data.sizes["time"] for data in datasets]
+    
+    # Plot histograms for each dataset
+    fig, axes = plt.subplots(figsize=(10, 6))
+    
+    bin_widths = bin_edges[1] - bin_edges[0]
+    norm_histograms = [100 * (hist / num_profiles[i]) for i, hist in enumerate(histograms)]
+    
+    for i, norm_hist in enumerate(norm_histograms):
+        label = f"{labels[i]} ({num_profiles[i]} profiles)"
+        axes.bar(bin_edges[:-1], norm_hist, width=bin_widths, alpha=0.5, label=label)
+    
+    axes.set_xlabel(x_label)
+    axes.set_ylabel(y_label)
+    axes.set_yscale('log')
+    axes.legend()
+    axes.grid()
+    # Set x-axis ticks to bin_edges with specified resolution
+    x_ticks = np.arange(min(bin_edges), max(bin_edges) + xticks_resolution, xticks_resolution)
+    axes.set_xticks(x_ticks)
+    
+    plt.tight_layout()
+    plt.show()
+
+def flatten_array(dataset: xr.Dataset) -> Dict[str, Union[np.ndarray, None]]:
+    """
+    Flattens arrays within an xarray dataset.
+
+    Args:
+        dataset (xr.Dataset): The input xarray dataset.
+
+    Returns:
+        dict: A dictionary containing flattened arrays for each variable in the dataset.
+              The dictionary maps variable names to flattened arrays or None if no valid arrays are present.
+    """
+    flattened_arrays = {}
+
     for var_name in dataset.data_vars:
         variable = dataset[var_name]
         variable_np = variable.values
-        flattened_var = np.concatenate([np.array(arr) for arr in variable_np if arr is not None])
+        
+        flattened_var = []
+        for arr in variable_np:
+            if arr is not None:
+                if np.ndim(arr) == 0:  # Handle scalar values
+                    flattened_var.append(np.array([arr]))
+                else:
+                    flattened_var.append(arr)
+        
+        if flattened_var:
+            flattened_var = np.concatenate(flattened_var)
+        else:
+            flattened_var = None
+        
         flattened_arrays[var_name] = flattened_var
         
     return flattened_arrays
@@ -314,56 +391,71 @@ def flatten_array(dataset):
 # Specify the folder path where the files are located
 root_folder    = '../../../processed_data/'
 processed_data = read_files_and_convert(root_folder)
-
+# ----------------------------------------------------------------------------------------------
+# Getting only single layer clouds data from chirp_0
+# ----------------------------------------------------------------------------------------------
 df_layers = processed_data['chirp_0_number_of_layers'].to_dataframe()
-time_mask_single_layer = xr.DataArray.from_series((df_layers.sum(axis=1) == 1))
-
+time_mask = (df_layers.sum(axis=1) == 1.0).to_numpy() # Mask with single layer clouds
+# Get following variables where is only one layer of cloud
+single_layer_mask = processed_data['chirp_0_number_of_layers'].sel(time=time_mask)
+single_layer_lwp = processed_data['chirp_0_lwp'].sel(time=time_mask)
+single_layer_cbase = processed_data["chirp_0_height_cloud_base"].sel(time=time_mask)
+single_layer_ctop = processed_data["chirp_0_height_cloud_top"].sel(time=time_mask)
+single_layer_cmean = processed_data["chirp_0_height_cloud_mean"].sel(time=time_mask)
+single_layer_cthickness = processed_data["chirp_0_geometric_cloud_thickness"].sel(time=time_mask)
+# ----------------------------------------------------------------------------------------------
 # Test if the data is read correctly
 # Specify the time range you want to slice
 start_time = '2021-04-21T00:00:00'  # Replace with your desired start time
 end_time   = '2021-04-22T00:00:00'  # Replace with your desired end time
 
 # Slice the data
-
-# flatten_cloudtop = flatten_array(processed_data["chirp_0_height_cloud_top"].sel(time=slice(start_time, end_time)))
-# flatten_cloudbase = flatten_array(processed_data["chirp_0_height_cloud_base"].sel(time=slice(start_time, end_time)))
-# flatten_cloudmean = flatten_array(processed_data["chirp_0_height_cloud_mean"].sel(time=slice(start_time, end_time)))
-# flatten_cloudthickness = flatten_array(processed_data["chirp_0_geometric_cloud_thickness"].sel(time=slice(start_time, end_time)))
+flatten_cloudtop = flatten_array(processed_data["chirp_0_height_cloud_top"].sel(time=slice(start_time, end_time)))
+flatten_cloudbase = flatten_array(processed_data["chirp_0_height_cloud_base"].sel(time=slice(start_time, end_time)))
+flatten_cloudmean = flatten_array(processed_data["chirp_0_height_cloud_mean"].sel(time=slice(start_time, end_time)))
+flatten_cloudthickness = flatten_array(processed_data["chirp_0_geometric_cloud_thickness"].sel(time=slice(start_time, end_time)))
 
 with sns.axes_style("ticks"):
     # Call the function to plot CFADs
     plot_cfads(processed_data['chirp_0_radar'], ['Zh', 'v'])
+
+freq_str = "1D"
+with sns.axes_style("ticks"):
+    create_data_availability_plot(processed_data['chirp_0_hydrometeor'].Total, freq_str)
 
 # plot_histograms(flatten_cloudtop, title="Histograms for Cloud Top Height")
 # plot_histograms(flatten_cloudbase, title="Histograms for Cloud Base Height")
 # plot_histograms(flatten_cloudmean, title="Histograms for Cloud Mean Height")
 # plot_histograms(flatten_cloudthickness, title="Histograms for Cloud Thickness")
 
-freq_str = "1D"
 with sns.axes_style("ticks"):
     # Call the function to plot CFADs
-    create_data_availability_plot(processed_data['chirp_0_hydrometeor'].Total, freq_str)
+    
     plot_2d_and_vertical_frequency((processed_data['chirp_0_hydrometeor'] > 0).resample(time=freq_str).mean(dim='time'),
                                  (processed_data['chirp_0_hydrometeor'].sel(time=slice(start_time, end_time)).resample(time="60S").sum(dim='time') > 0))
     plot_time_evolution_frequency((processed_data['chirp_0_hydrometeor'].sum(dim='range') > 0).resample(time='1H').mean())
 
-single_layer_cloud = processed_data['chirp_0_number_of_layers'].where(time_mask_single_layer, other=np.nan)
-single_layer_lwp = processed_data['chirp_0_lwp'].where(time_mask_single_layer, other=np.nan)
-create_frequency_cloud_layers_plot(single_layer_cloud, freq_str)
 
-# Plot histograms for each variable
-fig, axes = plt.subplots(nrows=len(single_layer_lwp.data_vars), ncols=1, figsize=(6, 4 * len(single_layer_lwp.data_vars)))
+create_frequency_cloud_layers_plot(processed_data['chirp_0_number_of_layers'].where(time_mask, np.nan), 
+                                   freq_str)
 
-for idx, variable in enumerate(single_layer_lwp.data_vars):
-    axes.hist(single_layer_lwp[variable].dropna(dim='time'), bins=20, edgecolor='black', histtype='step', linewidth=2, density=True)
-    axes.set_xlabel('Value')
-    axes.set_ylabel('Frequency')
-    axes.set_title(f'Histogram of {variable}')
-    axes.set_yscale('log')
-    axes.grid()
+plot_histograms_with_profiles(datasets=[single_layer_lwp.value.where(single_layer_mask.Liquid == 1, drop=True).dropna(dim='time'),
+                                        single_layer_lwp.value.where(single_layer_mask.Mixed_phase == 1, drop=True).dropna(dim='time')],
+                             bin_width=25,
+                             labels=["Liquid", "Mixed-phase"],
+                             x_label= r"LWP ($\delta$ LWP = 25 [g $m^{-2}$])",
+                             y_label="Frequency [%]",
+                             xticks_resolution=25)
 
-plt.tight_layout()
-plt.show()
+plot_histograms_with_profiles(datasets=[single_layer_cthickness.Liquid.where(single_layer_mask.Liquid == 1, drop=True).dropna(dim='time'),
+                                        single_layer_cthickness.Ice.where(single_layer_mask.Ice == 1, drop=True).dropna(dim='time'),
+                                        single_layer_cthickness.Mixed_phase.where(single_layer_mask.Mixed_phase == 1, drop=True).dropna(dim='time')],
+                             bin_width=200,
+                             labels=["Liquid", "Ice", "Mixed-phase"],
+                             x_label= r"CB ($\delta$ CTHICKNESS = 200 [m])",
+                             y_label="Frequency [%]",
+                             xticks_resolution=1000)
+
 
 # plot_kde(flatten_cloudtop, title="Kernel Density Estimation for Cloud Top Height",
 #                       ymin=1e-6, ymax=1e-2)

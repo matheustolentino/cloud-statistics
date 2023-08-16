@@ -808,19 +808,19 @@ for nchirp in range(number_chirp_config):
     hydrometeor_count         = pd.DataFrame(index=time_complete,
                                              columns=["Hydrometeors"])
     height_cloud_base         = pd.DataFrame(index=time_complete, 
-                                    columns=["Liquid", "Ice", "Mixed-phase", "Pre-liquid", "Pre-mixed-phase"])
+                                    columns=["Liquid", "Ice", "Mixed_phase", "Pre_liquid", "Pre_mixed_phase"])
     height_cloud_top          = pd.DataFrame(index=time_complete,
-                                    columns=["Liquid", "Ice", "Mixed-phase", "Pre-liquid", "Pre-mixed-phase"])
+                                    columns=["Liquid", "Ice", "Mixed_phase", "Pre_liquid", "Pre_mixed_phase"])
     height_cloud_mean         = pd.DataFrame(index=time_complete,
-                                    columns=["Liquid", "Ice", "Mixed-phase", "Pre-liquid", "Pre-mixed-phase"])
+                                    columns=["Liquid", "Ice", "Mixed_phase", "Pre_liquid", "Pre_mixed_phase"])
     geometric_cloud_thickness = pd.DataFrame(index=time_complete,
-                                    columns=["Liquid", "Ice", "Mixed-phase", "Pre-liquid", "Pre-mixed-phase"])
+                                    columns=["Liquid", "Ice", "Mixed_phase", "Pre_liquid", "Pre_mixed_phase"])
     liquid_water_path         = pd.DataFrame(index=time_complete,
                                             columns=["value"])
     ice_water_path            = pd.DataFrame(index=time_complete,
                                             columns=["value"])
     number_of_layers          = pd.DataFrame(index=time_complete,
-                                    columns=["Liquid", "Ice", "Mixed-phase", "Pre-liquid", "Pre-mixed-phase"])
+                                    columns=["Liquid", "Ice", "Mixed_phase", "Pre_liquid", "Pre_mixed_phase"])
     hydrometeor_mask = pd.DataFrame(index=time_complete , columns=height)
     liquid_count_profile      = pd.DataFrame(index=time_complete , columns=height)
     ice_count_profile         = pd.DataFrame(index=time_complete , columns=height)
@@ -842,7 +842,7 @@ for nchirp in range(number_chirp_config):
     os.system("rm "+PATH_CLOUDNET_DER+"*der.nc") # remove all der files from der path
     os.system("rm "+PATH_CLOUDNET_IWC+"*iwc.nc") # remove all der files from der path
     print("\nAll file removed")
-    date_test = [database_intersection.date[20]]
+    date_test = [database_intersection.date[18]]
     #----------------------------------------------------------------------------------------------------
     # uncomment the following line for a complet time series analysis
     print("\nComputating cloud microphysics for liquid clouds")
@@ -1013,10 +1013,10 @@ for nchirp in range(number_chirp_config):
         
         cloud_types = { "Liquid"          : [CLOUD_LIQUID,DRIZZLE_OR_RAIN_LIQUID_DROPLETS],
                           "Ice"             : [ICE_PARTICLES],
-                          "Mixed-phase"     : [CLOUD_LIQUID,ICE_PARTICLES,ICE_WITH_SUP_WATER,\
+                          "Mixed_phase"     : [CLOUD_LIQUID,ICE_PARTICLES,ICE_WITH_SUP_WATER,\
                                                MELTING_ICE, MELTING_ICE_LIQUID_DROPLETS],
-                          "Pre-liquid"      : [CLOUD_LIQUID,DRIZZLE_OR_RAIN_LIQUID_DROPLETS],
-                          "Pre-mixed-phase" : [ICE_PARTICLES,ICE_WITH_SUP_WATER,MELTING_ICE,\
+                          "Pre_liquid"      : [CLOUD_LIQUID,DRIZZLE_OR_RAIN_LIQUID_DROPLETS],
+                          "Pre_mixed_phase" : [ICE_PARTICLES,ICE_WITH_SUP_WATER,MELTING_ICE,\
                                                 MELTING_ICE_LIQUID_DROPLETS]
                         }  
         
@@ -1024,23 +1024,23 @@ for nchirp in range(number_chirp_config):
                                                      AERO_WITH_INSECT_NO_CLOUD],
                                 "Ice"             : [CLEAR_SKY, CLOUD_LIQUID, AERO_NO_CLOUD,\
                                                         INSECT_NO_CLOUD, AERO_WITH_INSECT_NO_CLOUD],
-                                "Mixed-phase"     : [CLEAR_SKY, DRIZZLE_OR_RAIN, AERO_NO_CLOUD,\
+                                "Mixed_phase"     : [CLEAR_SKY, DRIZZLE_OR_RAIN, AERO_NO_CLOUD,\
                                                         INSECT_NO_CLOUD, AERO_WITH_INSECT_NO_CLOUD],
-                                "Pre-liquid"      : [CLEAR_SKY, AERO_NO_CLOUD, INSECT_NO_CLOUD,\
+                                "Pre_liquid"      : [CLEAR_SKY, AERO_NO_CLOUD, INSECT_NO_CLOUD,\
                                                         AERO_WITH_INSECT_NO_CLOUD],
-                                "Pre-mixed-phase" : [CLEAR_SKY, DRIZZLE_OR_RAIN, AERO_NO_CLOUD,\
+                                "Pre_mixed_phase" : [CLEAR_SKY, DRIZZLE_OR_RAIN, AERO_NO_CLOUD,\
                                                         INSECT_NO_CLOUD, AERO_WITH_INSECT_NO_CLOUD]}
         
         targ_to_filter = {"Liquid"          : [DRIZZLE_OR_RAIN, ICE_PARTICLES, ICE_WITH_SUP_WATER, MELTING_ICE,\
                                                 MELTING_ICE_LIQUID_DROPLETS],
                           "Ice"             : [CLOUD_LIQUID, DRIZZLE_OR_RAIN, DRIZZLE_OR_RAIN_LIQUID_DROPLETS,\
                                                 ICE_WITH_SUP_WATER, MELTING_ICE, MELTING_ICE_LIQUID_DROPLETS],
-                          "Mixed-phase"     : [DRIZZLE_OR_RAIN, DRIZZLE_OR_RAIN_LIQUID_DROPLETS],
-                          "Pre-liquid"      : [ICE_PARTICLES, ICE_WITH_SUP_WATER, MELTING_ICE, MELTING_ICE_LIQUID_DROPLETS],
-                          "Pre-mixed-phase" : []}
+                          "Mixed_phase"     : [DRIZZLE_OR_RAIN, DRIZZLE_OR_RAIN_LIQUID_DROPLETS],
+                          "Pre_liquid"      : [ICE_PARTICLES, ICE_WITH_SUP_WATER, MELTING_ICE, MELTING_ICE_LIQUID_DROPLETS],
+                          "Pre_mixed_phase" : []}
         
-        targ_to_get_bellow = {"Pre-liquid"      : [DRIZZLE_OR_RAIN],
-                              "Pre-mixed-phase" : [CLOUD_LIQUID, DRIZZLE_OR_RAIN, DRIZZLE_OR_RAIN_LIQUID_DROPLETS]}
+        targ_to_get_bellow = {"Pre_liquid"      : [DRIZZLE_OR_RAIN],
+                              "Pre_mixed_phase" : [CLOUD_LIQUID, DRIZZLE_OR_RAIN, DRIZZLE_OR_RAIN_LIQUID_DROPLETS]}
         
         cloud_phase = ["single_phase", "single_phase", "mixed_phase", "single_phase", "mixed_phase", "single_phase"]
         #------------------------------------------------------------------------------------------------
@@ -1056,7 +1056,7 @@ for nchirp in range(number_chirp_config):
             for target in targ_to_filter[cloud]:
                 classification_filter.filter_species(target, 400, 200)
             
-            if cloud == "Pre-liquid" or cloud == "Pre-mixed-phase":
+            if cloud == "Pre_liquid" or cloud == "Pre_mixed_phase":
                 classification_filter.get_specie_below(targ_to_get_bellow[cloud], 10)
                 cloud_cat, cloud_ze = classification_filter.cloud_categorization(df_reflectivity.copy(),
                                                                                  targ_to_get_bellow[cloud])
@@ -1075,7 +1075,6 @@ for nchirp in range(number_chirp_config):
                             cloud_ze, 
                             classification_filter, 
                             cloud, .1, 12., tick_labels)
-                
         #------------------------------------------------------------------------------------------------
         # CLOUD statistics
         # ------------------------------------------------------------------------------------------------
@@ -1100,8 +1099,6 @@ for nchirp in range(number_chirp_config):
             
             cloud_mask = classification_filter.cloud_mask()
             ds_hydrometeor[cloud] = xr.DataArray(cloud_mask, dims=('time', 'range'), coords={'time': time, 'range': height})
-            # number_of_layers.loc[classification_filter.time_cbt, cloud] = sublist_lengths(classification_filter.cloud_base)
-            # plot_cloud_mask(df_classification, cloud_mask, cloud, 300, 12000)
 
         # verification:  
         try:
