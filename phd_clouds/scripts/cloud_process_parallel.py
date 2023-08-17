@@ -20,6 +20,7 @@ import itertools
 import xarray as xr
 import seaborn as sns
 import colorcet as cc  # Import the colorcet library
+import multiprocessing
 import time as time_module
 # import seaborn as sns
 #-------------------------------------------------------------------------------------------------------
@@ -359,13 +360,13 @@ def process_cloud_data(df_classification: pd.DataFrame,
                        cloud_types: Dict[str, List[int]],  # Define the appropriate type
                        targ_between_cloud: Dict[str, List[int]],  # Define the appropriate type
                        targ_to_filter: Dict[str, List[int]],  # Define the appropriate type
-                       targ_to_get_below: Dict[str, int],  # Define the appropriate type
+                       targ_to_get_bellow: Dict[str, int],  # Define the appropriate type
                        hydro_types: Dict[str, List[int]],  # Define the appropriate type
                        targ_between_hydro: List[int],  # Define the appropriate type
                        number_of_layers: pd.DataFrame,
                        liquid_water_path: pd.DataFrame,
-                       ds_hydrometeor: xr.Dataset,
-                       time: pd.DatetimeIndex,):
+                       ds_hydrometeor: xr.Dataset, 
+                       time: pd.DatetimeIndex):
     # ------------------------------------------------------------------------------------------------
     # CLOUD filters for calculations of cloud properties 
     # ------------------------------------------------------------------------------------------------
@@ -380,9 +381,9 @@ def process_cloud_data(df_classification: pd.DataFrame,
             classification_filter.filter_species(target, 400, 200)
         
         if cloud == "Pre_liquid" or cloud == "Pre_mixed_phase":
-            classification_filter.get_specie_below(targ_to_get_below[cloud], 10)
+            classification_filter.get_specie_below(targ_to_get_bellow[cloud], 10)
             cloud_cat, cloud_ze = classification_filter.cloud_categorization(df_reflectivity.copy(),
-                                                                             targ_to_get_below[cloud])
+                                                                             targ_to_get_bellow[cloud])
         else:
             cloud_cat, cloud_ze = classification_filter.cloud_categorization(df_reflectivity.copy())
         
@@ -392,12 +393,12 @@ def process_cloud_data(df_classification: pd.DataFrame,
                                                          geometric_cloud_thickness,
                                                          cloud)
         number_of_layers.loc[classification_filter.time_cbt, cloud] = sublist_lengths(classification_filter.cloud_base)
-        with sns.axes_style("whitegrid"):
-            plot_cloud_type(df_classification, 
-                            cloud_cat, 
-                            cloud_ze, 
-                            classification_filter, 
-                            cloud, .1, 12., tick_labels)
+        # with sns.axes_style("whitegrid"):
+        #     plot_cloud_type(df_classification, 
+        #                     cloud_cat, 
+        #                     cloud_ze, 
+        #                     classification_filter, 
+        #                     cloud, .1, 12., tick_labels)
     #------------------------------------------------------------------------------------------------
     # Analisis hydrometeors 
     #------------------------------------------------------------------------------------------------ 
@@ -409,15 +410,16 @@ def process_cloud_data(df_classification: pd.DataFrame,
         
         cloud_mask = classification_filter.cloud_mask()
         ds_hydrometeor[cloud] = xr.DataArray(cloud_mask, dims=('time', 'range'), coords={'time': time, 'range': height})
-    try:
-        total_hydromet_sum = (ds_hydrometeor.Ice + ds_hydrometeor.Liquid + ds_hydrometeor.Mixed_phase).sum(dim='time')
+
+    # try:
+    #     total_hydromet_sum = (ds_hydrometeor.Ice + ds_hydrometeor.Liquid + ds_hydrometeor.Mixed_phase).sum(dim='time')
         
-        if np.all(total_hydromet_sum == ds_hydrometeor.Total.sum(dim='time')):
-            print("All cloud types are mutually exclusive")
-        else:
-            print("Cloud types are not mutually exclusive")
-    except Exception as e:
-        print("An error occurred:", e)
+    #     if np.all(total_hydromet_sum == ds_hydrometeor.Total.sum(dim='time')):
+    #         print("All cloud types are mutually exclusive")
+    #     else:
+    #         print("Cloud types are not mutually exclusive")
+    # except Exception as e:
+    #     print("An error occurred:", e)
         
     liquid_water_path.loc[time, "value"] = df_lwp["value"]
 
@@ -854,7 +856,26 @@ class CloudProcess:
                 current_count = 0
 
         return max_count, start_index, end_index
-        
+
+def process_cloud_data_parallel(args):
+    # Unpack the arguments
+    (df_classification, df_reflectivity, df_lwp, cloud_phase, tick_labels,
+    height_cloud_base, height_cloud_top, height_cloud_mean, geometric_cloud_thickness,
+    cloud_types, targ_between_cloud, targ_to_filter, targ_to_get_bellow,
+    hydro_types, targ_between_hydro,
+    number_of_layers, liquid_water_path, ds_hydrometeor, time)  = args
+    # print("Ta tudo bem!!", flush=True)
+    # Perform the tasks for the given date and nchirp
+    # ... (initialize the necessary variables and DataFrames)
+    # print(liquid_water_path)
+    process_cloud_data(df_classification, df_reflectivity, df_lwp, cloud_phase, tick_labels,
+                       height_cloud_base, height_cloud_top, height_cloud_mean, geometric_cloud_thickness,
+                       cloud_types,targ_between_cloud, targ_to_filter, targ_to_get_bellow,
+                       hydro_types, targ_between_hydro,
+                       number_of_layers, liquid_water_path, ds_hydrometeor, time)
+    # print("Ta tudo bem!!", flush=True)
+# def main():
+# Define variables and DataFrames:
 #--------------------------------------------------------------------------------------------------------
 paths     = [PATH_RADAR, PATH_CATE, PATH_CLASS]
 extension = '.nc'
@@ -865,8 +886,67 @@ end_date          = max(database_intersection) # last date of database
 #TODO: should create a loop to iterate over all chirp configurations
 
 chirp_ini, chirp_final, chirp_zres, chirp_height = compare_radar_chirp_configurations(start_date, end_date, database_intersection, PATH_RADAR)
-
 number_chirp_config = len(chirp_ini)
+
+tick_labels = ['Clear  sky', 
+               'Droplets', 
+               'Drizzle or rain', 
+               'Drizzle & droplets', 
+               'Ice', 
+               'Ice & droplets', 
+               'Melting ice', 
+               'Melting & droplets', 
+               'Aerosol',
+               'Insect', 
+               'Aerosol & insect']
+        
+hydro_types = { "Liquid"          : [CLOUD_LIQUID,DRIZZLE_OR_RAIN,DRIZZLE_OR_RAIN_LIQUID_DROPLETS],
+                "Ice"             : [ICE_PARTICLES],
+                "Mixed_phase"     : [ICE_WITH_SUP_WATER,\
+                                        MELTING_ICE, MELTING_ICE_LIQUID_DROPLETS],
+                "Total"    : [CLOUD_LIQUID, DRIZZLE_OR_RAIN, DRIZZLE_OR_RAIN_LIQUID_DROPLETS,\
+                                        ICE_PARTICLES, ICE_WITH_SUP_WATER, MELTING_ICE,\
+                                                MELTING_ICE_LIQUID_DROPLETS]
+                }
+
+targ_between_hydro = [CLEAR_SKY, AERO_NO_CLOUD, INSECT_NO_CLOUD,\
+                                                AERO_WITH_INSECT_NO_CLOUD]
+
+cloud_types = { "Liquid"          : [CLOUD_LIQUID,DRIZZLE_OR_RAIN_LIQUID_DROPLETS],
+                    "Ice"             : [ICE_PARTICLES],
+                    "Mixed_phase"     : [CLOUD_LIQUID,ICE_PARTICLES,ICE_WITH_SUP_WATER,\
+                                        MELTING_ICE, MELTING_ICE_LIQUID_DROPLETS],
+                    "Pre_liquid"      : [CLOUD_LIQUID,DRIZZLE_OR_RAIN_LIQUID_DROPLETS],
+                    "Pre_mixed_phase" : [ICE_PARTICLES,ICE_WITH_SUP_WATER,MELTING_ICE,\
+                                        MELTING_ICE_LIQUID_DROPLETS]
+                }  
+
+targ_between_cloud = {  "Liquid"          : [CLEAR_SKY, AERO_NO_CLOUD, INSECT_NO_CLOUD,\
+                                                AERO_WITH_INSECT_NO_CLOUD],
+                        "Ice"             : [CLEAR_SKY, CLOUD_LIQUID, AERO_NO_CLOUD,\
+                                                INSECT_NO_CLOUD, AERO_WITH_INSECT_NO_CLOUD],
+                        "Mixed_phase"     : [CLEAR_SKY, DRIZZLE_OR_RAIN, AERO_NO_CLOUD,\
+                                                INSECT_NO_CLOUD, AERO_WITH_INSECT_NO_CLOUD],
+                        "Pre_liquid"      : [CLEAR_SKY, AERO_NO_CLOUD, INSECT_NO_CLOUD,\
+                                                AERO_WITH_INSECT_NO_CLOUD],
+                        "Pre_mixed_phase" : [CLEAR_SKY, DRIZZLE_OR_RAIN, AERO_NO_CLOUD,\
+                                                INSECT_NO_CLOUD, AERO_WITH_INSECT_NO_CLOUD]}
+
+targ_to_filter = {"Liquid"          : [DRIZZLE_OR_RAIN, ICE_PARTICLES, ICE_WITH_SUP_WATER, MELTING_ICE,\
+                                        MELTING_ICE_LIQUID_DROPLETS],
+                    "Ice"             : [CLOUD_LIQUID, DRIZZLE_OR_RAIN, DRIZZLE_OR_RAIN_LIQUID_DROPLETS,\
+                                        ICE_WITH_SUP_WATER, MELTING_ICE, MELTING_ICE_LIQUID_DROPLETS],
+                    "Mixed_phase"     : [DRIZZLE_OR_RAIN, DRIZZLE_OR_RAIN_LIQUID_DROPLETS],
+                    "Pre_liquid"      : [ICE_PARTICLES, ICE_WITH_SUP_WATER, MELTING_ICE, MELTING_ICE_LIQUID_DROPLETS],
+                    "Pre_mixed_phase" : []}
+
+targ_to_get_bellow = {"Pre_liquid"      : [DRIZZLE_OR_RAIN],
+                        "Pre_mixed_phase" : [CLOUD_LIQUID, DRIZZLE_OR_RAIN, DRIZZLE_OR_RAIN_LIQUID_DROPLETS]}
+
+cloud_phase = ["single_phase", "single_phase", "mixed_phase", "single_phase", "mixed_phase", "single_phase"]
+#--------------------------------------------------------------------------------------------------------
+# Create a list of arguments for parallel processing
+processing_args = []
 start_time = time_module.time()
 for nchirp in range(number_chirp_config):
     height     = chirp_height[nchirp]
@@ -876,10 +956,9 @@ for nchirp in range(number_chirp_config):
     
     date_complete     = pd.date_range( start=start_date, end=end_date, freq='D') # datetime with all days between
                                                                                 # start and end dates
-    time_complete             = pd.date_range(start=start_date+timedelta(seconds=15),
-                                    end=end_date + pd.Timedelta(days=1),
-                                    freq='30S')
-    # Create an empty list to store DataFrames
+    time_complete     = pd.date_range(start=start_date+timedelta(seconds=15),
+                                      end=end_date + pd.Timedelta(days=1),
+                                      freq='30S')
     dataframes_list_ze = []
     dataframes_list_vd = []
     hydrometeor_count         = pd.DataFrame(index=time_complete,
@@ -905,30 +984,19 @@ for nchirp in range(number_chirp_config):
     npr_per_day = 24*3600/30 
     print("Start date:", start_date.date())
     print("End date:", end_date.date())
-
-    #----------------------------------------------------------------------------------------------------
-    # verification
-    #----------------------------------------------------------------------------------------------------
-
-    # date_ex = cloudnet_example.dates[28] # 29/04/2021
-    # i = 20 case with diferent resolution 
-    # NOTE: If working in a server without adm permission the following two lines should 
-    # be discomented
+    # ----------------------------------------------------------------------------------------------------
     print("\nRemoving all cloudnet files of LWC and Reff from its directory...")
+    
     os.system("rm "+PATH_CLOUDNET_LWC+"*lwc.nc") # remove all lwc files from lwc path 
     os.system("rm "+PATH_CLOUDNET_DER+"*der.nc") # remove all der files from der path
     os.system("rm "+PATH_CLOUDNET_IWC+"*iwc.nc") # remove all der files from der path
+    
     print("\nAll file removed")
-    date_test = [database_intersection.date[18]]
-    #----------------------------------------------------------------------------------------------------
-    # uncomment the following line for a complet time series analysis
     print("\nComputating cloud microphysics for liquid clouds")
-    #for i, date in enumerate(cloudnet_example.dates):
-    # and of course, comment the next line :)
     n = len(database_intersection.date)
-    for ind_day, date in enumerate(date_test):
-    # for ind_day, date in enumerate(database_intersection.date):
-    #----------------------------------------------------------------------------------------------------
+    # ----------------------------------------------------------------------------------------------------
+    # for ind_day, date in enumerate([database_intersection.date[18]]):
+    for ind_day, date in enumerate(database_intersection.date):
         print("\nFiles = %d/%d"%(ind_day+1, n))
         #------------------------------------------------------------------------------------------------
         # reading categorize and classification files 
@@ -961,87 +1029,6 @@ for nchirp in range(number_chirp_config):
         else:
             print("Red flag: classification and categorize files with diferent time resolution - ",
                     time.date())
-        
-        tot_profile_number = time.shape[0]
-        #------------------------------------------------------------------------------------------------
-        # verification: plot time interval
-        #------------------------------------------------------------------------------------------------
-        # a1 = np.diff(classification['time'][:30])*3600
-        # a2 = np.diff(categorize['time'][:30])*3600
-        # plt.figure()
-        # plt.plot(a1, '-o',label='classification')
-        # plt.plot(a2, '-o', label='categorize')
-        # plt.ylabel(r'$\Delta T\ [s]$')
-        # plt.legend()
-        # plt.ylim([25, 40])
-        # plt.show()
-        #------------------------------------------------------------------------------------------------
-        # verification: plot one profile of reflectivity (comment this block if nedeed)
-        #------------------------------------------------------------------------------------------------
-        # t = 500
-        # fig = plt.figure(figsize=[5, 8])
-        # ax1 = plt.subplot()
-
-        # colormesh = plt.plot(categorize['Z'][t,:], categorize['height'][:]/1000, marker='o')
-
-        # xlabx = ax1.xaxis.get_label()
-        # xlaby = ax1.yaxis.get_label()
-
-        # xlabx.set_size(12)
-        # xlaby.set_size(12)
-        # ax1.set_ylabel(r'Height [km]')
-        # ax1.set_xlabel(r'Reflectivity [dBZ]')
-        # plt.show()
-        # #------------------------------------------------------------------------------------------------
-        # # verification: plot reflectivity time serie, cloud base and cloud top 
-        # #------------------------------------------------------------------------------------------------
-        # fig = plt.figure(figsize=[12, 6])
-        # axs = plt.subplot()
-
-        # colormesh = plt.pcolormesh(time, categorize['height'][:],
-        #                             np.transpose(categorize['Z'][:]),
-        #                             cmap='viridis',
-        #                             shading='nearest')
-        # p1        = plt.scatter(time, classification['cloud_base_height_amsl'][:],
-        #                         s=1, c='black', alpha=.7, marker='*')
-        # p2        = plt.scatter(time, classification['cloud_top_height_amsl'][:],
-        #                         s=1, c='red', alpha=.7, marker='*')
-
-        # xlabx = axs.xaxis.get_label()
-        # xlaby = axs.yaxis.get_label()
-        # cbar = plt.colorbar(colormesh)
-        # cbar.set_label(r'Z [dBz]')
-        # xlabx.set_size(12)
-        # xlaby.set_size(12)
-        # axs.set_ylabel(r'Height [m]')
-        # axs.set_xlabel(r'Time [UTC]')
-        # axs.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
-        # #plt.savefig(PATH_FIG+cloudnet_filename[0][:8]+'_radar.png', dpi=400)
-        # plt.show()
-        #------------------------------------------------------------------------------------------------
-        # verification: plot classification time serie
-        #------------------------------------------------------------------------------------------------
-        # fig = plt.figure(figsize=[12, 6])
-        # axs = plt.subplot()
-
-        # colormesh = plt.pcolormesh(time, classification['height'][:],
-        #                             np.transpose(classification['target_classification'][:]),
-        #                             cmap='tab10',
-        #                             shading='nearest',
-        #                             vmin=0,
-        #                             vmax=10)
-
-        # fig.colorbar(colormesh, ax=axs, ticks=list(range(11)))
-        # #cbar.set_ticks([mn,md,mx])
-        # axs.set_ylabel(r'Height [m]')
-        # axs.set_xlabel(r'Time [UTC]')
-        # axs.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
-        # #plt.savefig(PATH_FIG+cloudnet_filename[0][:8]+'_radar.png', dpi=400)
-        # plt.show()
-        #------------------------------------------------------------------------------------------------
-        # creating variables as dataframe with time series as the index
-        # and altitude as columns 
-        #------------------------------------------------------------------------------------------------
         #------------------------------------------------------------------------------------------------
         # reading lwc and der files generated by the last code block
         #------------------------------------------------------------------------------------------------
@@ -1052,8 +1039,12 @@ for nchirp in range(number_chirp_config):
         dataframes_list_ze.append(radar.Zh)
         dataframes_list_vd.append(radar.v)
         ds_hydrometeor    = xr.Dataset(coords={'time': time_complete, 'range': height})
-        df_reflectivity   = pd.DataFrame(data   =categorize['Z'][:],
-                                            index  =time,
+        df_cloud_base     = pd.DataFrame(data =classification['cloud_base_height_amsl'][:], 
+                                            index =time )
+        df_cloud_top      = pd.DataFrame(data =classification['cloud_top_height_amsl'][:],
+                                            index =time )
+        df_reflectivity   = pd.DataFrame(data =categorize['Z'][:],
+                                            index =time,
                                             columns=height)
         df_lwp            = pd.DataFrame(data  =categorize['lwp'][:], 
                                         index =time, 
@@ -1073,339 +1064,61 @@ for nchirp in range(number_chirp_config):
                                             index  =time,
                                             columns=height) # um
         #------------------------------------------------------------------------------------------------
-        tick_labels = ['Clear  sky', 
-               'Droplets', 
-               'Drizzle or rain', 
-               'Drizzle & droplets', 
-               'Ice', 
-               'Ice & droplets', 
-               'Melting ice', 
-               'Melting & droplets', 
-               'Aerosol',
-               'Insect', 
-               'Aerosol & insect']
-        
-        hydro_types = { "Liquid"          : [CLOUD_LIQUID,DRIZZLE_OR_RAIN,DRIZZLE_OR_RAIN_LIQUID_DROPLETS],
-                        "Ice"             : [ICE_PARTICLES],
-                        "Mixed_phase"     : [ICE_WITH_SUP_WATER,\
-                                                MELTING_ICE, MELTING_ICE_LIQUID_DROPLETS],
-                        "Total"    : [CLOUD_LIQUID, DRIZZLE_OR_RAIN, DRIZZLE_OR_RAIN_LIQUID_DROPLETS,\
-                                                ICE_PARTICLES, ICE_WITH_SUP_WATER, MELTING_ICE,\
-                                                      MELTING_ICE_LIQUID_DROPLETS]
-                        }
-        
-        targ_between_hydro = [CLEAR_SKY, AERO_NO_CLOUD, INSECT_NO_CLOUD,\
-                                                     AERO_WITH_INSECT_NO_CLOUD]
-        
-        cloud_types = { "Liquid"          : [CLOUD_LIQUID,DRIZZLE_OR_RAIN_LIQUID_DROPLETS],
-                          "Ice"             : [ICE_PARTICLES],
-                          "Mixed_phase"     : [CLOUD_LIQUID,ICE_PARTICLES,ICE_WITH_SUP_WATER,\
-                                               MELTING_ICE, MELTING_ICE_LIQUID_DROPLETS],
-                          "Pre_liquid"      : [CLOUD_LIQUID,DRIZZLE_OR_RAIN_LIQUID_DROPLETS],
-                          "Pre_mixed_phase" : [ICE_PARTICLES,ICE_WITH_SUP_WATER,MELTING_ICE,\
-                                                MELTING_ICE_LIQUID_DROPLETS]
-                        }  
-        
-        targ_between_cloud = {  "Liquid"          : [CLEAR_SKY, AERO_NO_CLOUD, INSECT_NO_CLOUD,\
-                                                     AERO_WITH_INSECT_NO_CLOUD],
-                                "Ice"             : [CLEAR_SKY, CLOUD_LIQUID, AERO_NO_CLOUD,\
-                                                        INSECT_NO_CLOUD, AERO_WITH_INSECT_NO_CLOUD],
-                                "Mixed_phase"     : [CLEAR_SKY, DRIZZLE_OR_RAIN, AERO_NO_CLOUD,\
-                                                        INSECT_NO_CLOUD, AERO_WITH_INSECT_NO_CLOUD],
-                                "Pre_liquid"      : [CLEAR_SKY, AERO_NO_CLOUD, INSECT_NO_CLOUD,\
-                                                        AERO_WITH_INSECT_NO_CLOUD],
-                                "Pre_mixed_phase" : [CLEAR_SKY, DRIZZLE_OR_RAIN, AERO_NO_CLOUD,\
-                                                        INSECT_NO_CLOUD, AERO_WITH_INSECT_NO_CLOUD]}
-        
-        targ_to_filter = {"Liquid"          : [DRIZZLE_OR_RAIN, ICE_PARTICLES, ICE_WITH_SUP_WATER, MELTING_ICE,\
-                                                MELTING_ICE_LIQUID_DROPLETS],
-                          "Ice"             : [CLOUD_LIQUID, DRIZZLE_OR_RAIN, DRIZZLE_OR_RAIN_LIQUID_DROPLETS,\
-                                                ICE_WITH_SUP_WATER, MELTING_ICE, MELTING_ICE_LIQUID_DROPLETS],
-                          "Mixed_phase"     : [DRIZZLE_OR_RAIN, DRIZZLE_OR_RAIN_LIQUID_DROPLETS],
-                          "Pre_liquid"      : [ICE_PARTICLES, ICE_WITH_SUP_WATER, MELTING_ICE, MELTING_ICE_LIQUID_DROPLETS],
-                          "Pre_mixed_phase" : []}
-        
-        targ_to_get_bellow = {"Pre_liquid"      : [DRIZZLE_OR_RAIN],
-                              "Pre_mixed_phase" : [CLOUD_LIQUID, DRIZZLE_OR_RAIN, DRIZZLE_OR_RAIN_LIQUID_DROPLETS]}
-        
-        cloud_phase = ["single_phase", "single_phase", "mixed_phase", "single_phase", "mixed_phase", "single_phase"]
-        
-        # Call the function with your variables and DataFrames
-        process_cloud_data(df_classification, df_reflectivity, df_lwp, cloud_phase, tick_labels,
-                        height_cloud_base, height_cloud_top, height_cloud_mean, geometric_cloud_thickness,
-                        cloud_types, targ_between_cloud, targ_to_filter, targ_to_get_bellow,
-                        hydro_types, targ_between_hydro,
-                        number_of_layers, liquid_water_path, ds_hydrometeor, time)
+        args = (df_classification, df_reflectivity, df_lwp, cloud_phase, tick_labels,
+                height_cloud_base, height_cloud_top, height_cloud_mean, geometric_cloud_thickness,
+                cloud_types, targ_between_cloud, targ_to_filter, targ_to_get_bellow,
+                hydro_types, targ_between_hydro,
+                number_of_layers, liquid_water_path, ds_hydrometeor, time)
+        processing_args.append(args)
 
-        # # ------------------------------------------------------------------------------------------------
-        # # CLOUD filters for calculations of cloud properties 
-        # # ------------------------------------------------------------------------------------------------
-        # for i, cloud in enumerate(cloud_types):
-        #     classification_filter = CloudProcess(df_classification.copy(), 
-        #                                             cloud_types[cloud], 
-        #                                             targ_between_cloud[cloud], 
-        #                                             NBINS_BETWEEN_CLOUD,
-        #                                             cloud_phase[i],
-        #                                             NBINS_CLOUD)
-        #     for target in targ_to_filter[cloud]:
-        #         classification_filter.filter_species(target, 400, 200)
-            
-        #     if cloud == "Pre_liquid" or cloud == "Pre_mixed_phase":
-        #         classification_filter.get_specie_below(targ_to_get_bellow[cloud], 10)
-        #         cloud_cat, cloud_ze = classification_filter.cloud_categorization(df_reflectivity.copy(),
-        #                                                                          targ_to_get_bellow[cloud])
-        #     else:
-        #         cloud_cat, cloud_ze = classification_filter.cloud_categorization(df_reflectivity.copy())
-            
-        #     classification_filter.calculate_cloud_properties(height_cloud_base,
-        #                                                         height_cloud_top,
-        #                                                         height_cloud_mean,
-        #                                                         geometric_cloud_thickness,
-        #                                                         cloud)
-        #     number_of_layers.loc[classification_filter.time_cbt, cloud] = sublist_lengths(classification_filter.cloud_base)
-        #     with sns.axes_style("whitegrid"):
-        #         plot_cloud_type(df_classification, 
-        #                     cloud_cat, 
-        #                     cloud_ze, 
-        #                     classification_filter, 
-        #                     cloud, .1, 12., tick_labels)
-        # # -------------------------------------------------------------------------------------------------
-        # # CLOUD statistics
-        # # -----------------------------------------------------------------------------------------------
-        # nbins_between_cloud = 1
-        # ds_hydrometeor = xr.Dataset(coords={'time': time_complete, 'range': height})
-        # for cloud in hydro_types:
-        #     classification_filter = CloudProcess(df_classification.copy(), 
-        #                                         hydro_types[cloud], 
-        #                                         targ_between_hydro, 
-        #                                         nbins_between_cloud)
-            
-        #     cloud_mask = classification_filter.cloud_mask()
-        #     ds_hydrometeor[cloud] = xr.DataArray(cloud_mask, dims=('time', 'range'), coords={'time': time, 'range': height})
+num_workers = 4 #
 
-        # # verification:  
-        # try:
-        #     total_hydromet_sum = (ds_hydrometeor.Ice + ds_hydrometeor.Liquid\
-        #       + ds_hydrometeor.Mixed_phase).sum(dim='time')
-            
-        #     if np.all(total_hydromet_sum == ds_hydrometeor.Total.sum(dim='time')):
-        #         print("All cloud types are mutually exclusive")
-        #     else:
-        #         print("Cloud types are not mutually exclusive")
-        # except Exception as e:
-        #     print("An error occurred:", e)
-            
-        # liquid_water_path.loc[time, "value"] = df_lwp["value"]
-        #------------------------------------------------------------------------------------------------
-        # Analisis hydrometeors 
-        #------------------------------------------------------------------------------------------------ 
-        # targets_hydro     = [CLOUD_LIQUID, DRIZZLE_OR_RAIN, DRIZZLE_OR_RAIN_LIQUID_DROPLETS, ICE_PARTICLES,\
-        #                     ICE_WITH_SUP_WATER, MELTING_ICE, MELTING_ICE_LIQUID_DROPLETS]
+# Parallel execution using multiprocessing.Pool
+with multiprocessing.Pool(processes=num_workers) as pool:
+    pool.map(process_cloud_data_parallel, processing_args)
 
-        # hydrometeor_count_profile.loc[time, :] = mask_target(df_classification, targets_hydro)
-
-        # #------------------------------------------------------------------------------------------------
-        # # test: ICE_CLOUDS filter 
-        # #------------------------------------------------------------------------------------------------ 
-        # name_title          = "ICE"
-        # targets             = [ICE_PARTICLES]
-        # targs_between_cloud = [CLEAR_SKY, CLOUD_LIQUID, AERO_NO_CLOUD, INSECT_NO_CLOUD, AERO_WITH_INSECT_NO_CLOUD]
-        # classification_filter = CloudProcess(df_classification.copy(), targets, targs_between_cloud, NBINS_BETWEEN_CLOUD)
-        # classification_filter.filter_species(CLOUD_LIQUID, 400, 200)
-        # classification_filter.filter_species(DRIZZLE_OR_RAIN, 400, 200)
-        # classification_filter.filter_species(DRIZZLE_OR_RAIN_LIQUID_DROPLETS, 400, 200)
-        # classification_filter.filter_species(ICE_WITH_SUP_WATER, 400, 200)
-        # classification_filter.filter_species(MELTING_ICE, 400, 200)
-        # classification_filter.filter_species(MELTING_ICE_LIQUID_DROPLETS, 400, 200)
-        # cloud_cat, cloud_ze = classification_filter.cloud_categorization(df_reflectivity.copy())
-        # #------------------------------------------------------------------------------------------------
-        # # test: Analisis
-        # #------------------------------------------------------------------------------------------------
-        # classification_filter.calculate_cloud_properties(height_cloud_base,
-        #                                                 height_cloud_top,
-        #                                                 height_cloud_mean,
-        #                                                 geometric_cloud_thickness,
-        #                                                 "Ice")
-        
-        # ice_count_profile.loc[time, :] = mask_target(df_classification, targets)
-        # number_of_layers.loc[classification_filter.time_cbt,"Ice"] = sublist_lengths(classification_filter.cloud_base)
-        # #------------------------------------------------------------------------------------------------
-        # # fig, axs = plt.subplots()
-        # # axs.plot(ice_profile_number, ice_profile_number.index)
-        # # axs.set_ylabel("z [m]")
-        # # axs.set_xlabel("Number ice particle")
-        # # plt.show()
-        
-        # # cloud_base_hist = classification_filter.height[flatten_list_with_itertools(classification_filter.cloud_base)]
-        # # cloud_top_hist = classification_filter.height[flatten_list_with_itertools(classification_filter.cloud_top)]
-        # # plt.figure(); plt.hist(cloud_base_hist, bins=20);plt.title("ICE CB");plt.show()
-        # # plt.figure(); plt.hist(cloud_top_hist, bins=20);plt.title("ICE CT");plt.show()
-
-        # # fig, ax = plt.subplots()
-        # # h_m = []
-        # # i=0
-        # # for j in range(len(classification_filter.cloud_base)):
-        # #     n_p  = len(classification_filter.cloud_base[j])
-        # #     h_cb = classification_filter.height[classification_filter.cloud_base[j]]
-        # #     h_ct = classification_filter.height[classification_filter.cloud_top[j]]
-        # #     h_m.append((h_cb+h_ct)/2)
-        # #     ax.plot( np.tile(classification_filter.time_cbt[i], n_p), h_m[j], "*b")
-        # #     # ax.plot( np.tile(classification_filter.time_cbt[i], n_p-1), np.diff(h_m[j]), "-*")
-        # #     # ax.plot( np.tile(classification_filter.time_cbt[i], n_p), df_classification.columns[classification_filter.cloud_base[j]], "*", color='black', markersize=3)
-        # #     # ax.plot( np.tile(classification_filter.time_cbt[i], n_p), df_classification.columns[classification_filter.cloud_top[j]], "*", color='red', markersize=3)
-        # #     i+=1
-        # # plt.show()
-        
-        # # fig, ax = plt.subplots()
-        # # ax.hist(flatten_list_with_itertools(h_m), 25)
-        # # plt.show()
-
-        # #------------------------------------------------------------------------------------------------  
-        # # test: plot the result for ICE_CLOUDS filter 
-        # #------------------------------------------------------------------------------------------------
-        # # plot_cloud_type(df_classification, cloud_cat, cloud_ze, classification_filter, name_title, 0, 23, 300, 12000)
-        # #------------------------------------------------------------------------------------------------
-        # # test: LIQUID_CLOUDS filter 
-        # #------------------------------------------------------------------------------------------------
-        # name_title = "LIQUID CLOUDS"
-        # targets             = [CLOUD_LIQUID,DRIZZLE_OR_RAIN_LIQUID_DROPLETS]
-        # targs_between_cloud = [CLEAR_SKY, AERO_NO_CLOUD, INSECT_NO_CLOUD, AERO_WITH_INSECT_NO_CLOUD]
-        # classification_filter = CloudProcess(df_classification.copy(), targets , targs_between_cloud, NBINS_BETWEEN_CLOUD)
-        # classification_filter.filter_species(DRIZZLE_OR_RAIN, 400, 200)
-        # classification_filter.filter_species(ICE_PARTICLES, 400, 200)
-        # classification_filter.filter_species(ICE_WITH_SUP_WATER, 400, 200)
-        # classification_filter.filter_species(MELTING_ICE, 400, 200)
-        # classification_filter.filter_species(MELTING_ICE_LIQUID_DROPLETS, 400, 200)
-        # cloud_cat, cloud_ze= classification_filter.cloud_categorization(df_reflectivity.copy())
-        # #------------------------------------------------------------------------------------------------
-        # # test: Analisis
-        # #------------------------------------------------------------------------------------------------
-        # classification_filter.calculate_cloud_properties(height_cloud_base,
-        #                                                 height_cloud_top,
-        #                                                 height_cloud_mean,
-        #                                                 geometric_cloud_thickness,
-        #                                                 "Liquid")
-        # liquid_count_profile.loc[time, :] = mask_target(df_classification, targets)
-        # number_of_layers.loc[classification_filter.time_cbt,"Liquid"] = sublist_lengths(classification_filter.cloud_base)
-        # #------------------------------------------------------------------------------------------------
-        # # fig, axs = plt.subplots()
-        # # axs.plot(liquid_profile_number, liquid_profile_number.index)
-        # # axs.set_ylabel("z [m]")
-        # # axs.set_xlabel("Number Liquid Particles")
-        # # plt.show()
-        
-        # # plot_cloud_type(df_classification, cloud_cat, cloud_ze, classification_filter, name_title, 0, 23, 300, 12000)
-        # #------------------------------------------------------------------------------------------------
-        # # test: precipitating LIQUID_CLOUDS filter 
-        # #------------------------------------------------------------------------------------------------
-        # name_title = "PRECIPITATING LIQUID CLOUDS"
-        # targets             = [CLOUD_LIQUID,DRIZZLE_OR_RAIN_LIQUID_DROPLETS]
-        # targs_between_cloud = [CLEAR_SKY, AERO_NO_CLOUD, INSECT_NO_CLOUD, AERO_WITH_INSECT_NO_CLOUD]
-        # classification_filter = CloudProcess(df_classification.copy(), targets , targs_between_cloud, NBINS_BETWEEN_CLOUD)
-        # classification_filter.filter_species(ICE_PARTICLES, 400, 200)
-        # classification_filter.filter_species(ICE_WITH_SUP_WATER, 400, 200)
-        # classification_filter.filter_species(MELTING_ICE, 400, 200)
-        # classification_filter.filter_species(MELTING_ICE_LIQUID_DROPLETS, 400, 200)
-        # classification_filter.get_specie_below([2], 10)
-        # cloud_cat, cloud_ze= classification_filter.cloud_categorization(df_reflectivity.copy(), [DRIZZLE_OR_RAIN])
-        # #------------------------------------------------------------------------------------------------
-        # # test: Abalisys
-        # #------------------------------------------------------------------------------------------------
-        # classification_filter.calculate_cloud_properties(height_cloud_base,
-        #                                                 height_cloud_top,
-        #                                                 height_cloud_mean,
-        #                                                 geometric_cloud_thickness,
-        #                                                 "Pre-liquid")
-        # number_of_layers.loc[classification_filter.time_cbt,"Pre-liquid"] = sublist_lengths(classification_filter.cloud_base)
-        # #------------------------------------------------------------------------------------------------
-        # # test: plot the result for ICE_CLOUDS filter 
-        # #------------------------------------------------------------------------------------------------
-        # # plot_cloud_type(df_classification, cloud_cat, cloud_ze, classification_filter, name_title, 0, 23, 300, 12000)
-        # #------------------------------------------------------------------------------------------------
-        # # test: mixed phase clouds 
-        # #------------------------------------------------------------------------------------------------
-        # name_title = "MIXED PHASE CLOUDS"
-        # targets               = [CLOUD_LIQUID,ICE_PARTICLES,ICE_WITH_SUP_WATER,MELTING_ICE, MELTING_ICE_LIQUID_DROPLETS]
-        # targs_between_cloud   = [CLEAR_SKY, DRIZZLE_OR_RAIN, AERO_NO_CLOUD, INSECT_NO_CLOUD, AERO_WITH_INSECT_NO_CLOUD]
-        # classification_filter = CloudProcess(df_classification.copy(), targets, targs_between_cloud, NBINS_BETWEEN_CLOUD, "mixed_phase")
-        # classification_filter.filter_species(DRIZZLE_OR_RAIN, 400, 200)
-        # classification_filter.filter_species(DRIZZLE_OR_RAIN_LIQUID_DROPLETS, 400, 200)
-        # cloud_cat, cloud_ze = classification_filter.cloud_categorization(df_reflectivity.copy())
-        # #------------------------------------------------------------------------------------------------
-        # # test: Analisis
-        # #------------------------------------------------------------------------------------------------
-        # classification_filter.calculate_cloud_properties(height_cloud_base,
-        #                                                 height_cloud_top,
-        #                                                 height_cloud_mean,
-        #                                                 geometric_cloud_thickness,
-        #                                                 "Mixed-phase")
-        # number_of_layers.loc[classification_filter.time_cbt,"Mixed-phase"] = sublist_lengths(classification_filter.cloud_base)
-        # #------------------------------------------------------------------------------------------------
-        # # test: plot the result of mixed phase clouds categorization
-        # #------------------------------------------------------------------------------------------------
-        # plot_cloud_type(df_classification, cloud_cat, cloud_ze, classification_filter, name_title, 0, 23, 300, 12000)
-        # #------------------------------------------------------------------------------------------------
-        # # test: precipitating mixed phase clouds 
-        # #------------------------------------------------------------------------------------------------
-        # name_title = "PRECIPITATING MIXED PHASE CLOUDS"
-        # targets               = [ICE_PARTICLES,ICE_WITH_SUP_WATER,MELTING_ICE, MELTING_ICE_LIQUID_DROPLETS]
-        # targs_between_cloud   = [CLEAR_SKY, DRIZZLE_OR_RAIN, AERO_NO_CLOUD, INSECT_NO_CLOUD, AERO_WITH_INSECT_NO_CLOUD]
-        # classification_filter = CloudProcess(df_classification.copy(), targets , targs_between_cloud, NBINS_BETWEEN_CLOUD, "mixed_phase")
-        # classification_filter.get_specie_below([CLOUD_LIQUID, DRIZZLE_OR_RAIN, DRIZZLE_OR_RAIN_LIQUID_DROPLETS], 10)
-        # cloud_cat, cloud_ze= classification_filter.cloud_categorization(df_reflectivity.copy(), [CLOUD_LIQUID, DRIZZLE_OR_RAIN, DRIZZLE_OR_RAIN_LIQUID_DROPLETS])
-        # #------------------------------------------------------------------------------------------------
-        # # test: Analisis
-        # #------------------------------------------------------------------------------------------------
-        # classification_filter.calculate_cloud_properties(height_cloud_base,
-        #                                                 height_cloud_top,
-        #                                                 height_cloud_mean,
-        #                                                 geometric_cloud_thickness,
-        #                                                 "Pre-mixed-phase")
-        # number_of_layers.loc[classification_filter.time_cbt,"Pre-mixed-phase"] = sublist_lengths(classification_filter.cloud_base)
-        # #------------------------------------------------------------------------------------------------
-        # # test: plot the result of mixed phase clouds categorization
-        # #------------------------------------------------------------------------------------------------
-        # # plot_cloud_type(df_classification, cloud_cat, cloud_ze, classification_filter, name_title, 0, 23, 300, 12000)
-        # #------------------------------------------------------------------------------------------------
-        # liquid_water_path.loc[time, "value"] = df_lwp["value"]
-    #------------------------------------------------------------------------------------------------
-    # Save the data as a NetCDF file
-    #------------------------------------------------------------------------------------------------
-    # concatenated_ze = xr.concat(dataframes_list_ze, dim='time')
-    # concatenated_vd = xr.concat(dataframes_list_vd, dim='time')
-    # ds_radar = xr.merge([concatenated_ze, concatenated_vd])
-    # folder_name = f"../../../processed_data/chirp_{nchirp}"
-    # if not os.path.exists(folder_name):
-    #     os.makedirs(folder_name)
-    
-    # number_of_layers.index.name = 'time'
-    # ds_layers                   = xr.Dataset.from_dataframe(number_of_layers)
-    # liquid_water_path.index.name= 'time'
-    # ds_lwp                      = xr.Dataset.from_dataframe(liquid_water_path)
-
-    # # Save the dataset as a NetCDF file inside the folder
-    # for ds, name in zip([ds_layers, ds_hydrometeor, ds_lwp, ds_radar], 
-    #                     ["number_of_layers", "hydrometeor", "lwp", "radar"]): 
-    #     print(f"Saving {name}...")
-    #     output_path = os.path.join(folder_name, f"chirp_{nchirp}_{name}.nc")
-    #     ds.to_netcdf(output_path)
-    # # ------------------------------------------------------------------------------------------------
-    # height_cloud_base.index.name = 'time'
-    # height_cloud_top.index.name = 'time'
-    # height_cloud_mean.index.name = 'time'
-    # geometric_cloud_thickness.index.name = 'time'
-    
-    # for df, name in zip([height_cloud_base, height_cloud_top, height_cloud_mean, geometric_cloud_thickness],
-    #                 ["height_cloud_base", "height_cloud_top", "height_cloud_mean", "geometric_cloud_thickness"]):
-    #     print(f"Saving {name}...")
-    #     try:
-    #         # Convert columns to serializable format
-    #         df_serializable = df.applymap(handle_serialization)
-    #         df_serializable.to_json(f"{folder_name}/chirp_{nchirp}_{name}.json", orient='index')
-    #     except Exception as e:
-    #         print(f"Error while saving {name}: {e}")
-    #------------------------------------------------------------------------------------------------
 end_time = time_module.time()
 # Calculate and print the execution time
 execution_time = (end_time - start_time) / 60
 print(f"Execution time: {execution_time:.2f} minutes")
+
+#------------------------------------------------------------------------------------------------
+# Save the data as a NetCDF file
+#------------------------------------------------------------------------------------------------
+# concatenated_ze = xr.concat(dataframes_list_ze, dim='time')
+# concatenated_vd = xr.concat(dataframes_list_vd, dim='time')
+# ds_radar = xr.merge([concatenated_ze, concatenated_vd])
+# folder_name = f"../../../processed_data/chirp_{nchirp}"
+# if not os.path.exists(folder_name):
+#     os.makedirs(folder_name)
+
+# number_of_layers.index.name = 'time'
+# ds_layers                   = xr.Dataset.from_dataframe(number_of_layers)
+# liquid_water_path.index.name= 'time'
+# ds_lwp                      = xr.Dataset.from_dataframe(liquid_water_path)
+
+# # Save the dataset as a NetCDF file inside the folder
+# for ds, name in zip([ds_layers, ds_hydrometeor, ds_lwp, ds_radar], 
+#                     ["number_of_layers", "hydrometeor", "lwp", "radar"]): 
+#     print(f"Saving {name}...")
+#     output_path = os.path.join(folder_name, f"chirp_{nchirp}_{name}.nc")
+#     ds.to_netcdf(output_path)
+# # ------------------------------------------------------------------------------------------------
+# height_cloud_base.index.name = 'time'
+# height_cloud_top.index.name = 'time'
+# height_cloud_mean.index.name = 'time'
+# geometric_cloud_thickness.index.name = 'time'
+
+# for df, name in zip([height_cloud_base, height_cloud_top, height_cloud_mean, geometric_cloud_thickness],
+#                 ["height_cloud_base", "height_cloud_top", "height_cloud_mean", "geometric_cloud_thickness"]):
+#     print(f"Saving {name}...")
+#     try:
+#         # Convert columns to serializable format
+#         df_serializable = df.applymap(handle_serialization)
+#         df_serializable.to_json(f"{folder_name}/chirp_{nchirp}_{name}.json", orient='index')
+#     except Exception as e:
+#         print(f"Error while saving {name}: {e}")
+#------------------------------------------------------------------------------------------------
+
+# if __name__ == "__main__":
+#     main()

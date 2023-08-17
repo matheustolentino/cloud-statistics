@@ -13,7 +13,6 @@ import os
 
 plt.ion()
 plt.close('all')
-
 #**************************************************************************************************
 PATH_SIZDIST = '../../data/cloud_sizdist/'
 PATH_FIG     = '../figures/'
