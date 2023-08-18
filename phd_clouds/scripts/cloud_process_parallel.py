@@ -22,6 +22,7 @@ import seaborn as sns
 import colorcet as cc  # Import the colorcet library
 import multiprocessing
 import time as time_module
+from pdb import set_trace
 # import seaborn as sns
 #-------------------------------------------------------------------------------------------------------
 from cloudnetpy.products import generate_lwc
@@ -348,80 +349,102 @@ def plot_cloud_mask(df_complete, df_mask, name_title, z_min, z_max):
     plt.suptitle(name_title)
     plt.show()
 
-def process_cloud_data(df_classification: pd.DataFrame,
-                       df_reflectivity: pd.DataFrame,
-                       df_lwp: pd.DataFrame,
-                       cloud_phase: Dict[str, List[str]],
-                       tick_labels: ...,  # Define the appropriate type
-                       height_cloud_base: ...,  # Define the appropriate type
-                       height_cloud_top: ...,  # Define the appropriate type
-                       height_cloud_mean: ...,  # Define the appropriate type
-                       geometric_cloud_thickness: ...,  # Define the appropriate type
-                       cloud_types: Dict[str, List[int]],  # Define the appropriate type
-                       targ_between_cloud: Dict[str, List[int]],  # Define the appropriate type
-                       targ_to_filter: Dict[str, List[int]],  # Define the appropriate type
-                       targ_to_get_bellow: Dict[str, int],  # Define the appropriate type
-                       hydro_types: Dict[str, List[int]],  # Define the appropriate type
-                       targ_between_hydro: List[int],  # Define the appropriate type
-                       number_of_layers: pd.DataFrame,
-                       liquid_water_path: pd.DataFrame,
-                       ds_hydrometeor: xr.Dataset, 
-                       time: pd.DatetimeIndex):
+def process_cloud_data(date: datetime.datetime,
+                        radar_data: xr.Dataset,
+                        df_classification: pd.DataFrame,
+                        df_reflectivity: pd.DataFrame,
+                        df_lwp: pd.DataFrame,
+                        number_of_layers: pd.DataFrame,
+                        height_cloud_base: pd.DataFrame,
+                        height_cloud_top: pd.DataFrame,
+                        height_cloud_mean: pd.DataFrame,
+                        geometric_cloud_thickness: pd.DataFrame,
+                        ds_hydrometeor: xr.Dataset, 
+                        time: pd.DatetimeIndex,
+                        nchirp: int):
     # ------------------------------------------------------------------------------------------------
     # CLOUD filters for calculations of cloud properties 
     # ------------------------------------------------------------------------------------------------
-    for i, cloud in enumerate(cloud_types):
+    for i, cloud in enumerate(CLOUD_TYPES):
         classification_filter = CloudProcess(df_classification.copy(), 
-                                             cloud_types[cloud], 
-                                             targ_between_cloud[cloud], 
+                                             CLOUD_TYPES[cloud], 
+                                             TARG_BET_CLOUD[cloud], 
                                              NBINS_BETWEEN_CLOUD,
-                                             cloud_phase[i],
+                                             CLOUD_PHASE[i],
                                              NBINS_CLOUD)
-        for target in targ_to_filter[cloud]:
+        for target in TARG_TO_FILTER[cloud]:
             classification_filter.filter_species(target, 400, 200)
         
         if cloud == "Pre_liquid" or cloud == "Pre_mixed_phase":
-            classification_filter.get_specie_below(targ_to_get_bellow[cloud], 10)
+            classification_filter.get_specie_below(TARG_TO_GET_BELLOW[cloud], 10)
             cloud_cat, cloud_ze = classification_filter.cloud_categorization(df_reflectivity.copy(),
-                                                                             targ_to_get_bellow[cloud])
+                                                                             TARG_TO_GET_BELLOW[cloud])
         else:
             cloud_cat, cloud_ze = classification_filter.cloud_categorization(df_reflectivity.copy())
         
         classification_filter.calculate_cloud_properties(height_cloud_base,
-                                                         height_cloud_top,
-                                                         height_cloud_mean,
-                                                         geometric_cloud_thickness,
-                                                         cloud)
+                                                        height_cloud_top,
+                                                        height_cloud_mean,
+                                                        geometric_cloud_thickness,
+                                                        cloud)
+        
         number_of_layers.loc[classification_filter.time_cbt, cloud] = sublist_lengths(classification_filter.cloud_base)
         # with sns.axes_style("whitegrid"):
         #     plot_cloud_type(df_classification, 
         #                     cloud_cat, 
         #                     cloud_ze, 
         #                     classification_filter, 
-        #                     cloud, .1, 12., tick_labels)
+        #                     cloud, .1, 12., CLASSIFICATION_TICK_LABELS)
     #------------------------------------------------------------------------------------------------
     # Analisis hydrometeors 
     #------------------------------------------------------------------------------------------------ 
-    for cloud in hydro_types:
+    for cloud in HYDRO_TYPES:
         classification_filter = CloudProcess(df_classification.copy(), 
-                                             hydro_types[cloud], 
-                                             targ_between_hydro, 
+                                             HYDRO_TYPES[cloud], 
+                                             TARG_BET_HYDRO, 
                                              NBINS_BETWEEN_HYDRO)
         
         cloud_mask = classification_filter.cloud_mask()
         ds_hydrometeor[cloud] = xr.DataArray(cloud_mask, dims=('time', 'range'), coords={'time': time, 'range': height})
 
-    # try:
-    #     total_hydromet_sum = (ds_hydrometeor.Ice + ds_hydrometeor.Liquid + ds_hydrometeor.Mixed_phase).sum(dim='time')
+    ds_radar_var       = xr.concat([radar_data.Zh, radar_data.v], dim='time')
+    df_lwp.name        = 'time'
+    ds_lwp             = xr.Dataset.from_dataframe(df_lwp)
+    name_folders_nc    = ["radar_variables", "lwp", "hydrometeor"]
+    name_folders_json  = ["height_cloud_base", "height_cloud_top", "height_cloud_mean", "geometric_cloud_thickness"]
+    # ------------------------------------------------------------------------------------------------
+    # Save the dataset as a NetCDF file inside the folder
+    # ------------------------------------------------------------------------------------------------
+    for ds, name in zip([ds_radar_var, ds_lwp, ds_hydrometeor], name_folders_nc):
+        folder_name = f"../../../processed_data/chirp_{nchirp}/{name}/"
+        if not os.path.exists(folder_name):
+            os.makedirs(folder_name)
         
-    #     if np.all(total_hydromet_sum == ds_hydrometeor.Total.sum(dim='time')):
-    #         print("All cloud types are mutually exclusive")
-    #     else:
-    #         print("Cloud types are not mutually exclusive")
-    # except Exception as e:
-    #     print("An error occurred:", e)
+        output_path = os.path.join(folder_name, f"{date.strftime('%Y%m%d')}_{name}.nc")
+        ds.to_netcdf(output_path)
+    # ------------------------------------------------------------------------------------------------
+    # Save the dataset as a JSON file inside the folder
+    # ------------------------------------------------------------------------------------------------
+    height_cloud_base.index.name = 'time'
+    height_cloud_top.index.name  = 'time'
+    height_cloud_mean.index.name = 'time'
+    geometric_cloud_thickness.index.name = 'time'
+    
+    for df, name in zip([height_cloud_base, height_cloud_top, height_cloud_mean, geometric_cloud_thickness],
+                       name_folders_json):
+        folder_name = f"../../../processed_data/chirp_{nchirp}/{name}/"
+        if not os.path.exists(folder_name):
+            os.makedirs(folder_name)
         
-    liquid_water_path.loc[time, "value"] = df_lwp["value"]
+        try:
+            # Convert columns to serializable format
+            output_path = os.path.join(folder_name, f"{date.strftime('%Y%m%d')}_{name}.json")
+            df_serializable = df.applymap(handle_serialization)
+            df_serializable.to_json(output_path, orient='index')
+        except Exception as e:
+            print(f"Error while saving {name}: {e}")
+    set_trace()
+    # ------------------------------------------------------------------------------------------------
 
 class HMmodel:
     def __init__(self,
@@ -578,10 +601,10 @@ class CloudProcess:
         return mask
     
     def calculate_cloud_properties(self,
-                                   height_cloud_base: DataFrame,
-                                   height_cloud_top: DataFrame,
-                                   height_cloud_mean: DataFrame,
-                                   geometric_cloud_thickness: DataFrame,
+                                   height_cloud_base: pd.DataFrame,
+                                   height_cloud_top: pd.DataFrame,
+                                   height_cloud_mean: pd.DataFrame,
+                                   geometric_cloud_thickness: pd.DataFrame,
                                    cloud_type: str) -> None:
         """
         Calculates cloud properties based on provided data and updates the corresponding DataFrame objects.
@@ -859,20 +882,64 @@ class CloudProcess:
 
 def process_cloud_data_parallel(args):
     # Unpack the arguments
-    (df_classification, df_reflectivity, df_lwp, cloud_phase, tick_labels,
-    height_cloud_base, height_cloud_top, height_cloud_mean, geometric_cloud_thickness,
-    cloud_types, targ_between_cloud, targ_to_filter, targ_to_get_bellow,
-    hydro_types, targ_between_hydro,
-    number_of_layers, liquid_water_path, ds_hydrometeor, time)  = args
-    # print("Ta tudo bem!!", flush=True)
-    # Perform the tasks for the given date and nchirp
-    # ... (initialize the necessary variables and DataFrames)
-    # print(liquid_water_path)
-    process_cloud_data(df_classification, df_reflectivity, df_lwp, cloud_phase, tick_labels,
-                       height_cloud_base, height_cloud_top, height_cloud_mean, geometric_cloud_thickness,
-                       cloud_types,targ_between_cloud, targ_to_filter, targ_to_get_bellow,
-                       hydro_types, targ_between_hydro,
-                       number_of_layers, liquid_water_path, ds_hydrometeor, time)
+    (height, nchirp, ind_day, date)  = args
+    #------------------------------------------------------------------------------------------------
+    # reading categorize and classification files 
+    #------------------------------------------------------------------------------------------------
+    categorize     = nc.Dataset(PATH_CATE+date.strftime('%Y%m%d')+"_granada_categorize.nc")
+    classification = nc.Dataset(PATH_CLASS+date.strftime('%Y%m%d')+"_granada_classification.nc")
+    radar          = xr.open_dataset(PATH_RADAR+date.strftime('%Y%m%d')+"_granada_rpg-fmcw-94.nc")
+    # ------------------------------------------------------------------------------------------------
+    # check if categorize and classification files have the same time resolution 
+    # ------------------------------------------------------------------------------------------------
+    time = check_time_resolution(classification, categorize, date)
+    # ------------------------------------------------------------------------------------------------
+    # cloudnet_lwc = nc.Dataset(PATH_CLOUDNET_LWC+date.strftime('%Y%m%d')+"_granada_"+'lwc.nc')
+    # cloudnet_iwc = nc.Dataset(PATH_CLOUDNET_IWC+date.strftime('%Y%m%d')+"_granada_"+'iwc.nc')
+    # cloudnet_der = nc.Dataset(PATH_CLOUDNET_DER+date.strftime('%Y%m%d')+"_granada_"+'der.nc')
+    # ------------------------------------------------------------------------------------------------
+    # dataframes_list_ze.append(radar.Zh)
+    # dataframes_list_vd.append(radar.v)
+    ds_hydrometeor    = xr.Dataset(coords={'time': time, 'range': height})
+    number_of_layers          = pd.DataFrame(index=time,
+                                columns=["Liquid", "Ice", "Mixed_phase", "Pre_liquid", "Pre_mixed_phase"])
+    height_cloud_base         = pd.DataFrame(index=time, 
+                                    columns=["Liquid", "Ice", "Mixed_phase", "Pre_liquid", "Pre_mixed_phase"])
+    height_cloud_top          = pd.DataFrame(index=time,
+                                    columns=["Liquid", "Ice", "Mixed_phase", "Pre_liquid", "Pre_mixed_phase"])
+    height_cloud_mean         = pd.DataFrame(index=time,
+                                    columns=["Liquid", "Ice", "Mixed_phase", "Pre_liquid", "Pre_mixed_phase"])
+    geometric_cloud_thickness = pd.DataFrame(index=time,
+                                    columns=["Liquid", "Ice", "Mixed_phase", "Pre_liquid", "Pre_mixed_phase"])
+    df_reflectivity   = pd.DataFrame(data =categorize['Z'][:],
+                                        index =time,
+                                        columns=height)
+    df_lwp            = pd.DataFrame(data  =categorize['lwp'][:], 
+                                    index =time, 
+                                    columns=["value"])
+
+    df_classification = pd.DataFrame(data=classification['target_classification'][:],
+                                        index  =time,
+                                        columns=height)
+    # ------------------------------------------------------------------------------------------------
+    # df_cloudnet_lwc   = pd.DataFrame(data   =1.0e3*cloudnet_lwc['lwc'][:],
+    #                                     index  =time,
+    #                                     columns= height) # g m^-3
+    # df_cloudnet_iwc   = pd.DataFrame(data   =1.0e3*cloudnet_iwc['iwc'][:],
+    #                                     index  =time,
+    #                                     columns= height) # g m^-3
+    # df_cloudnet_der   = pd.DataFrame(data   =1.0e6*cloudnet_der['der'][:],
+    #                                     index  =time,
+    #                                     columns=height) # um
+    # ------------------------------------------------------------------------------------------------
+    process_cloud_data(date, radar, df_classification,
+                       df_reflectivity, df_lwp,
+                       number_of_layers,
+                       height_cloud_base, 
+                       height_cloud_top, 
+                       height_cloud_mean, 
+                       geometric_cloud_thickness,
+                       ds_hydrometeor, time, nchirp)
     # print("Ta tudo bem!!", flush=True)
 # def main():
 # Define variables and DataFrames:
@@ -888,7 +955,7 @@ end_date          = max(database_intersection) # last date of database
 chirp_ini, chirp_final, chirp_zres, chirp_height = compare_radar_chirp_configurations(start_date, end_date, database_intersection, PATH_RADAR)
 number_chirp_config = len(chirp_ini)
 
-tick_labels = ['Clear  sky', 
+CLASSIFICATION_TICK_LABELS = ['Clear  sky', 
                'Droplets', 
                'Drizzle or rain', 
                'Drizzle & droplets', 
@@ -900,7 +967,7 @@ tick_labels = ['Clear  sky',
                'Insect', 
                'Aerosol & insect']
         
-hydro_types = { "Liquid"          : [CLOUD_LIQUID,DRIZZLE_OR_RAIN,DRIZZLE_OR_RAIN_LIQUID_DROPLETS],
+HYDRO_TYPES = { "Liquid"          : [CLOUD_LIQUID,DRIZZLE_OR_RAIN,DRIZZLE_OR_RAIN_LIQUID_DROPLETS],
                 "Ice"             : [ICE_PARTICLES],
                 "Mixed_phase"     : [ICE_WITH_SUP_WATER,\
                                         MELTING_ICE, MELTING_ICE_LIQUID_DROPLETS],
@@ -909,10 +976,10 @@ hydro_types = { "Liquid"          : [CLOUD_LIQUID,DRIZZLE_OR_RAIN,DRIZZLE_OR_RAI
                                                 MELTING_ICE_LIQUID_DROPLETS]
                 }
 
-targ_between_hydro = [CLEAR_SKY, AERO_NO_CLOUD, INSECT_NO_CLOUD,\
+TARG_BET_HYDRO = [CLEAR_SKY, AERO_NO_CLOUD, INSECT_NO_CLOUD,\
                                                 AERO_WITH_INSECT_NO_CLOUD]
 
-cloud_types = { "Liquid"          : [CLOUD_LIQUID,DRIZZLE_OR_RAIN_LIQUID_DROPLETS],
+CLOUD_TYPES = { "Liquid"          : [CLOUD_LIQUID,DRIZZLE_OR_RAIN_LIQUID_DROPLETS],
                     "Ice"             : [ICE_PARTICLES],
                     "Mixed_phase"     : [CLOUD_LIQUID,ICE_PARTICLES,ICE_WITH_SUP_WATER,\
                                         MELTING_ICE, MELTING_ICE_LIQUID_DROPLETS],
@@ -921,7 +988,7 @@ cloud_types = { "Liquid"          : [CLOUD_LIQUID,DRIZZLE_OR_RAIN_LIQUID_DROPLET
                                         MELTING_ICE_LIQUID_DROPLETS]
                 }  
 
-targ_between_cloud = {  "Liquid"          : [CLEAR_SKY, AERO_NO_CLOUD, INSECT_NO_CLOUD,\
+TARG_BET_CLOUD = {  "Liquid"          : [CLEAR_SKY, AERO_NO_CLOUD, INSECT_NO_CLOUD,\
                                                 AERO_WITH_INSECT_NO_CLOUD],
                         "Ice"             : [CLEAR_SKY, CLOUD_LIQUID, AERO_NO_CLOUD,\
                                                 INSECT_NO_CLOUD, AERO_WITH_INSECT_NO_CLOUD],
@@ -932,7 +999,7 @@ targ_between_cloud = {  "Liquid"          : [CLEAR_SKY, AERO_NO_CLOUD, INSECT_NO
                         "Pre_mixed_phase" : [CLEAR_SKY, DRIZZLE_OR_RAIN, AERO_NO_CLOUD,\
                                                 INSECT_NO_CLOUD, AERO_WITH_INSECT_NO_CLOUD]}
 
-targ_to_filter = {"Liquid"          : [DRIZZLE_OR_RAIN, ICE_PARTICLES, ICE_WITH_SUP_WATER, MELTING_ICE,\
+TARG_TO_FILTER = {"Liquid"          : [DRIZZLE_OR_RAIN, ICE_PARTICLES, ICE_WITH_SUP_WATER, MELTING_ICE,\
                                         MELTING_ICE_LIQUID_DROPLETS],
                     "Ice"             : [CLOUD_LIQUID, DRIZZLE_OR_RAIN, DRIZZLE_OR_RAIN_LIQUID_DROPLETS,\
                                         ICE_WITH_SUP_WATER, MELTING_ICE, MELTING_ICE_LIQUID_DROPLETS],
@@ -940,144 +1007,94 @@ targ_to_filter = {"Liquid"          : [DRIZZLE_OR_RAIN, ICE_PARTICLES, ICE_WITH_
                     "Pre_liquid"      : [ICE_PARTICLES, ICE_WITH_SUP_WATER, MELTING_ICE, MELTING_ICE_LIQUID_DROPLETS],
                     "Pre_mixed_phase" : []}
 
-targ_to_get_bellow = {"Pre_liquid"      : [DRIZZLE_OR_RAIN],
+TARG_TO_GET_BELLOW = {"Pre_liquid"      : [DRIZZLE_OR_RAIN],
                         "Pre_mixed_phase" : [CLOUD_LIQUID, DRIZZLE_OR_RAIN, DRIZZLE_OR_RAIN_LIQUID_DROPLETS]}
 
-cloud_phase = ["single_phase", "single_phase", "mixed_phase", "single_phase", "mixed_phase", "single_phase"]
+CLOUD_PHASE = ["single_phase", "single_phase", "mixed_phase", "single_phase", "mixed_phase", "single_phase"]
+
+print("\nRemoving all cloudnet files of LWC and Reff from its directory...")
+    
+os.system("rm "+PATH_CLOUDNET_LWC+"*lwc.nc") # remove all lwc files from lwc path 
+os.system("rm "+PATH_CLOUDNET_DER+"*der.nc") # remove all der files from der path
+os.system("rm "+PATH_CLOUDNET_IWC+"*iwc.nc") # remove all der files from der path
+
+print("\nAll file removed")
+#------------------------------------------------------------------------------------------------
+# cloudnet algorithm to generate netcdf files with liquid water content (lwc) and droplet 
+# effective radius (der)
+#------------------------------------------------------------------------------------------------
+def generate_cloudnet_products(date, path_cate, path_cloudnet_lwc, path_cloudnet_iwc, path_cloudnet_der):
+    # Generate LWC
+    lwc_input_path = os.path.join(path_cate, date.strftime('%Y%m%d') + "_granada_categorize.nc")
+    lwc_output_path = os.path.join(path_cloudnet_lwc, date.strftime('%Y%m%d') + "_granada_" + 'lwc.nc')
+    generate_lwc(lwc_input_path, lwc_output_path)
+
+    # Generate IWC
+    iwc_input_path = os.path.join(path_cate, date.strftime('%Y%m%d') + "_granada_categorize.nc")
+    iwc_output_path = os.path.join(path_cloudnet_iwc, date.strftime('%Y%m%d') + "_granada_" + 'iwc.nc')
+    generate_iwc(iwc_input_path, iwc_output_path)
+
+    # Generate DER
+    der_input_path = os.path.join(path_cate, date.strftime('%Y%m%d') + "_granada_categorize.nc")
+    der_output_path = os.path.join(path_cloudnet_der, date.strftime('%Y%m%d') + "_granada_" + 'der.nc')
+    params = Parameters(2.0, 100.0e6, 200.0e6, 0.25, 0.1, 5.0e-3)
+    generate_der(der_input_path, der_output_path, parameters=params)
+
+def check_time_resolution(classification, categorize, date):
+    try:
+        if (classification.dimensions['time'].size == categorize.dimensions['time'].size
+            and sum(categorize['time'][:] == classification['time'][:]) == categorize.dimensions['time'].size):
+
+            time_auxiliary = []
+            for h in categorize['time']:
+                time_auxiliary.append(date.strftime('%Y%m%d') + ' ' + str(timedelta(hours=float(h))))
+
+            time = round_datetimeindex_to_seconds(pd.to_datetime(time_auxiliary, format='mixed', dayfirst=True))
+            return time
+        else:
+            print("Red flag: classification and categorize files with different time resolution - ", date.date())
+            return None
+    except Exception as e:
+        print("An error occurred:", str(e))
+        return None
+
 #--------------------------------------------------------------------------------------------------------
 # Create a list of arguments for parallel processing
 processing_args = []
-start_time = time_module.time()
+
 for nchirp in range(number_chirp_config):
     height     = chirp_height[nchirp]
-    zres       = chirp_zres[nchirp]
     start_date = chirp_ini[nchirp]
     end_date = chirp_final[nchirp]
     
-    date_complete     = pd.date_range( start=start_date, end=end_date, freq='D') # datetime with all days between
-                                                                                # start and end dates
     time_complete     = pd.date_range(start=start_date+timedelta(seconds=15),
                                       end=end_date + pd.Timedelta(days=1),
                                       freq='30S')
-    dataframes_list_ze = []
-    dataframes_list_vd = []
-    hydrometeor_count         = pd.DataFrame(index=time_complete,
-                                             columns=["Hydrometeors"])
-    height_cloud_base         = pd.DataFrame(index=time_complete, 
-                                    columns=["Liquid", "Ice", "Mixed_phase", "Pre_liquid", "Pre_mixed_phase"])
-    height_cloud_top          = pd.DataFrame(index=time_complete,
-                                    columns=["Liquid", "Ice", "Mixed_phase", "Pre_liquid", "Pre_mixed_phase"])
-    height_cloud_mean         = pd.DataFrame(index=time_complete,
-                                    columns=["Liquid", "Ice", "Mixed_phase", "Pre_liquid", "Pre_mixed_phase"])
-    geometric_cloud_thickness = pd.DataFrame(index=time_complete,
-                                    columns=["Liquid", "Ice", "Mixed_phase", "Pre_liquid", "Pre_mixed_phase"])
-    liquid_water_path         = pd.DataFrame(index=time_complete,
-                                            columns=["value"])
-    ice_water_path            = pd.DataFrame(index=time_complete,
-                                            columns=["value"])
-    number_of_layers          = pd.DataFrame(index=time_complete,
-                                    columns=["Liquid", "Ice", "Mixed_phase", "Pre_liquid", "Pre_mixed_phase"])
-    hydrometeor_mask = pd.DataFrame(index=time_complete , columns=height)
-    liquid_count_profile      = pd.DataFrame(index=time_complete , columns=height)
-    ice_count_profile         = pd.DataFrame(index=time_complete , columns=height)
-
-    npr_per_day = 24*3600/30 
-    print("Start date:", start_date.date())
-    print("End date:", end_date.date())
-    # ----------------------------------------------------------------------------------------------------
-    print("\nRemoving all cloudnet files of LWC and Reff from its directory...")
-    
-    os.system("rm "+PATH_CLOUDNET_LWC+"*lwc.nc") # remove all lwc files from lwc path 
-    os.system("rm "+PATH_CLOUDNET_DER+"*der.nc") # remove all der files from der path
-    os.system("rm "+PATH_CLOUDNET_IWC+"*iwc.nc") # remove all der files from der path
-    
-    print("\nAll file removed")
-    print("\nComputating cloud microphysics for liquid clouds")
-    n = len(database_intersection.date)
     # ----------------------------------------------------------------------------------------------------
     # for ind_day, date in enumerate([database_intersection.date[18]]):
+    start_time = time_module.time()
     for ind_day, date in enumerate(database_intersection.date):
-        print("\nFiles = %d/%d"%(ind_day+1, n))
         #------------------------------------------------------------------------------------------------
-        # reading categorize and classification files 
+        # generate_cloudnet_products(date, 
+        #                            PATH_CATE, 
+        #                            PATH_CLOUDNET_LWC, 
+        #                            PATH_CLOUDNET_IWC, 
+        #                            PATH_CLOUDNET_DER)
         #------------------------------------------------------------------------------------------------
-        categorize     = nc.Dataset(PATH_CATE+date.strftime('%Y%m%d')+"_granada_categorize.nc")
-        classification = nc.Dataset(PATH_CLASS+date.strftime('%Y%m%d')+"_granada_classification.nc")
-        radar          = xr.open_dataset(PATH_RADAR+date.strftime('%Y%m%d')+"_granada_rpg-fmcw-94.nc")
-        #------------------------------------------------------------------------------------------------
-        # cloudnet algorithm to generate netcdf files with liquid water content (lwc) and droplet 
-        # effective radius (der)
-        #------------------------------------------------------------------------------------------------
-        generate_lwc(PATH_CATE+date.strftime('%Y%m%d')+"_granada_categorize.nc", 
-                        PATH_CLOUDNET_LWC+date.strftime('%Y%m%d')+"_granada_"+'lwc.nc')
-        generate_iwc(PATH_CATE+date.strftime('%Y%m%d')+"_granada_categorize.nc",
-                        PATH_CLOUDNET_IWC+date.strftime('%Y%m%d')+"_granada_"+'iwc.nc')
-        params = Parameters(2.0, 100.0e6, 200.0e6, 0.25, 0.1, 5.0e-3)
-        generate_der(PATH_CATE+date.strftime('%Y%m%d')+"_granada_categorize.nc",
-                        PATH_CLOUDNET_DER+date.strftime('%Y%m%d')+"_granada_"+'der.nc', 
-                        parameters=params)
-        
-        # check if categorize and classification files have the same time resolution 
-        if classification.dimensions['time'].size == categorize.dimensions['time'].size\
-        and sum(categorize['time'][:] == classification['time'][:]) == categorize.dimensions['time'].size:
-            
-            time_auxiliary  = []
-            for h in categorize['time']:
-                time_auxiliary.append( date.strftime('%Y%m%d')\
-                                        + ' ' + str(timedelta(hours=float(h))) )
-            time = round_datetimeindex_to_seconds( pd.to_datetime(time_auxiliary, format='mixed', dayfirst=True) )
-        else:
-            print("Red flag: classification and categorize files with diferent time resolution - ",
-                    time.date())
-        #------------------------------------------------------------------------------------------------
-        # reading lwc and der files generated by the last code block
-        #------------------------------------------------------------------------------------------------
-        cloudnet_lwc = nc.Dataset(PATH_CLOUDNET_LWC+date.strftime('%Y%m%d')+"_granada_"+'lwc.nc')
-        cloudnet_iwc = nc.Dataset(PATH_CLOUDNET_IWC+date.strftime('%Y%m%d')+"_granada_"+'iwc.nc')
-        cloudnet_der = nc.Dataset(PATH_CLOUDNET_DER+date.strftime('%Y%m%d')+"_granada_"+'der.nc')
-        
-        dataframes_list_ze.append(radar.Zh)
-        dataframes_list_vd.append(radar.v)
-        ds_hydrometeor    = xr.Dataset(coords={'time': time_complete, 'range': height})
-        df_cloud_base     = pd.DataFrame(data =classification['cloud_base_height_amsl'][:], 
-                                            index =time )
-        df_cloud_top      = pd.DataFrame(data =classification['cloud_top_height_amsl'][:],
-                                            index =time )
-        df_reflectivity   = pd.DataFrame(data =categorize['Z'][:],
-                                            index =time,
-                                            columns=height)
-        df_lwp            = pd.DataFrame(data  =categorize['lwp'][:], 
-                                        index =time, 
-                                        columns=["value"])
-
-        df_classification = pd.DataFrame(data=classification['target_classification'][:],
-                                            index  =time,
-                                            columns=height)
-
-        df_cloudnet_lwc   = pd.DataFrame(data   =1.0e3*cloudnet_lwc['lwc'][:],
-                                            index  =time,
-                                            columns= height) # g m^-3
-        df_cloudnet_iwc   = pd.DataFrame(data   =1.0e3*cloudnet_iwc['iwc'][:],
-                                            index  =time,
-                                            columns= height) # g m^-3
-        df_cloudnet_der   = pd.DataFrame(data   =1.0e6*cloudnet_der['der'][:],
-                                            index  =time,
-                                            columns=height) # um
-        #------------------------------------------------------------------------------------------------
-        args = (df_classification, df_reflectivity, df_lwp, cloud_phase, tick_labels,
-                height_cloud_base, height_cloud_top, height_cloud_mean, geometric_cloud_thickness,
-                cloud_types, targ_between_cloud, targ_to_filter, targ_to_get_bellow,
-                hydro_types, targ_between_hydro,
-                number_of_layers, liquid_water_path, ds_hydrometeor, time)
-        processing_args.append(args)
-
-num_workers = 4 #
-
-# Parallel execution using multiprocessing.Pool
-with multiprocessing.Pool(processes=num_workers) as pool:
-    pool.map(process_cloud_data_parallel, processing_args)
-
+        # processing_args.append((height, nchirp, ind_day, date))
+        process_cloud_data_parallel((height, nchirp, ind_day, date))
 end_time = time_module.time()
+# #------------------------------------------------------------------------------------------------
+# # Parallel execution using multiprocessing.Pool
+# # ------------------------------------------------------------------------------------------------
+# num_processes = 4  # You can adjust this as needed
+# start_time = time_module.time()
+# # Parallel execution using multiprocessing.Pool
+# with multiprocessing.Pool(processes=num_processes) as pool:
+#     pool.map(process_cloud_data_parallel, processing_args)
+# end_time = time_module.time()
+# # ------------------------------------------------------------------------------------------------
+
 # Calculate and print the execution time
 execution_time = (end_time - start_time) / 60
 print(f"Execution time: {execution_time:.2f} minutes")
