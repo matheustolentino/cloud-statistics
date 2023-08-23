@@ -229,24 +229,29 @@ def common_prefix_of_filenames(paths, extension):
 
     return pd.DatetimeIndex(datetime_prefixes)
 
-def compare_radar_chirp_configurations(start_date: datetime,
+def compare_radar_chirp_configurations(start_date: datetime, 
                                        end_date: datetime,
                                        database_intersection: List[datetime.datetime],
-                                       path_radar: str) -> Tuple[List[datetime.datetime], List[np.ndarray], List[np.ndarray]]:
+                                       path_radar: str) -> Tuple[List[datetime.datetime], List[datetime.datetime], List[np.ndarray], List[np.ndarray]]:
     """
     Compare radar chirp configurations for multiple dates from NetCDF files.
 
     Parameters:
         start_date (datetime): The start date from which the processing should begin.
+        end_date (datetime): The end date to which the processing should continue.
         database_intersection (List[datetime]): List of dates to process radar data for.
         path_radar (str): The path where the NetCDF radar data files are located.
 
     Returns:
-        Tuple[List[datetime], List[np.ndarray], List[np.ndarray]]: A tuple containing:
+        Tuple[List[datetime], List[datetime], List[np.ndarray], List[np.ndarray]]: A tuple containing:
             - start_chirp (List[datetime]): List of dates when the radar chirp configuration changed.
+            - end_chirp (List[datetime]): List of dates when the radar chirp configuration changed, except for the last one which is 'end_date'.
             - chirp_zres (List[np.ndarray]): List of arrays containing the range resolutions for each date.
             - height (List[np.ndarray]): List of arrays containing the height data for each date.
     """
+    # Filter database_intersection to only include dates within the range
+    valid_dates = [date for date in database_intersection if start_date <= date <= end_date]
+    
     # Initialize lists to store results
     start_chirp = [start_date]
     end_chirp = []
@@ -259,13 +264,13 @@ def compare_radar_chirp_configurations(start_date: datetime,
     chirp_zres.append(range_resolution)
     height.append(radar['range'][:])
     
-    # Loop through the dates in the intersection and compare chirp configurations
-    for date in database_intersection:
+    # Loop through the filtered dates and compare chirp configurations
+    for date in valid_dates:
         radar = nc.Dataset(path_radar + date.strftime('%Y%m%d') + "_granada_rpg-fmcw-94.nc")
         new_range_res = np.round(radar['range_resolution'][:], 1)
         
-        # Check if the new range resolution is the same as the previous one
-        if not np.array_equal(new_range_res, range_resolution):
+        # Check if the new range resolution is the same as any previous one
+        if not any(np.array_equal(new_range_res, res) for res in chirp_zres):
             print("Range resolution is not the same for all dates")
             
             # Store the new date, chirp configuration, and height data if different
@@ -273,10 +278,9 @@ def compare_radar_chirp_configurations(start_date: datetime,
             end_chirp.append(date - timedelta(days=1))
             chirp_zres.append(new_range_res)
             height.append(radar['range'][:])
-            range_resolution = new_range_res
     
-    end_chirp.append(end_date)  
-    return start_chirp, end_chirp, chirp_zres, height
+    end_chirp.append(end_date)
+    return start_chirp, end_chirp, chirp_zres, height, valid_dates
 
 # Define a function to handle serialization of individual columns
 def handle_serialization(column):
@@ -456,6 +460,11 @@ def check_time_resolution(classification, categorize, date):
         print("An error occurred:", str(e))
         return None
 
+# Define a function to rechunk the dataset
+def rechunk_dataset(ds, chunks):
+    rechunked_ds = ds.chunk(chunks)
+    return rechunked_ds
+
 def process_cloud_data_parallel(args):
     # Unpack the arguments
     (height, nchirp, ind_day, date)  = args
@@ -589,6 +598,14 @@ def process_cloud_data(date: datetime.datetime,
             os.makedirs(folder_name)
         
         output_path = os.path.join(folder_name, f"{date.strftime('%Y%m%d')}_{name}.nc")
+        # Determine chunking size based on dimensions present in the dataset
+        # chunks = {}
+        # for dim in ds.dims:
+        #     chunks[dim] = ds[dim].size
+        # # Rechunk the dataset
+        # rechunked_ds = rechunk_dataset(ds, chunks)
+        # # Save the rechunked dataset
+        # rechunked_ds.to_netcdf(output_path)
         ds.to_netcdf(output_path)
     # ------------------------------------------------------------------------------------------------
     # Save the dataset as a JSON file inside the chirp folder
@@ -1022,12 +1039,15 @@ class CloudProcess:
 #--------------------------------------------------------------------------------------------------------
 paths     = [PATH_RADAR, PATH_CATE, PATH_CLASS]
 extension = '.nc'
-database_intersection = common_prefix_of_filenames(paths, extension)
-start_date        = min(database_intersection) # first date of database
-end_date          = max(database_intersection) # last date of database
+database_intersection  = common_prefix_of_filenames(paths, extension)
+all_dataset_start_date = min(database_intersection) # first date of database
+all_dataset_end_date   = max(database_intersection) # last date of database
+
+start_date = datetime.datetime(2021, 4, 1)
+end_date   = datetime.datetime(2021, 4, 30)
 
 #TODO: should create a loop to iterate over all chirp configurations
-chirp_ini, chirp_final, chirp_zres, chirp_height = compare_radar_chirp_configurations(start_date, end_date, database_intersection, PATH_RADAR)
+chirp_ini, chirp_final, chirp_zres, chirp_height, selected_interval = compare_radar_chirp_configurations(start_date, end_date, database_intersection, PATH_RADAR)
 number_chirp_config = len(chirp_ini)
 
 print("\nRemoving all cloudnet files of LWC and Reff from its directory...")
@@ -1037,29 +1057,17 @@ os.system("rm "+PATH_CLOUDNET_DER+"*der.nc") # remove all der files from der pat
 os.system("rm "+PATH_CLOUDNET_IWC+"*iwc.nc") # remove all der files from der path
 
 print("\nAll file removed")
-#--------------------------------------------------------------------------------------------------------
-df_aux = pd.DataFrame({'date': database_intersection})
-# Specify the interval using string-based slicing (replace with your desired interval)
-start_date = "2021-04-01"
-end_date = "2021-04-30"
-
-# Use pandas indexing to select the interval
-selected_interval = database_intersection[(df_aux['date'] >= start_date) & (df_aux['date'] <= end_date)]
-
 # Create a list of arguments for parallel processing
 processing_args = []
-
 for nchirp in range(number_chirp_config):
     height     = chirp_height[nchirp]
-    start_date = chirp_ini[nchirp]
-    end_date = chirp_final[nchirp]
     # time_complete     = pd.date_range(start=start_date+timedelta(seconds=15),
     #                                   end=end_date + pd.Timedelta(days=1),
     #                                   freq='30S')
     # ----------------------------------------------------------------------------------------------------
     # for ind_day, date in enumerate([database_intersection.date[18]]):
     # start_time = time_module.time()
-    for ind_day, date in enumerate(selected_interval.date):
+    for ind_day, date in enumerate(selected_interval):
         #------------------------------------------------------------------------------------------------
         # generate_cloudnet_products(date, 
         #                            PATH_CATE, 
@@ -1075,11 +1083,14 @@ for nchirp in range(number_chirp_config):
 # Parallel execution using multiprocessing.Pool
 # ------------------------------------------------------------------------------------------------
 num_processes = 4  # You can adjust this as needed
+# Start the timer for parallel execution
+print("Starting parallel execution...")
 start_time = time_module.time()
 # Parallel execution using multiprocessing.Pool
 with multiprocessing.Pool(processes=num_processes) as pool:
     pool.map(process_cloud_data_parallel, processing_args)
 end_time = time_module.time()
+print("Parallel execution finished.")
 # ------------------------------------------------------------------------------------------------
 
 # Calculate and print the execution time

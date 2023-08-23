@@ -15,6 +15,9 @@ import locale
 import seaborn as sns
 from pdb import set_trace
 from typing import Dict, Union, Any, List
+import dask
+import dask.dataframe as dd
+import dask.array as da
 # import seaborn as sns
 
 plt.ion()
@@ -142,41 +145,51 @@ def plot_time_evolution_frequency(dataset):
     # Show the plot
     plt.show()
 
-def plot_cfads(dataset, variables):
+def plot_cfads(dataset):
     """
-    Plot 2D histograms with frequency-based contour plots for given variables.
+    Plot 2D histograms with frequency-based contour plots for variables in the dataset.
     
     Parameters:
-    - dataset (xarray.Dataset): The dataset containing the variables.
-    - variables (list): List of variable names to plot.
+    - dataset (dask.array.Array): The chunked dataset containing the variables.
     """
 
-    # Extract variables from the dataset
-    range_values = dataset.range
+    # Extract variable names from the dataset
+    var_names = dataset.data_vars.keys()
+    range_values = dataset.range  # Assuming range is constant across chunks
 
     # Define a Seaborn color palette for the colormap with inverted colors
     cmap = sns.color_palette("turbo", as_cmap=True)
-
     # Create subplots for each variable using gridspec
     fig = plt.figure(figsize=(12, 6))
-    gs = gridspec.GridSpec(1, len(variables) + 1, width_ratios=[1] * len(variables) + [0.05])
-
-    for i, var_name in enumerate(variables):
-        ax = plt.subplot(gs[i])
+    num_vars = len(var_names)
+    gs = gridspec.GridSpec(1, 2 * num_vars, width_ratios=[1, 0.02] * num_vars)  # Adjust the number of columns as needed
+    for i, var_name in enumerate(var_names):
+        ax = plt.subplot(gs[2*i])
         var_values = dataset[var_name]
 
-        # Flatten the arrays and remove NaN values
-        flattened_var = var_values.values[~np.isnan(var_values.values)]
-        flattened_range_var = np.tile(range_values, var_values.shape[0])[~np.isnan(var_values.values.ravel())]
+        # Get the chunk size of the variable
+        chunk_size = var_values.chunks
+        # Create a 2D histogram for each chunk
+        histograms = []
+        # Initialize a starting value
+        start_value = 0
+        for step in chunk_size[0]:
+            chunked_values = var_values[start_value:start_value + step, :].compute()
+            flattened_var = chunked_values.values[~np.isnan(chunked_values.values)]
+            flattened_range_var = np.tile(range_values, step)[~np.isnan(chunked_values.values.ravel())]
+            hist, x_edges, y_edges = np.histogram2d(flattened_var, flattened_range_var, bins=(50, 50), density=True)
+            histograms.append(hist)
+            # Update the value using the current step
+            start_value += step
+        hist = np.sum(histograms, axis=0)
 
-        # Create a 2D histogram
-        hist, x_edges, y_edges = np.histogram2d(flattened_var, flattened_range_var, bins=(50, 50), density=True)
         # Calculate bin centers for the contour plot
         x_centers = (x_edges[:-1] + x_edges[1:]) / 2
         y_centers = (y_edges[:-1] + y_edges[1:]) / 2 / 1e3  # Convert to km
 
         # Define levels for contour plot
-        levels = np.linspace(0, hist.max(), 12)
+        colorbar_max = 0.5 * hist.max()
+        levels = np.linspace(0, colorbar_max, 17)
 
         # Contour plot for the current variable
         contour = ax.contourf(x_centers, y_centers, hist.T, levels=levels, cmap=cmap, extend='both')
@@ -189,150 +202,197 @@ def plot_cfads(dataset, variables):
 
         # Add grid
         plt.grid(True, linestyle='--', linewidth=0.5, color='gray')
+        # Calculate colorbar limits
+        colorbar_max = 0.5 * hist.max()
 
-    # Add a colorbar on the right using the last subplot's position
-    cbar_ax = plt.subplot(gs[len(variables)])
-    cbar = plt.colorbar(contour, cax=cbar_ax, label='Density', format='%.0e', extend='both')  # Scientific notation
-    cbar.set_ticks(levels[:-1] + np.diff(levels)/2)  # Set colorbar ticks at bin centers
-    cbar.ax.yaxis.set_ticks_position('left')
-    cbar.ax.yaxis.set_label_position('left')
-
+        # Create a colorbar for the current variable
+        cbar_ax = plt.subplot(gs[2 * i + 1])
+        cbar = plt.colorbar(contour, cax=cbar_ax, label='Density', extend='both')
+        cbar.formatter.set_useMathText(True)
+        cbar_ticks = np.linspace(0, colorbar_max, 10)  # Adjust the number of ticks as needed
+        cbar.set_ticks(cbar_ticks)
+        cbar.ax.yaxis.set_ticks_position('left')
+        cbar.ax.yaxis.set_label_position('left')
     plt.tight_layout()
     plt.show()
 
-def incremental_cfads(root_folder: str, target_parent_folder: str, variables: list, file_extension: str = '.nc', chunk_size: int = 1000):
-    """
-    Read NetCDF files from subdirectories of a root folder, incrementally update and plot 2D histograms with frequency-based contour plots for given variables.
-    
-    Args:
-        root_folder (str): The root folder to start the search from.
-        target_parent_folder (str): The name of the target parent folder to process data from.
-        variables (list): List of variable names to plot.
-        file_extension (str, optional): The file extension to filter files. Defaults to '.nc'.
-        chunk_size (int, optional): Size of chunks for incremental processing. Defaults to 1000.
-    """
-    # Define a Seaborn color palette for the colormap with inverted colors
-    cmap = sns.color_palette("turbo", as_cmap=True)
 
-    # Create subplots using gridspec
-    fig = plt.figure(figsize=(12, 6))
-    gs = gridspec.GridSpec(1, len(variables) + 1, width_ratios=[1] * len(variables) + [0.05])
+# def incremental_cfads(root_folder: str, target_parent_folder: str, file_extension: str = '.nc', chunk_size: int = 1000):
+#     """
+#     Read NetCDF files from subdirectories of a root folder, incrementally update and plot 2D histograms with frequency-based contour plots for given variables.
 
-    cumulative_histograms = {var_name: None for var_name in variables}
-    bin_centers = {var_name: None for var_name in variables}
+#     Args:
+#         root_folder (str): The root folder to start the search from.
+#         target_parent_folder (str): The name of the target parent folder to process data from.
+#         variables (list): List of variable names to plot.
+#         file_extension (str, optional): The file extension to filter files. Defaults to '.nc'.
+#         chunk_size (int, optional): Size of chunks for incremental processing. Defaults to 1000.
+#     """
+#     # Define a Seaborn color palette for the colormap with inverted colors
+#     cmap = sns.color_palette("turbo", as_cmap=True)
 
-    # Initialize variables to track colorbar limits
-    cbar_min = np.inf
-    cbar_max = -np.inf
+#     last_filepath = None  # Initialize variable to track the last filepath
+#     fig = None  # Initialize the figure variable
+#     gs = None  # Initialize the gridspec
+#     colorbars = {}  # Initialize a dictionary to store colorbars for each variable
 
-    for parent_folder, _, _ in os.walk(root_folder):
-        parent_folder_name = os.path.basename(parent_folder)
+#     for parent_folder, _, _ in os.walk(root_folder):
+#         parent_folder_name = os.path.basename(parent_folder)
 
-        if parent_folder_name == target_parent_folder:
-            for _, _, filenames in os.walk(parent_folder):
-                for filename in filenames:
-                    filepath = os.path.join(parent_folder, filename)
+#         if parent_folder_name == target_parent_folder:
+#             for _, _, filenames in os.walk(parent_folder):
+#                 for filename in filenames:
+#                     filepath = os.path.join(parent_folder, filename)
 
-                    if filename.endswith(file_extension):
-                        try:
-                            dataset = xr.open_dataset(filepath)
+#                     if filename.endswith(file_extension):
+#                         dataset = xr.open_dataset(filepath)
+#                         try:
+#                             # Check if the actual filepath before parent folder change
+#                             if last_filepath is None or os.path.dirname(filepath) != os.path.dirname(last_filepath):
+#                                 # Close the previous figure if it exists
+#                                 if fig is not None:
+#                                     plt.close(fig)
+                                
+#                                 # Create a new figure with a single gridspec
+#                                 num_vars = len(dataset.data_vars)
+#                                 num_cols = num_vars * 2
+#                                 fig = plt.figure(figsize=(12 + num_cols, 6))
+#                                 gs = gridspec.GridSpec(1, num_cols, figure=fig, width_ratios=[1, 0.05] * num_vars, wspace=0.6)
+#                                 cumulative_histograms = {var_name: None for var_name in dataset}
+#                                 bin_centers = {var_name: None for var_name in dataset}
                             
-                            for i, var_name in enumerate(variables):
-                                ax = plt.subplot(gs[i])
-                                var_values = dataset[var_name]
-                                range_values = dataset.range
+#                             last_filepath = filepath  # Update last filepath
 
-                                flattened_var = var_values.values[~np.isnan(var_values.values)]
-                                flattened_range_var = np.tile(range_values, var_values.shape[0])[~np.isnan(var_values.values.ravel())]
+#                             # Create subplots and colorbars using the single gridspec
+#                             for i, var_name in enumerate(dataset):
+#                                 ax = fig.add_subplot(gs[0, i * 2])
+#                                 cax = fig.add_subplot(gs[0, i * 2 + 1])
+#                                 # set_trace()
+#                                 var_values = dataset[var_name]
+#                                 range_values = dataset.range
+#                                 flattened_var = var_values.values[~np.isnan(var_values.values)]
+#                                 flattened_range_var = np.tile(range_values, var_values.shape[0])[~np.isnan(var_values.values.ravel())]
 
-                                # Create a 2D histogram for the current chunk of data
-                                chunk_histogram, x_edges, y_edges = np.histogram2d(flattened_var, flattened_range_var, bins=(50, 50), density=True)
-                                
-                                # Check if chunk_histogram contains only NaNs
-                                if np.all(np.isnan(chunk_histogram)):
-                                    print(f"Chunk histogram for {var_name} contains only NaN values.")
-                                else:
-                                    # Initialize or update the cumulative histogram for the current variable
-                                    if cumulative_histograms[var_name] is None:
-                                        cumulative_histograms[var_name] = chunk_histogram
-                                        bin_centers[var_name] = (x_edges[:-1] + x_edges[1:]) / 2, (y_edges[:-1] + y_edges[1:]) / 2 / 1e3  # Convert to km
-                                    else:
-                                        cumulative_histograms[var_name] += chunk_histogram
+#                                 chunk_histogram, x_edges, y_edges = np.histogram2d(flattened_var, flattened_range_var, bins=(50, 50), density=True)
 
-                                    # Update colorbar limits
-                                    cbar_min = min(cbar_min, np.nanmin(cumulative_histograms[var_name]))
-                                    cbar_max = max(cbar_max, np.nanmax(cumulative_histograms[var_name]))
+#                                 if np.all(np.isnan(chunk_histogram)):
+#                                     print(f"Chunk histogram for {var_name} contains only NaN values.")
+#                                 else:
+#                                     if cumulative_histograms[var_name] is None:
+#                                         cumulative_histograms[var_name] = chunk_histogram
+#                                         bin_centers[var_name] = (x_edges[:-1] + x_edges[1:]) / 2, (y_edges[:-1] + y_edges[1:]) / 2 / 1e3  # Convert to km
+#                                     else:
+#                                         cumulative_histograms[var_name] += chunk_histogram
 
-                                    ax.clear()  # Clear the previous plot
-                                    contour = ax.contourf(bin_centers[var_name][0], bin_centers[var_name][1], cumulative_histograms[var_name].T, levels=12, cmap=cmap, extend='both', vmin=cbar_min, vmax=cbar_max)
-                                    ax.set_xlabel(var_name)
-                                    ax.set_ylabel('Height [km]')
-                                    ax.set_title(f'2D Histogram of {var_name} vs Height')
-                                    ax.grid(True, linestyle='--', linewidth=0.5, color='gray')
-                                
-                                    plt.pause(0.01)  # Pause to allow the plot to update
+#                                     ax.clear()  # Clear the previous plot
+#                                     contour = ax.contourf(bin_centers[var_name][0], bin_centers[var_name][1], cumulative_histograms[var_name].T, levels=20, cmap=cmap)
+#                                     ax.set_xlabel(var_name)
+#                                     ax.set_ylabel('Height [km]')
+#                                     ax.set_title(f'2D Histogram of {var_name} vs Height')
+#                                     ax.grid(True, linestyle='--', linewidth=0.5, color='gray')
 
-                        except Exception as e:
-                            print(f"Error reading {filename}: {e}")
+#                                     if var_name in colorbars:
+#                                         colorbars[var_name].remove()  # Remove the previous colorbar
+#                                     colorbars[var_name] = fig.colorbar(contour, cax=cax, label='Density')
+#                                     colorbars[var_name].ax.yaxis.set_major_formatter(ticker.ScalarFormatter(useMathText=True))
+#                                     cax.yaxis.tick_left()  # Move colorbar ticks and values to the left side
+#                                     cax.yaxis.set_label_position('left')  # Move colorbar label to the left side
+#                                     plt.pause(0.1)  # Pause to allow the plot to updat
+#                             # plt.tight_layout()  # Adjust layout using tight_layout
+#                             plt.show()
 
-    # Outside the loop, add a colorbar on the right using the last subplot's position
-    cbar_ax = plt.subplot(gs[len(variables)])
-    cbar = plt.colorbar(contour, cax=cbar_ax, label='Density', extend='both')  # Scientific notation
-    cbar.set_ticks(np.linspace(cbar_min, cbar_max, 12))  # Set colorbar ticks based on limits
-    cbar.ax.yaxis.set_ticks_position('left')
-    cbar.ax.yaxis.set_label_position('left')
+#                         except Exception as e:
+#                             print(f"Error reading {filename}: {e}")
 
-    plt.tight_layout()
-    plt.show()
+# def read_and_concatenate_datasets(root_folder: str, target_parent_folder: str, file_extension: str = '.nc') -> Dict[str, xr.Dataset]:
+#     """
+#     Read NetCDF files from subdirectories of a root folder, concatenate them, and return concatenated datasets
+#     grouped by the folder before the target parent folder.
 
+#     Args:
+#         root_folder (str): The root folder to start the search from.
+#         target_parent_folder (str): The name of the target parent folder to concatenate datasets from.
+#         file_extension (str, optional): The file extension to filter files. Defaults to '.nc'.
 
+#     Returns:
+#         dict: A dictionary where keys are folder names before the target parent folder and values are concatenated xarray datasets.
+#     """
+#     concatenated_datasets_dict = {}
 
-def read_and_concatenate_datasets(root_folder: str, target_parent_folder: str, file_extension: str = '.nc') -> Dict[str, xr.Dataset]:
-    """
-    Read NetCDF files from subdirectories of a root folder, concatenate them, and return concatenated datasets
-    grouped by the folder before the target parent folder.
+#     # Walk through the root folder and its subdirectories
+#     for parent_folder, _, _ in os.walk(root_folder):
+#         parent_folder_name = os.path.basename(parent_folder)
 
-    Args:
-        root_folder (str): The root folder to start the search from.
-        target_parent_folder (str): The name of the target parent folder to concatenate datasets from.
-        file_extension (str, optional): The file extension to filter files. Defaults to '.nc'.
+#         if parent_folder_name == target_parent_folder:
+#             # Get the folder name before the target parent folder
+#             previous_folder_name = os.path.basename(os.path.dirname(parent_folder))
 
-    Returns:
-        dict: A dictionary where keys are folder names before the target parent folder and values are concatenated xarray datasets.
-    """
+#             concatenated_dataset = None
+
+#             for _, _, filenames in os.walk(parent_folder):
+#                 for filename in filenames:
+#                     filepath = os.path.join(parent_folder, filename)
+
+#                     # Check if the file has the desired extension
+#                     if filename.endswith(file_extension):
+#                         try:
+#                             # Read the file into an xarray dataset
+#                             dataset = xr.open_dataset(filepath)
+
+#                             if concatenated_dataset is None:
+#                                 # Initialize the concatenated dataset with the first file's data
+#                                 concatenated_dataset = dataset
+#                             else:
+#                                 # Concatenate the new dataset with the existing concatenated dataset
+#                                 concatenated_dataset = xr.concat([concatenated_dataset, dataset], dim='time')
+
+#                         except Exception as e:
+#                             print(f"Error reading {filename}: {e}")
+
+#             if concatenated_dataset is not None:
+#                 concatenated_datasets_dict[previous_folder_name] = concatenated_dataset.sortby('time')
+
+#     return concatenated_datasets_dict
+
+def reading_dataset_chunking(root_folder: str, target_parent_folder: str, file_extension: str = '.nc') -> Dict[str, xr.Dataset]:
     concatenated_datasets_dict = {}
 
-    # Walk through the root folder and its subdirectories
     for parent_folder, _, _ in os.walk(root_folder):
         parent_folder_name = os.path.basename(parent_folder)
 
         if parent_folder_name == target_parent_folder:
-            # Get the folder name before the target parent folder
             previous_folder_name = os.path.basename(os.path.dirname(parent_folder))
 
-            concatenated_dataset = None
+            delayed_datasets = []
 
             for _, _, filenames in os.walk(parent_folder):
                 for filename in filenames:
                     filepath = os.path.join(parent_folder, filename)
 
-                    # Check if the file has the desired extension
                     if filename.endswith(file_extension):
-                        try:
-                            # Read the file into an xarray dataset
-                            dataset = xr.open_dataset(filepath)
+                        # Create a delayed function to open the file as a Dask-backed xarray dataset
+                        delayed_dataset = dask.delayed(xr.open_dataset)(filepath)
+                        delayed_datasets.append(delayed_dataset)
 
-                            if concatenated_dataset is None:
-                                # Initialize the concatenated dataset with the first file's data
-                                concatenated_dataset = dataset
-                            else:
-                                # Concatenate the new dataset with the existing concatenated dataset
-                                concatenated_dataset = xr.concat([concatenated_dataset, dataset], dim='time')
+            if delayed_datasets:
+                # Use Dask's delayed computation to parallelize the dataset opening
+                datasets = dask.compute(*delayed_datasets)
 
-                        except Exception as e:
-                            print(f"Error reading {filename}: {e}")
+                concatenated_datasets = []
 
-            if concatenated_dataset is not None:
+                for dataset in datasets:
+                    # Calculate chunking based on the dimensions of the current dataset
+                    chunking = {}
+                    for dim in dataset.dims:
+                        chunking[dim] = dataset.sizes[dim]
+
+                    # Apply chunking to the current dataset
+                    chunked_dataset = dataset.chunk(chunking)
+                    concatenated_datasets.append(chunked_dataset)
+
+                # Concatenate the chunked datasets along the 'time' dimension
+                concatenated_dataset = xr.concat(concatenated_datasets, dim='time')
+
                 concatenated_datasets_dict[previous_folder_name] = concatenated_dataset.sortby('time')
 
     return concatenated_datasets_dict
@@ -364,8 +424,13 @@ def read_and_concatenate_datasets(root_folder: str, target_parent_folder: str, f
 root_folder    = '../../../processed_data/'
 target_parent_folder = "radar_variables"
 file_extension = '.nc'
-variables = ['Zh', 'v'] # Replace with your variable names
-incremental_cfads(root_folder, target_parent_folder, variables)
+
+concatenated_datasets = reading_dataset_chunking(root_folder, target_parent_folder)
+plot_cfads(concatenated_datasets['chirp_0'])
+
+# plot_cfads(concatenated_datasets['chirp_0'], chunks)
+# plot_cfads(concatenated_datasets['chirp_0'], ['Zh', 'v'])
+# incremental_cfads(root_folder, target_parent_folder)
 
 # Specify the specific day you're interested in (replace with your desired date)
 # specific_day = "2021-04-07"
