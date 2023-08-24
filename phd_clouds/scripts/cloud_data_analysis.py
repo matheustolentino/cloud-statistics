@@ -456,7 +456,6 @@ plot_histograms_with_profiles(datasets=[single_layer_cthickness.Liquid.where(sin
                              y_label="Frequency [%]",
                              xticks_resolution=1000)
 
-
 # plot_kde(flatten_cloudtop, title="Kernel Density Estimation for Cloud Top Height",
 #                       ymin=1e-6, ymax=1e-2)
 # plot_kde(flatten_cloudbase, title="Kernel Density Estimation for Cloud Base Height",

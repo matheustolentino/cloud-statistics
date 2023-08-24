@@ -585,14 +585,15 @@ def process_cloud_data(date: datetime.datetime,
         #                     cloud, .1, 12., CLASSIFICATION_TICK_LABELS)
     #------------------------------------------------------------------------------------------------
     ds_radar_var       = xr.merge([radar_data.Zh, radar_data.v], compat='no_conflicts', join='exact')
-    df_lwp.name        = 'time'
+    df_lwp.index.name  = 'time'
     ds_lwp             = xr.Dataset.from_dataframe(df_lwp)
-    name_folders_nc    = ["radar_variables", "lwp", "hydrometeor"]
-    name_folders_json  = ["height_cloud_base", "height_cloud_top", "height_cloud_mean", "geometric_cloud_thickness"]
+    number_of_layers.index.name = 'time'
+    ds_layers          = xr.Dataset.from_dataframe(number_of_layers)
+    name_folders_nc    = ["radar_variables", "lwp", "hydrometeor", "number_of_layers"]
     # ------------------------------------------------------------------------------------------------
     # Save the dataset as a NetCDF file inside the chirp folder
     # ------------------------------------------------------------------------------------------------
-    for ds, name in zip([ds_radar_var, ds_lwp, ds_hydrometeor], name_folders_nc):
+    for ds, name in zip([ds_radar_var, ds_lwp, ds_hydrometeor, ds_layers], name_folders_nc):
         folder_name = f"../../../processed_data/chirp_{nchirp}/{name}/"
         if not os.path.exists(folder_name):
             os.makedirs(folder_name)
@@ -614,6 +615,7 @@ def process_cloud_data(date: datetime.datetime,
     height_cloud_top.index.name  = 'time'
     height_cloud_mean.index.name = 'time'
     geometric_cloud_thickness.index.name = 'time'
+    name_folders_json  = ["height_cloud_base", "height_cloud_top", "height_cloud_mean", "geometric_cloud_thickness"]
     
     for df, name in zip([height_cloud_base, height_cloud_top, height_cloud_mean, geometric_cloud_thickness],
                        name_folders_json):
@@ -1040,11 +1042,11 @@ class CloudProcess:
 paths     = [PATH_RADAR, PATH_CATE, PATH_CLASS]
 extension = '.nc'
 database_intersection  = common_prefix_of_filenames(paths, extension)
-all_dataset_start_date = min(database_intersection) # first date of database
-all_dataset_end_date   = max(database_intersection) # last date of database
+start_date = min(database_intersection) # first date of database
+end_date   = max(database_intersection) # last date of database
 
-start_date = datetime.datetime(2021, 4, 1)
-end_date   = datetime.datetime(2021, 4, 30)
+# start_date = datetime.datetime(2021, 4, 1)
+# end_date   = datetime.datetime(2021, 4, 30)
 
 #TODO: should create a loop to iterate over all chirp configurations
 chirp_ini, chirp_final, chirp_zres, chirp_height, selected_interval = compare_radar_chirp_configurations(start_date, end_date, database_intersection, PATH_RADAR)

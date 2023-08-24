@@ -18,6 +18,9 @@ from typing import Dict, Union, Any, List
 import dask
 import dask.dataframe as dd
 import dask.array as da
+from dask.array.core import Array
+from datetime import timedelta
+from datetime import datetime, timedelta
 # import seaborn as sns
 
 plt.ion()
@@ -27,62 +30,61 @@ locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
 sns.set_context("paper", font_scale=1.5, rc={"lines.linewidth": 2.5})
 # Customize tick parameters to have black markers only at the axis
 
-def create_data_availability_plot(data, freq_str):
-    
-    # Convert time coordinate to pandas Series
-    time_series = pd.Series(data.time.to_index())
-    
-    # Create a new time index with the desired frequency
-    new_time_index = pd.date_range(start=time_series.min(), end=time_series.max(), freq="30S")
-    # set_trace()
-    # Reindex the dataset to fill time gaps with NaN values
-    new_dataset = data.reindex(time=new_time_index)
-    
-    # Calculate data availability metrics
-    data_availability = [
-        (new_dataset.sum(dim='range', skipna=False) > 0).resample(time=freq_str).mean(),
-        (new_dataset.sum(dim='range', skipna=False) == 0).resample(time=freq_str).mean(),
-        (np.sum(np.isnan(new_dataset), axis=1) > 0).resample(time=freq_str).mean()
-    ]
-    
-    # Labels for the data availability categories
-    data_availability_lab = ["Hydrometeors", "Clear Sky", "No Data"]
+def create_data_availability_plot(data: Array, freq_str: str):
+    """
+    Create a data availability plot using Dask arrays.
 
+    Parameters:
+        data (Array): Dask array containing the data.
+        freq_str (str): Frequency string for resampling (e.g., 'D' for daily, 'H' for hourly).
+
+    Returns:
+        None
+    """
+    # Assuming 'data' is your xarray dataset
+    time_series = pd.to_datetime(data.indexes['time'])  # Convert to pandas DateTimeIndex
+
+    # Calculate the new start time as the first 15 seconds of the day
+    new_start_time = time_series.min().replace(second=15, microsecond=0)
+    new_end_time = time_series.max().replace(hour=23, minute=59, second=59)
+
+    # Create a new time index starting from the new_start_time and ending at the end of the day
+    new_time_index = pd.date_range(start=new_start_time, end=new_end_time, freq="30S")
+
+    # reindex_like to create a new dataset with the modified time index
+    new_dataset = data.reindex(time=new_time_index)
     # set_trace()
-    # Create a subplot
+    data_availability = [
+        (new_dataset.sum(dim='range', skipna=False) > 0).resample(time=freq_str).mean().compute(),
+        (new_dataset.sum(dim='range', skipna=False) == 0).resample(time=freq_str).mean().compute(),
+        (np.sum(np.isnan(new_dataset), axis=1) > 0).resample(time=freq_str).mean().compute()
+    ]
+
+    data_availability_lab = ["Hydrometeors", "Clear Sky", "No Data"]
+    # set_trace()
     fig, ax = plt.subplots(figsize=(8, 6))
-    
-    # Initialize variables for stacking bars
+
     bot = np.zeros(data_availability[0].shape[0])
-    width = 1.  # Bar width
-    colors = ["#28fc21", "#07a8e3", "#ffffff"]  # Improved color scheme
-    
-    # Loop over each data availability category
+    width = 1.
+    colors = ["#28fc21", "#07a8e3", "#ffffff"]
+
     for i, freq in enumerate(data_availability):
-        # Create stacked bar plot
-        p = ax.bar(freq['time'], 100*freq,
+        p = ax.bar(freq.time, 100*freq,
                    width,
                    label=data_availability_lab[i],
                    bottom=bot,
                    color=colors[i],
                    edgecolor="black")
         bot += 100*freq
-    
-    # Format the x-axis date labels
+
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%y/%m/%d'))
     ax.set_xlabel("Time")
     ax.set_ylabel("Frequency [%]")
-    # Add a legend above the figure, out of the graph, and spread
-    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15), ncol=len(data_availability_lab), frameon=False)
-    # ax.xaxis.set_major_locator(mdates.MonthLocator())  # Set tick frequency to months
-    plt.xticks(rotation=45)  # Rotate x-axis labels for better visibility
 
-    # Remove top and right spines
-    # ax.spines['top'].set_visible(False)
-    # ax.spines['right'].set_visible(False)
-    
-    # Display the plot
-    plt.tight_layout()  # Improve layout spacing
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15), ncol=len(data_availability_lab), frameon=False)
+    plt.xticks(rotation=45)
+
+    plt.tight_layout()
     plt.show()
 
 def plot_2d_and_vertical_frequency(dataset1, dataset2):
@@ -126,7 +128,7 @@ def plot_2d_and_vertical_frequency(dataset1, dataset2):
         plt.tight_layout()  # Adjust the left subplot to occupy most of the figure space
         
         plt.show()
-
+        # set_trace()
 def plot_time_evolution_frequency(dataset):
     # Create a figure and axis
     fig, ax = plt.subplots(figsize=(10, 6))  # Adjust the figure size as needed
@@ -216,7 +218,54 @@ def plot_cfads(dataset):
     plt.tight_layout()
     plt.show()
 
+def plot_histograms_with_profiles(datasets: list, bin_width: float,
+                                  labels: list, x_label: str, y_label: str,
+                                  xticks_resolution: float = 1.0) -> None:
+    """
+    Plot histograms for multiple xarray DataArrays, with labeled bars indicating the number of profiles.
 
+    Parameters:
+        datasets (list of xr.DataArray): List of xarray DataArray objects.
+        bin_width (float): Width of histogram bins.
+        labels (list of str): List of labels for each dataset in the legend.
+        x_label (str): Label for the x-axis.
+        y_label (str): Label for the y-axis.
+
+    Returns:
+        None: Displays the histogram plot.
+    """
+    # Calculate histograms and shared bin edges
+    min_value = min(np.nanmin(data) for data in datasets)
+    max_value = max(np.nanmax(data) for data in datasets)
+    bin_edges = np.arange(min_value, max_value + bin_width, bin_width)
+    
+    # Calculate histograms for each dataset
+    histograms = [np.histogram(data, bins=bin_edges)[0] for data in datasets]
+    
+    # Get the number of profiles for each dataset
+    num_profiles = [data.sizes["time"] for data in datasets]
+    
+    # Plot histograms for each dataset
+    fig, axes = plt.subplots(figsize=(10, 6))
+    
+    bin_widths = bin_edges[1] - bin_edges[0]
+    norm_histograms = [100 * (hist / num_profiles[i]) for i, hist in enumerate(histograms)]
+    
+    for i, norm_hist in enumerate(norm_histograms):
+        label = f"{labels[i]} ({num_profiles[i]} profiles)"
+        axes.bar(bin_edges[:-1], norm_hist, width=bin_widths, alpha=0.5, label=label)
+    
+    axes.set_xlabel(x_label)
+    axes.set_ylabel(y_label)
+    axes.set_yscale('log')
+    axes.legend()
+    axes.grid()
+    # Set x-axis ticks to bin_edges with specified resolution
+    x_ticks = np.arange(min(bin_edges), max(bin_edges) + xticks_resolution, xticks_resolution)
+    axes.set_xticks(x_ticks)
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()
 # def incremental_cfads(root_folder: str, target_parent_folder: str, file_extension: str = '.nc', chunk_size: int = 1000):
 #     """
 #     Read NetCDF files from subdirectories of a root folder, incrementally update and plot 2D histograms with frequency-based contour plots for given variables.
@@ -370,9 +419,17 @@ def reading_dataset_chunking(root_folder: str, target_parent_folder: str, file_e
                     filepath = os.path.join(parent_folder, filename)
 
                     if filename.endswith(file_extension):
-                        # Create a delayed function to open the file as a Dask-backed xarray dataset
-                        delayed_dataset = dask.delayed(xr.open_dataset)(filepath)
-                        delayed_datasets.append(delayed_dataset)
+                        if file_extension == '.nc':
+                            # Create a delayed function to open the file as a Dask-backed xarray dataset
+                            delayed_dataset = dask.delayed(xr.open_dataset)(filepath)
+                            delayed_datasets.append(delayed_dataset)
+                        elif file_extension == '.json':
+                            # Read and process JSON file using the json library
+                            # Read the JSON file into a pandas DataFrame
+                            df = pd.read_json(filepath, orient='index')
+                            df.index.name = 'time'
+                            delayed_dataset = dask.delayed(xr.Dataset.from_dataframe)(df)
+                            delayed_datasets.append(delayed_dataset)
 
             if delayed_datasets:
                 # Use Dask's delayed computation to parallelize the dataset opening
@@ -397,11 +454,12 @@ def reading_dataset_chunking(root_folder: str, target_parent_folder: str, file_e
 
     return concatenated_datasets_dict
 
-# # Specify the folder path where the files are located
-# root_folder    = '../../../processed_data/'
-# target_parent_folder = "hydrometeor"
-# file_extension = '.nc'
-# concatenated_datasets = read_and_concatenate_datasets(root_folder, target_parent_folder, file_extension)['chirp_0']
+
+# Specify the folder path where the files are located
+root_folder    = '../../../processed_data/'
+target_parent_folder = "hydrometeor"
+file_extension = '.nc'
+concatenated_datasets = reading_dataset_chunking(root_folder, target_parent_folder)['chirp_0']
 
 # # Specify the specific day you're interested in (replace with your desired date)
 # specific_day = "2021-04-07"
@@ -409,34 +467,61 @@ def reading_dataset_chunking(root_folder: str, target_parent_folder: str, file_e
 # # Select the data for the specific day using .sel
 # concatenated_datasets = concatenated_datasets.sel(time=specific_day)
 
-# # Set up the figure
-# freq_str = "1D"
-# with sns.axes_style("ticks"):
-#     create_data_availability_plot(concatenated_datasets.Total, freq_str)
+# Set up the figure
+freq_str = "1D"
+with sns.axes_style("ticks"):
+    create_data_availability_plot(concatenated_datasets.Total, freq_str)
 
-# with sns.axes_style("ticks"):
-#     # Call the function to plot CFADs
-#     plot_2d_and_vertical_frequency((concatenated_datasets > 0).resample(time=freq_str).mean(dim='time'),
-#                                  (concatenated_datasets > 0))
-#     plot_time_evolution_frequency((concatenated_datasets.sum(dim='range') > 0).resample(time=freq_str).mean())
+with sns.axes_style("ticks"):
+    # Call the function to plot CFADs
+    plot_2d_and_vertical_frequency((concatenated_datasets > 0).resample(time=freq_str).mean(dim='time'),
+                                 (concatenated_datasets > 0))
+    plot_time_evolution_frequency((concatenated_datasets.sum(dim='range') > 0).resample(time=freq_str).mean())
 
-# Specify the folder path where the files are located
+# def main():
+    # Specify the folder path where the files are located
 root_folder    = '../../../processed_data/'
 target_parent_folder = "radar_variables"
 file_extension = '.nc'
 
-concatenated_datasets = reading_dataset_chunking(root_folder, target_parent_folder)
-plot_cfads(concatenated_datasets['chirp_0'])
+concatenated_datasets = reading_dataset_chunking(root_folder, target_parent_folder)['chirp_0']
+plot_cfads(concatenated_datasets)
 
-# plot_cfads(concatenated_datasets['chirp_0'], chunks)
-# plot_cfads(concatenated_datasets['chirp_0'], ['Zh', 'v'])
-# incremental_cfads(root_folder, target_parent_folder)
+# Specify the folder path where the files are located
+root_folder    = '../../../processed_data/'
+target_parent_folder = "number_of_layers"
+file_extension = '.nc'
+cloud_layers = reading_dataset_chunking(root_folder, target_parent_folder)['chirp_0']
+target_parent_folder = "lwp"
+lwp = reading_dataset_chunking(root_folder, target_parent_folder)['chirp_0']
+target_parent_folder = "geometric_cloud_thickness"
+file_extension = '.json'
+cloud_thickness = reading_dataset_chunking(root_folder, target_parent_folder, file_extension=file_extension)['chirp_0']
 
-# Specify the specific day you're interested in (replace with your desired date)
-# specific_day = "2021-04-07"
+df_layers = cloud_layers.to_dataframe()
+arr_mask = (df_layers.sum(axis=1) == 1.0).to_numpy() # Mask with single layer clouds
+del df_layers
 
-# # Select the data for the specific day using .sel
-# concatenated_datasets = concatenated_datasets.sel(time=specific_day)
-# with sns.axes_style("ticks"):
-#     # Call the function to plot CFADs
-#     plot_cfads(concatenated_datasets['chirp_0'], ['Zh', 'v'])
+clouds_single_layer = cloud_layers.sel(time=arr_mask)
+clouds_multi_layer  = cloud_layers.sel(time=~arr_mask)
+lwp_single_layer    = lwp.sel(time=arr_mask)
+
+plot_histograms_with_profiles(datasets=[lwp_single_layer.value.where(clouds_single_layer.Liquid.compute() == 1, drop=True).dropna(dim='time'),
+                                        lwp_single_layer.value.where(clouds_single_layer.Mixed_phase.compute() == 1, drop=True).dropna(dim='time')],
+                             bin_width=25,
+                             labels=["Liquid", "Mixed-phase"],
+                             x_label= r"LWP ($\delta$ LWP = 25 [g $m^{-2}$])",
+                             y_label="Frequency [%]",
+                             xticks_resolution=50)
+
+plot_histograms_with_profiles(datasets=[cloud_thickness.Liquid.where(clouds_single_layer.Liquid.compute() == 1, drop=True).dropna(dim='time'),
+                                        cloud_thickness.Ice.where(clouds_single_layer.Ice.compute() == 1, drop=True).dropna(dim='time'),
+                                        cloud_thickness.Mixed_phase.where(clouds_single_layer.Mixed_phase.compute() == 1, drop=True).dropna(dim='time')],
+                             bin_width=200,
+                             labels=["Liquid", "Ice", "Mixed-phase"],
+                             x_label= r"CB ($\delta$ CTHICKNESS = 200 [m])",
+                             y_label="Frequency [%]",
+                             xticks_resolution=1000)
+
+# if __name__ == "__main__":
+#     main()
