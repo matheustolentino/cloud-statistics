@@ -25,7 +25,7 @@ import dask.config
 # import seaborn as sns
 
 # Set the option to split large chunks
-dask.config.set(**{'array.slicing.split_large_chunks': True})
+#dask.config.set(**{'array.slicing.split_large_chunks': True})
 #dask.config.set(num_workers=4)
 
 plt.ion()
@@ -34,7 +34,11 @@ locale.setlocale(locale.LC_TIME, 'en_US.UTF-8')
 # Set up Seaborn for better visualization
 sns.set_context("paper", font_scale=1.5, rc={"lines.linewidth": 2.5})
 # Customize tick parameters to have black markers only at the axis
-
+# ---------------------------------------------------------------------------------------------
+# Paths to the data files and save figures
+# ---------------------------------------------------------------------------------------------
+PATH_FIG = '../figures/'
+# ---------------------------------------------------------------------------------------------
 def create_data_availability_plot(reindexed_variable: xr.DataArray, freq_str: str):
     """
     Create a data availability plot using Dask arrays.
@@ -66,10 +70,55 @@ def create_data_availability_plot(reindexed_variable: xr.DataArray, freq_str: st
                 width=w)  # Set the width of the bars
         bot += 100*freq.values
 
-    ax.xaxis.set_major_formatter(mdates.DateFormatter('%y/%m/%d'))
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%y'))
     ax.set_xlabel("Time")
     ax.set_ylabel("Frequency [%]")
     ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15), ncol=len(data_availability), frameon=False)
+    ax.set_xticks(freq.time[::3])
+    plt.xticks(rotation=45)
+
+    plt.tight_layout()
+    plt.show()
+
+def plot_cloud_frequency(reindexed_variable: xr.DataArray, freq_str: str):
+    """
+    Create a data availability plot using Dask arrays.
+
+    Parameters:
+        reindexed_variable (xr.DataArray): xarray DataArray to plot.
+        freq_str (str): Frequency string for resampling (e.g., 'D' for daily, 'H' for hourly).
+
+    Returns:
+        None
+    """
+    # includinf new variable to reindexed_variable:
+    # including new variable to reindexed_variable:
+    colors = ["#f953d2", "#53d2f9", "#c9b337", "#2521b6", "#fc564f", "#ffffff"]
+
+    cloud_frequency = (reindexed_variable == 1).resample(time=freq_str).mean()
+    df = reindexed_variable.to_dataframe()
+    mask_no_single_layer = df.isna().sum(axis=1) == df.columns.size # mask for no single layer and missing data
+    cloud_frequency['multi_layer_or_missing'] = mask_no_single_layer.resample(freq_str).mean()
+    bar_width = (cloud_frequency.time.max().values - cloud_frequency.time.min().values) / cloud_frequency.time.shape[0]
+    # bar_width = pd.Timedelta(days=30)
+    fig, ax = plt.subplots(figsize=(12, 8))  # Increase the size of the plot for better visibility
+    for i, var_name in enumerate(cloud_frequency.data_vars):
+        freq = cloud_frequency[var_name]
+        if i==0:
+            bot = np.zeros(freq.time.shape[0])
+        p = ax.bar(freq.time, 100*freq.values,
+                label=var_name,
+                bottom=bot,
+                color=colors[i],
+                edgecolor="black",
+                width=bar_width)  # Set the width of the bars
+        bot += 100*freq.values
+
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%y'))
+    ax.set_xlabel("Time")
+    ax.set_ylabel("Frequency [%]")
+    ax.set_ylim([0, 50])
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15), ncol=len(cloud_frequency.data_vars), frameon=False)
     ax.set_xticks(freq.time[::3])
     plt.xticks(rotation=45)
 
@@ -181,13 +230,13 @@ def plot_time_evolution_frequency(dataset):
     ax.grid(True)
     ax.legend()
     ax.xaxis.set_major_locator(mdates.MonthLocator())  # Set x-axis tick locator to show ticks by month
-    ax.xaxis.set_major_formatter(mdates.DateFormatter('%y/%m'))  # Set x-axis tick formatter to show month and year
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%y'))  # Set x-axis tick formatter to show month and year
     ax.set_xticks(dataset["time"][::3])  # Set x-axis ticks at every 3 months
     plt.xticks(rotation=45)  # Rotate x-axis labels for better visibility
     # Show the plot
     plt.show()
 
-def plot_cfads2(dataset, bin_edges, nbins=50):
+def plot_cfads2(dataset, bin_edges, nbins=50, figname='cfads.png'):
     """
     Plot 2D histograms with frequency-based contour plots for variables in the dataset.
     
@@ -207,27 +256,26 @@ def plot_cfads2(dataset, bin_edges, nbins=50):
     gs = gridspec.GridSpec(1, 2 * num_vars, width_ratios=[1, 0.02] * num_vars)  # Adjust the number of columns as needed
     for i, var_name in enumerate(var_names):
         ax = plt.subplot(gs[2*i])
-        var_values = dataset[var_name]
+        var_values = dataset[var_name].data
 
-        # Get the chunk size of the variable
-        chunk_size = var_values.chunks
         # Create a 2D histogram for each chunk
         hist = np.zeros((nbins-1,nbins-1))
-        # Initialize a starting value
-        start_value = 0
-        for step in chunk_size[0]:
-            chunked_values = var_values[start_value:start_value + step, :].values.ravel()
+        #set_trace()
+        for chunk in var_values.blocks:
+            chunked_values = chunk.compute().ravel()
             nan_mask       = np.isnan(chunked_values)
             flattened_var  = chunked_values[~nan_mask]
-            flattened_range_var = np.tile(range_values, step)[~nan_mask]
-            chunk_hist, x_edges, y_edges = np.histogram2d(flattened_var, flattened_range_var, bins=bin_edges[var_name])
+            flattened_range_var = np.tile(range_values, chunk.shape[0])[~nan_mask]
+            chunk_hist, _, _= np.histogram2d(flattened_var, flattened_range_var, bins=bin_edges[var_name])
             # Update the value using the current step
-            start_value += step
             hist += chunk_hist
 
+        bin_area = np.outer(np.diff(bin_edges[var_name][0]), np.diff(bin_edges[var_name][1]))
+        hist = hist / (np.sum(hist) * bin_area)
+
         # Calculate bin centers for the contour plot
-        x_centers = (x_edges[:-1] + x_edges[1:]) / 2
-        y_centers = (y_edges[:-1] + y_edges[1:]) / 2
+        x_centers = (bin_edges[var_name][0][:-1] + bin_edges[var_name][0][1:]) / 2
+        y_centers = (bin_edges[var_name][1][:-1] + bin_edges[var_name][1][1:]) / 2
 
         # Define levels for contour plot
         colorbar_max = 0.5 * hist.max()
@@ -244,9 +292,6 @@ def plot_cfads2(dataset, bin_edges, nbins=50):
 
         # Add grid
         plt.grid(True, linestyle='--', linewidth=0.5, color='gray')
-        # Calculate colorbar limits
-        colorbar_max = 0.5 * hist.max()
-        levels = np.linspace(0, colorbar_max, 17)
         # Create a colorbar for the current variable
         cbar_ax = plt.subplot(gs[2 * i + 1])
         cbar = plt.colorbar(contour, cax=cbar_ax, label='Density', extend='both')
@@ -256,6 +301,7 @@ def plot_cfads2(dataset, bin_edges, nbins=50):
         cbar.ax.yaxis.set_ticks_position('left')
         cbar.ax.yaxis.set_label_position('left')
     plt.tight_layout()
+    fig.savefig(figname, dpi=300)
     plt.show()
 
 def plot_cfads(dataset):
@@ -379,6 +425,33 @@ def plot_histograms_with_profiles(datasets: list, bin_width: float,
     plt.xticks(rotation=45)
     plt.tight_layout()
     plt.show()
+
+def create_frequency_cloud_layers_plot(frequency_cloud_layers):
+    # List of markers for the plot
+    markers = ["o", "*", "s", "<", "X"]
+    
+    # Create a subplot
+    fig, ax = plt.subplots(figsize=(10, 6))
+    
+    # Loop over each variable and create a plot
+    for i, variable in enumerate(frequency_cloud_layers):
+        p = ax.plot(frequency_cloud_layers['time'], 
+                    frequency_cloud_layers[variable],
+                    label=variable,
+                    color=np.random.rand(3),  # Generate random color
+                    marker=markers[i])
+    
+    ax.xaxis.set_major_locator(mdates.MonthLocator())  # Set x-axis tick locator to show ticks by month
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%y'))  # Set x-axis tick formatter to show month and year
+    ax.set_xticks(dataset["time"][::3])  # Set x-axis ticks at every 3 months
+    plt.xticks(rotation=45)  # Rotate x-axis labels for better visibility
+    # Add a legend
+    ax.legend()
+    plt.xticks(rotation=45)  # Rotate x-axis labels for better visibility
+    
+    # Display the plot
+    plt.show()
+
 # def incremental_cfads(root_folder: str, target_parent_folder: str, file_extension: str = '.nc', chunk_size: int = 1000):
 #     """
 #     Read NetCDF files from subdirectories of a root folder, incrementally update and plot 2D histograms with frequency-based contour plots for given variables.
@@ -611,93 +684,95 @@ def concatenate_dic_by_time(concatenated_datasets: Dict[str, xr.Dataset]) -> xr.
     concatenated_dataset = xr.concat(processed_datasets, dim='time').sortby('time')
     return concatenated_dataset
 
-root_folder    = '../../../processed_data/'
-target_parent_folder = "hydrometeor"
+# root_folder    = '../../../processed_data/'
+# target_parent_folder = "hydrometeor"
 
-file_extension = '.nc'
-chirp_hydromet = reading_dataset_chunking(root_folder, target_parent_folder)
+# file_extension = '.nc'
+# chirp_hydromet = reading_dataset_chunking(root_folder, target_parent_folder)
 
-for key in chirp_hydromet:
-    dataset = chirp_hydromet[key]
-    initial_time = dataset.time[0].values
-    final_time = dataset.time[-1].values
-    print(f"Key: {key}, Initial Time: {initial_time}, Final Time: {final_time}")
+# for key in chirp_hydromet:
+#     dataset = chirp_hydromet[key]
+#     initial_time = dataset.time[0].values
+#     final_time = dataset.time[-1].values
+#     print(f"Key: {key}, Initial Time: {initial_time}, Final Time: {final_time}")
 
-keys = list(chirp_hydromet.keys())
-for i in range(len(keys)):
-    for j in range(i+1, len(keys)):
-        key1 = keys[i]
-        key2 = keys[j]
-        dataset1 = chirp_hydromet[key1]
-        dataset2 = chirp_hydromet[key2]
-        mask = dataset1.time == dataset2.time
-        print(f"Comparing {key1} and {key2}, Time Overlaping: {mask.sum().item()}")
+# keys = list(chirp_hydromet.keys())
+# for i in range(len(keys)):
+#     for j in range(i+1, len(keys)):
+#         key1 = keys[i]
+#         key2 = keys[j]
+#         dataset1 = chirp_hydromet[key1]
+#         dataset2 = chirp_hydromet[key2]
+#         mask = dataset1.time == dataset2.time
+#         print(f"Comparing {key1} and {key2}, Time Overlaping: {mask.sum().item()}")
 
-# Create the figure and set the size
-fig, ax = plt.subplots(figsize=(10, 6))
-# Iterate over the keys in chirp_hydromet
-for key in chirp_hydromet:
-    dataset = chirp_hydromet[key]
-    time_values = dataset.time.values
+# # Create the figure and set the size
+# fig, ax = plt.subplots(figsize=(10, 6))
+# # Iterate over the keys in chirp_hydromet
+# for key in chirp_hydromet:
+#     dataset = chirp_hydromet[key]
+#     time_values = dataset.time.values
     
-    # Plot a constant value (key) against the time values
-    ax.plot(time_values, [key] * len(time_values),'*')
-# Set the x-axis label
-plt.xlabel('Time')
-# Set the y-axis label
-plt.ylabel('Key')
-# Set the title
-plt.title('Key vs Time')
-# Show the plot
-plt.show()
+#     # Plot a constant value (key) against the time values
+#     ax.plot(time_values, [key] * len(time_values),'*')
+# # Set the x-axis label
+# plt.xlabel('Time')
+# # Set the y-axis label
+# plt.ylabel('Key')
+# # Set the title
+# plt.title('Key vs Time')
+# # Show the plot
+# plt.show()
 
-hydro_total_list = [ds["Total"].sum(dim="range", skipna=False) for ds in chirp_hydromet.values()]
-chirp_concatenated_hydrometeors = xr.concat(hydro_total_list, dim="time").sortby("time")
-reindexed_variable = reindex_datasets(chirp_concatenated_hydrometeors)
+# hydro_total_list = [ds["Total"].sum(dim="range", skipna=False) for ds in chirp_hydromet.values()]
+# chirp_concatenated_hydrometeors = xr.concat(hydro_total_list, dim="time").sortby("time")
+# reindexed_variable = reindex_datasets(chirp_concatenated_hydrometeors)
 # -----------------------------------------------------------------------------------------------
 # Specify the start and end dates for the data you're interested in (replace with your desired dates)
 # -----------------------------------------------------------------------------------------------
-start_date = "2021-04-01"
-end_date = "2021-04-30"
-#sliced_variable = reindexed_variable.sel(time=slice(start_date, end_date))
-sliced_variable = reindexed_variable
-freq_str = "M"
-with sns.axes_style("ticks"):
-    create_data_availability_plot(sliced_variable, freq_str)
+# start_date = "2021-04-01"
+# end_date = "2021-04-30"
+# #sliced_variable = reindexed_variable.sel(time=slice(start_date, end_date))
+# sliced_variable = reindexed_variable
+# freq_str = "M"
+# with sns.axes_style("ticks"):
+#     create_data_availability_plot(sliced_variable, freq_str)
 # -----------------------------------------------------------------------------------------------
 #merged_hydromet_dataset = concatenate_dic_by_time(chirp_hydromet).sel(time=slice(start_date, end_date))
 #nan_mask = np.isnan(merged_hydromet_dataset)
 #mask_hydromet = (merged_hydromet_dataset == 1)
 #month_hydromet = mask_hydromet.where(~nan_mask, np.nan)
 
-hydro_list = [ds.sum(dim='range', skipna=False) for ds in chirp_hydromet.values()]
-hydro_frequency = xr.concat(hydro_list, dim='time').sortby('time')
-#with sns.axes_style("ticks"):
-#    # Call the function to plot CFADs
-#    plot_2d_and_vertical_frequency(month_hydromet.resample(time=freq_str).mean(dim='time'),
-#                                   month_hydromet.mean(dim='time'))
-with sns.axes_style("ticks"):
-    # Call the function to plot CFADs
-    # plot_2d_and_vertical_frequency_2(chirp_hydromet, freq_str)
-    plot_time_evolution_frequency((hydro_frequency > 0).resample(time=freq_str).mean())
+# hydro_list = [ds.sum(dim='range', skipna=False) for ds in chirp_hydromet.values()]
+# hydro_frequency = xr.concat(hydro_list, dim='time').sortby('time')
+# # with sns.axes_style("ticks"):
+# #    # Call the function to plot CFADs
+# #    plot_2d_and_vertical_frequency(month_hydromet.resample(time=freq_str).mean(dim='time'),
+# #                                   month_hydromet.mean(dim='time'))
+# with sns.axes_style("ticks"):
+#     # Call the function to plot CFADs
+#     plot_2d_and_vertical_frequency_2(chirp_hydromet, freq_str)
+#     plot_time_evolution_frequency((hydro_frequency > 0).resample(time=freq_str).mean())
 # -----------------------------------------------------------------------------------------------
 # Specify the folder path where the files are located
-root_folder    = '../../../processed_data/'
-target_parent_folder = "radar_variables"
-file_extension = '.nc'
+# root_folder    = '../../../processed_data/'
+# target_parent_folder = "radar_variables"
+# file_extension = '.nc'
 
-chirp_radar = reading_dataset_chunking(root_folder, target_parent_folder)
-bin_edges = {}
-nbins = 20
-bin_edges['Zh'] = [np.linspace(-60, 20, nbins), np.linspace(0, 10, nbins)]
-bin_edges['v']  = [np.linspace(-6, 6, nbins), np.linspace(0, 10, nbins)]
+# chirp_radar = reading_dataset_chunking(root_folder, target_parent_folder)
+# bin_edges = {}
+# nbins = 20
+# bin_edges['Zh'] = [np.linspace(-60, 20, nbins), np.linspace(0, 12, nbins)]
+# bin_edges['v']  = [np.linspace(-6, 6, nbins), np.linspace(0, 12, nbins)]
 
-plot_cfads2(chirp_radar['chirp_1'], bin_edges, nbins)
-#for key in chirp_radar:
-#    dataset = chirp_radar[key]
-#    plot_cfads(dataset)
+# chirp_radar_keys = list(chirp_radar.keys())
+# for key in chirp_radar_keys:
+#     plot_cfads2(chirp_radar[key],
+#                 bin_edges,
+#                 nbins,
+#                 figname=f"{PATH_FIG}2d_histogram_chirp_{key}.png")
 # -----------------------------------------------------------------------------------------------
-# # Specify the folder path where the files are located
+# Specify the folder path where the files are located
 # -----------------------------------------------------------------------------------------------
 root_folder    = '../../../processed_data/'
 target_parent_folder = "number_of_layers"
@@ -708,7 +783,7 @@ chirp_lwp = reading_dataset_chunking(root_folder, target_parent_folder)
 target_parent_folder = "geometric_cloud_thickness"
 file_extension = '.json'
 chirp_cloud_thickness = reading_dataset_chunking(root_folder, target_parent_folder, file_extension=file_extension)
-
+freq_str = "M"
 layer_list   = [ds for ds in chirp_layers.values()]
 cloud_layers = xr.concat(layer_list, dim='time').sortby('time')
 
@@ -726,6 +801,10 @@ lwp_single_layer    = lwp.sel(time=arr_mask)
 chirp_cloud_thickness_list = [ds for ds in chirp_cloud_thickness.values()]
 cloud_thickness = xr.concat(chirp_cloud_thickness_list, dim='time').sortby('time')
 
+reindexed_clouds_single_layer = reindex_datasets(clouds_single_layer)
+
+plot_cloud_frequency(reindexed_clouds_single_layer, freq_str)
+
 plot_histograms_with_profiles(datasets=[lwp_single_layer.value.where(clouds_single_layer.Liquid.compute() == 1, drop=True).dropna(dim='time'),
                                         lwp_single_layer.value.where(clouds_single_layer.Mixed_phase.compute() == 1, drop=True).dropna(dim='time')],
                              bin_width=25,
@@ -733,8 +812,6 @@ plot_histograms_with_profiles(datasets=[lwp_single_layer.value.where(clouds_sing
                              x_label= r"LWP ($\delta$ LWP = 25 [g $m^{-2}$])",
                              y_label="Frequency [%]",
                              xticks_resolution=500)
-
-
 
 plot_histograms_with_profiles(datasets=[cloud_thickness.Liquid.where(clouds_single_layer.Liquid.compute() == 1, drop=True).dropna(dim='time'),
                                         cloud_thickness.Ice.where(clouds_single_layer.Ice.compute() == 1, drop=True).dropna(dim='time'),
