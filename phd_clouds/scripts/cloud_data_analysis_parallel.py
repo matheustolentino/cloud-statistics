@@ -25,7 +25,7 @@ import dask.config
 # import seaborn as sns
 
 # Set the option to split large chunks
-#dask.config.set(**{'array.slicing.split_large_chunks': True})
+dask.config.set(**{'array.slicing.split_large_chunks': True})
 #dask.config.set(num_workers=4)
 
 plt.ion()
@@ -39,7 +39,7 @@ sns.set_context("paper", font_scale=1.5, rc={"lines.linewidth": 2.5})
 # ---------------------------------------------------------------------------------------------
 PATH_FIG = '../figures/'
 # ---------------------------------------------------------------------------------------------
-def create_data_availability_plot(reindexed_variable: xr.DataArray, freq_str: str):
+def create_data_availability_plot(reindexed_variable: xr.DataArray, freq_str: str, figname: str):
     """
     Create a data availability plot using Dask arrays.
 
@@ -78,9 +78,10 @@ def create_data_availability_plot(reindexed_variable: xr.DataArray, freq_str: st
     plt.xticks(rotation=45)
 
     plt.tight_layout()
+    fig.savefig(figname, dpi=300)
     plt.show()
 
-def plot_cloud_frequency(reindexed_variable: xr.DataArray, freq_str: str):
+def plot_cloud_frequency(reindexed_variable: xr.DataArray, freq_str: str, figname: str):
     """
     Create a data availability plot using Dask arrays.
 
@@ -123,6 +124,7 @@ def plot_cloud_frequency(reindexed_variable: xr.DataArray, freq_str: str):
     plt.xticks(rotation=45)
 
     plt.tight_layout()
+    fig.savefig(figname, dpi=300)
     plt.show()
 
 def plot_2d_and_vertical_frequency(dataset1, dataset2):
@@ -167,7 +169,7 @@ def plot_2d_and_vertical_frequency(dataset1, dataset2):
         
         plt.show()
 
-def plot_2d_and_vertical_frequency_2(dataset, freq_str: str):
+def plot_2d_and_vertical_frequency_2(dataset, freq_str: str, path: str):
     # Get variable names from the first key in the dataset dictionary
     variable_names = list(dataset[list(dataset.keys())[0]].data_vars)
     
@@ -181,6 +183,7 @@ def plot_2d_and_vertical_frequency_2(dataset, freq_str: str):
         for key in dataset.keys():
             # Get the variable for the current key and variable name
             variable = dataset[key][var_name] == 1
+            
             variable1 = variable.resample(time=freq_str).mean(dim='time')
             # Add heatmap on the left
             ax_heatmap = plt.subplot(gs[0])
@@ -206,15 +209,15 @@ def plot_2d_and_vertical_frequency_2(dataset, freq_str: str):
             ax_lineplot.grid(True)
             plt.legend()
     
-    # Adjust vertical spacing between subplots
-    # plt.subplots_adjust(wspace=horizontal_space)
-    
-    # Adjust layout for the subplots
-    plt.tight_layout()  # Adjust the left subplot to occupy most of the figure space
-    
-    plt.show()
+        # Adjust vertical spacing between subplots
+        # plt.subplots_adjust(wspace=horizontal_space)
+        
+        # Adjust layout for the subplots
+        plt.tight_layout()  # Adjust the left subplot to occupy most of the figure space
+        fig.savefig(f"{path}{var_name}_2d_histogram_hydrometeors.png", dpi=300)
+        plt.show()
 
-def plot_time_evolution_frequency(dataset):
+def plot_time_evolution_frequency(dataset, figname: str):
     # Create a figure and axis
     fig, ax = plt.subplots(figsize=(10, 6))  # Adjust the figure size as needed
 
@@ -234,6 +237,7 @@ def plot_time_evolution_frequency(dataset):
     ax.set_xticks(dataset["time"][::3])  # Set x-axis ticks at every 3 months
     plt.xticks(rotation=45)  # Rotate x-axis labels for better visibility
     # Show the plot
+    fig.savefig(figname, dpi=300)
     plt.show()
 
 def plot_cfads2(dataset, bin_edges, nbins=50, figname='cfads.png'):
@@ -379,7 +383,7 @@ def plot_cfads(dataset):
 
 def plot_histograms_with_profiles(datasets: list, bin_width: float,
                                   labels: list, x_label: str, y_label: str,
-                                  xticks_resolution: float = 1.0) -> None:
+                                  xticks_resolution: float = 1.0, figname = None) -> None:
     """
     Plot histograms for multiple xarray DataArrays, with labeled bars indicating the number of profiles.
 
@@ -397,7 +401,6 @@ def plot_histograms_with_profiles(datasets: list, bin_width: float,
     min_value = min(np.nanmin(data) for data in datasets)
     max_value = max(np.nanmax(data) for data in datasets)
     bin_edges = np.arange(min_value, max_value + bin_width, bin_width)
-    
     # Calculate histograms for each dataset
     histograms = [np.histogram(data, bins=bin_edges)[0] for data in datasets]
     
@@ -424,6 +427,7 @@ def plot_histograms_with_profiles(datasets: list, bin_width: float,
     axes.set_xticks(x_ticks)
     plt.xticks(rotation=45)
     plt.tight_layout()
+    fig.savefig(figname, dpi=300)
     plt.show()
 
 def create_frequency_cloud_layers_plot(frequency_cloud_layers):
@@ -727,32 +731,34 @@ def concatenate_dic_by_time(concatenated_datasets: Dict[str, xr.Dataset]) -> xr.
 # hydro_total_list = [ds["Total"].sum(dim="range", skipna=False) for ds in chirp_hydromet.values()]
 # chirp_concatenated_hydrometeors = xr.concat(hydro_total_list, dim="time").sortby("time")
 # reindexed_variable = reindex_datasets(chirp_concatenated_hydrometeors)
-# -----------------------------------------------------------------------------------------------
-# Specify the start and end dates for the data you're interested in (replace with your desired dates)
-# -----------------------------------------------------------------------------------------------
+# # -----------------------------------------------------------------------------------------------
+# # Specify the start and end dates for the data you're interested in (replace with your desired dates)
+# # -----------------------------------------------------------------------------------------------
 # start_date = "2021-04-01"
 # end_date = "2021-04-30"
 # #sliced_variable = reindexed_variable.sel(time=slice(start_date, end_date))
 # sliced_variable = reindexed_variable
 # freq_str = "M"
 # with sns.axes_style("ticks"):
-#     create_data_availability_plot(sliced_variable, freq_str)
-# -----------------------------------------------------------------------------------------------
-#merged_hydromet_dataset = concatenate_dic_by_time(chirp_hydromet).sel(time=slice(start_date, end_date))
-#nan_mask = np.isnan(merged_hydromet_dataset)
-#mask_hydromet = (merged_hydromet_dataset == 1)
-#month_hydromet = mask_hydromet.where(~nan_mask, np.nan)
+#     create_data_availability_plot(sliced_variable, freq_str, figname=f"{PATH_FIG}data_availability.png")
+# # -----------------------------------------------------------------------------------------------
+# #merged_hydromet_dataset = concatenate_dic_by_time(chirp_hydromet).sel(time=slice(start_date, end_date))
+# #nan_mask = np.isnan(merged_hydromet_dataset)
+# #mask_hydromet = (merged_hydromet_dataset == 1)
+# #month_hydromet = mask_hydromet.where(~nan_mask, np.nan)
 
+# freq_str = "M"
 # hydro_list = [ds.sum(dim='range', skipna=False) for ds in chirp_hydromet.values()]
 # hydro_frequency = xr.concat(hydro_list, dim='time').sortby('time')
+# reindexed_hydro_frequency = reindex_datasets(hydro_frequency)
 # # with sns.axes_style("ticks"):
 # #    # Call the function to plot CFADs
 # #    plot_2d_and_vertical_frequency(month_hydromet.resample(time=freq_str).mean(dim='time'),
 # #                                   month_hydromet.mean(dim='time'))
 # with sns.axes_style("ticks"):
 #     # Call the function to plot CFADs
-#     plot_2d_and_vertical_frequency_2(chirp_hydromet, freq_str)
-#     plot_time_evolution_frequency((hydro_frequency > 0).resample(time=freq_str).mean())
+#     plot_2d_and_vertical_frequency_2(chirp_hydromet, freq_str, path=f"{PATH_FIG}")
+#     plot_time_evolution_frequency((reindexed_hydro_frequency > 0).resample(time=freq_str).mean(), figname=f"{PATH_FIG}time_evolution_frequency_hydrometeors.png")
 # -----------------------------------------------------------------------------------------------
 # Specify the folder path where the files are located
 # root_folder    = '../../../processed_data/'
@@ -803,24 +809,28 @@ cloud_thickness = xr.concat(chirp_cloud_thickness_list, dim='time').sortby('time
 
 reindexed_clouds_single_layer = reindex_datasets(clouds_single_layer)
 
-plot_cloud_frequency(reindexed_clouds_single_layer, freq_str)
+# plot_cloud_frequency(reindexed_clouds_single_layer,
+#                       freq_str, 
+#                       figname=f"{PATH_FIG}cloud_frequency.png")
 
-plot_histograms_with_profiles(datasets=[lwp_single_layer.value.where(clouds_single_layer.Liquid.compute() == 1, drop=True).dropna(dim='time'),
-                                        lwp_single_layer.value.where(clouds_single_layer.Mixed_phase.compute() == 1, drop=True).dropna(dim='time')],
-                             bin_width=25,
-                             labels=["Liquid", "Mixed-phase"],
-                             x_label= r"LWP ($\delta$ LWP = 25 [g $m^{-2}$])",
-                             y_label="Frequency [%]",
-                             xticks_resolution=500)
+# plot_histograms_with_profiles(datasets=[lwp_single_layer.value.where(clouds_single_layer.Liquid.compute() == 1, drop=True).dropna(dim='time'),
+#                                         lwp_single_layer.value.where(clouds_single_layer.Mixed_phase.compute() == 1, drop=True).dropna(dim='time')],
+#                              bin_width=25,
+#                              labels=["Liquid", "Mixed-phase"],
+#                              x_label= r"LWP ($\delta$ LWP = 25 [g $m^{-2}$])",
+#                              y_label="Frequency [%]",
+#                              xticks_resolution=500,
+#                              figname=f"{PATH_FIG}lwp_histograms.png")
 
-plot_histograms_with_profiles(datasets=[cloud_thickness.Liquid.where(clouds_single_layer.Liquid.compute() == 1, drop=True).dropna(dim='time'),
-                                        cloud_thickness.Ice.where(clouds_single_layer.Ice.compute() == 1, drop=True).dropna(dim='time'),
-                                        cloud_thickness.Mixed_phase.where(clouds_single_layer.Mixed_phase.compute() == 1, drop=True).dropna(dim='time')],
-                             bin_width=200,
-                             labels=["Liquid", "Ice", "Mixed-phase"],
-                             x_label= r"CB ($\delta$ CTHICKNESS = 200 [m])",
-                             y_label="Frequency [%]",
-                             xticks_resolution=500)
+# plot_histograms_with_profiles(datasets=[cloud_thickness.Liquid.where(clouds_single_layer.Liquid.compute() == 1, drop=True).dropna(dim='time'),
+#                                         cloud_thickness.Ice.where(clouds_single_layer.Ice.compute() == 1, drop=True).dropna(dim='time'),
+#                                         cloud_thickness.Mixed_phase.where(clouds_single_layer.Mixed_phase.compute() == 1, drop=True).dropna(dim='time')],
+#                              bin_width=200,
+#                              labels=["Liquid", "Ice", "Mixed-phase"],
+#                              x_label= r"CB ($\delta$ CTHICKNESS = 200 [m])",
+#                              y_label="Frequency [%]",
+#                              xticks_resolution=500,
+#                              figname=f"{PATH_FIG}cloud_thickness_histograms.png")
 
 # # if __name__ == "__main__":
 # #     main()
