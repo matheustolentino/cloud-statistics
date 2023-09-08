@@ -843,6 +843,56 @@ with sns.axes_style("ticks"):
 
 with sns.axes_style("ticks"):
     create_data_availability_plot(sliced_variable, freq_str, figname=f"{PATH_FIG}data_availability.png")
+
+# Create a figure and axis
+fig, ax = plt.subplots(figsize=(10, 6))  # Adjust the figure size as needed
+
+# Iterate through variable names and plot each variable using the axis.plot method
+for i, f in enumerate(freq_pr_grater_than):
+    ax.plot(f.time, f, label=freq_labels[i])   
+
+# Add labels, title, and legend
+ax.set_xlabel("Time")
+ax.set_ylabel("Frequency [%]")
+ax.set_title("Variable Plots")
+ax.grid(True)
+ax.legend()
+plt.xticks(rotation=45)  # Rotate x-axis labels for better visibility
+# Show the plot
+plt.show()
+
+# # Create a figure and subplots
+# fig, axs = plt.subplots(len(freq_pr_grater_than), 1, figsize=(10, 6*len(freq_pr_grater_than)), 
+#                         sharex=True)  # Adjust the figure size as needed
+
+# # Iterate through variable names and plot each variable using the axis.plot method
+# for i, (f, ax) in enumerate(zip(freq_pr_grater_than, axs)):
+#     # Group the data by year and month
+#     years = np.unique(f.time.dt.year)
+#     # Iterate through each group and plot the data
+#     for y in years:
+#         # Extract the month from the group name
+#         data_year = f.sel(time=f.time.dt.year == y)
+#         # Plot the data for the current month
+#         ax.plot(data_year.time.dt.month, data_year, label=y)
+    
+#     # Add labels, title, and legend to each subplot
+#     ax.set_ylabel("Frequency [%]")
+#     # ax.set_title(f"Variable Plot - {freq_labels[i]}")
+#     ax.grid(True)
+
+# ax.set_xlabel("Month")
+# ax.legend()
+# #ax.set_xticks(np.arange(1, 13))  # Set x-axis ticks for each month
+# ax.xaxis.set_major_formatter(mdates.DateFormatter('%m'))
+# # Rotate x-axis labels for better visibility
+# plt.setp(ax.get_xticklabels(), rotation=45)
+
+# # Adjust the spacing between subplots
+# plt.tight_layout()
+
+# # Show the plot
+# plt.show()
 # -----------------------------------------------------------------------------------------------
 #merged_hydromet_dataset = concatenate_dic_by_time(chirp_hydromet).sel(time=slice(start_date, end_date))
 #nan_mask = np.isnan(merged_hydromet_dataset)
