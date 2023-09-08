@@ -525,9 +525,13 @@ def process_cloud_data_parallel(args):
     # ------------------------------------------------------------------------------------------------
     time = check_time_resolution(classification, categorize, date)
     if not np.array_equal(radar['range_resolution'].values, chirp_res):
-        print(f"Warning: radar and categorize files with different height resolution - {date} : {radar.range.size} vs {height.size}")
-        print(f"radar resolution: {radar['range_resolution'].values} vs heigth resolution: {np.unique(np.diff(height.data))}")
-        print(f" chirp resolution: {chirp_res}")
+        print(f"Warning: radar range resolution and chirp resolution are different - {date} : {radar.range.size} vs {height.size}")
+        # print(f"radar resolution: {radar['range_resolution'].values} vs heigth resolution: {np.unique(np.diff(height.data))}")
+        # print(f" chirp resolution: {chirp_res}")
+    if categorize['height'][:].size != height.size:
+        print(f"Warning: radar and categorize files with different height bins - {date} : {categorize['height'][:].size} vs {height.size}")
+    # if not np.array_equal(height, categorize['height'][:]-categorize['altitude'][:]):
+    #     print(f"Warning: radar and categorize files with different height bins - {date} : {radar.range.size} vs {height.size}")
     # if not np.array_equal(radar.range.values, height):
     # ------------------------------------------------------------------------------------------------
     # cloudnet_lwc = nc.Dataset(PATH_CLOUDNET_LWC+date.strftime('%Y%m%d')+"_granada_"+'lwc.nc')
@@ -1102,14 +1106,13 @@ start_date = min(database_intersection) # first date of database
 end_date   = max(database_intersection) # last date of database
 
 # start_date = datetime.datetime(2018, 4, 25)
-# end_date   = datetime.datetime(2018, 4, 25)
+# end_date   = datetime.datetime(2018, 4, 26)
 
 #TODO: should create a loop to iterate over all chirp configurations
 # chirp_ini, chirp_final, chirp_zres, chirp_height, selected_interval = compare_radar_chirp_configurations(start_date, end_date, database_intersection, PATH_RADAR)
 intervals_dic, height_dic = compare_radar_chirp_configurations(start_date, end_date, database_intersection, PATH_RADAR)
 for renge_res, interval in intervals_dic.items():
     print(f"Chirp resolution: {renge_res} m, Intervals Count: {len(interval)}")
-
 print("\nRemoving all cloudnet files of LWC and Reff from its directory...")
     
 os.system("rm "+PATH_CLOUDNET_LWC+"*lwc.nc") # remove all lwc files from lwc path 
