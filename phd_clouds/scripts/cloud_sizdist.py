@@ -129,15 +129,18 @@ def find_valleys(arr):
     
     return valleys
 
-def find_mountains(arr):
+def find_mountains(arr, epsilon):
     mountains = []
     n = len(arr)
     
     for i in range(1, n - 1):
-        if arr[i] > arr[i - 1] and arr[i] > arr[i + 1]:
+        if arr[i] - epsilon > arr[i - 1] and arr[i] - epsilon > arr[i + 1]:
             mountains.append(i)
     
     return mountains
+
+def moving_average(x, w):
+    return np.convolve(x, np.ones(w), 'valid') / w
 
 #**************************************************************************************************
 # Teste mixture of gamma functions
@@ -196,239 +199,261 @@ standard_diameter    = np.loadtxt(PATH_SIZDIST+'diameters.csv', delimiter=',')
 surface     = 0.24*10**(-2) # mm ^2 -> cm^2
 #fitted_dist = np.zeros((len(filenames), diameter.shape[0]))
 
-file = filenames[10]
+file = filenames[7]
 # 7 deu problema, maybe 3 modes
 data = np.loadtxt(PATH_SIZDIST+file, delimiter=',')
 # # for i,file in enumerate(filenames):
-for i in range(data.shape[0]):
-# for i in range(20):
+# for i in range(data.shape[0]):
+for i in range(10):
     dist     = data[i, 8:]
     diameter = standard_diameter
    
-
-    dist = dist/integrate.simps(dist, diameter)
-    derivative = np.diff(dist)
-    ind_neg = np.where(derivative[:2] < 0)[0]
-    if ind_neg.any() and ind_neg.shape[0] < 2:
-        print("negative derivative")
-        dist = dist[ind_neg[0]+1:]
-        diameter = diameter[ind_neg[0]+1:]
-    
-    n_montains = len(find_mountains(dist[:10]))
-    if n_montains > 1:
-        dist = savgol_filter(dist, 4, 2)
-    # # Create a new list with non-zero values from dist and corresponding values from diameter
-    # fig, ax = plt.subplots()
-    # ax.plot(diameter[:12], dist[:12], 'ob')
-    # ax.grid()
-    # plt.show()
-    #**************************************************************************************************
-    f = interpolate.interp1d(diameter, dist, kind='linear')
-    diameter_interp = np.arange(diameter[0], diameter[-1], .01)
-    # diameter_interp = np.linspace(diameter[0], diameter[-1], diameter.shape[0]*5)
-    dist_interp     = f(diameter_interp)
-
-    # Remover zeros aqui, e nao precisa abaixo
-    mask_non_zero = np.where(dist_interp > 0)[0]
-    if mask_non_zero.any():
-        dist_new, diameter_new = dist_interp[mask_non_zero], diameter_interp[mask_non_zero]
-    n0 = integrate.simps(dist_new, diameter_new)
-    
-    # fig, ax = plt.subplots()
-    # ax.plot(diameter, dist, 'ob')
-    # ax.plot(diameter_new, dist_new, '-r')
-    # # ax.set_yscale('log')
-    # ax.grid()
-    # ax.set_ylabel(r'Counts [#]') 
-    # # ax.set_ylim([.1, max(dist)+100])
-    # plt.show()
-    #**************************************************************************************************
-    # data = np.loadtxt(PATH_SIZDIST+file, delimiter=',')
-    # num  = np.zeros(data[:, 8:].shape)
-    # for i in range(data.shape[0]):
-    #     app_pas  = data[i, 7]
-    #     volume   = app_pas*100*surface*10 # PAS * Area * time (10s)
-    #                                      # (m s^-1)*100 * cm^2 * s -> cm^3
-    #     num[i,:] = data[i, 8:]/volume
-    
-    # ntime       = data[:, 8:].shape[0]
-    # counts_mean = np.mean(data[:, 8:],axis=0)
-    # n0_count    = integrate.simps(counts_mean, diameter)
-    # std_count   = np.std(data[:, 8:], axis=0)/np.sqrt(ntime)
-    # #ipoints    = 17 # for more mode analisys
-    # ipoints     = 11 # for more mode analisys
-    # ***********************************************************
-    # # Perform polynomial interpolation
-    # interp_func = interpolate.interp1d(diameter, data[i,8+8:], kind='quaratic')
-    # xnew = np.arange(diameter[0], diameter[-1], .01)
-    # ynew = interp_func(xnew )
-    # maximus = argrelextrema(ynew, np.greater)
-    # minimus = argrelextrema(ynew, np.less)
-    # # first mode analysis ***************************************
-    # # x_data      = diameter[:ipoints]
-    # # y_data      = counts_mean[:ipoints]
-    # # s_data      = std_count[:ipoints]
-    # # ***********************************************************
-    # # second mode analysis **************************************
-    # # x_data      = diameter[ipoints-1:ipoints+8]
-    # # y_data      = counts_mean[ipoints-1:ipoints+8]
-    # # s_data      = std_count[ipoints-1:ipoints+8]
-    # # ************************************************************
-    # # first and second mode analysis *****************************
-    # x_data      = diameter[:ipoints+8]
-    # y_data      = counts_mean[:ipoints+8]
-    # s_data      = std_count[:ipoints+8]
-    # # ************************************************************
-    # #s_data = np.ones(ipoints)
-    # #s_data = np.ones(8)
-    # dnew        = np.arange(x_data[0], x_data[-1], .1)
-    #print((np.mean(y_data[:15])/np.std(y_data[:15]))**2)
-    # ************************************************************
-    aux_dist     = np.diff(dist_new)
-    global_min_x = np.argmin(aux_dist)
-    xnew         = diameter_new[global_min_x:]
-    ind_sep_aux  = np.where(aux_dist[global_min_x:] > -.0001)[0]
-    if ind_sep_aux.any():
-        ind_sep  = ind_sep_aux[0]
-    else:
-        ind_sep  = xnew.shape[0] -2
-    xsep         = xnew[ind_sep]
-    ynew         = dist_new[global_min_x:]
-
-    # aux_line = np.arange(min(aux_dist), max(aux_dist), 0.001)
-    # fig, ax  = plt.subplots()
-    # ax.plot(diameter_new[:-1], aux_dist, '-or')
-    # ax.plot(np.ones(aux_line.shape[0])*xnew[ind_sep], aux_line, color="k")
-    # plt.show()
-     # ************************************************************
-    # plt.figure()
-    # plt.plot(diameter_new[:-1], np.diff(dist_new))
-    # plt.show()
-    # x1 = diameter[diameter<=xsep]
-    # x2 = diameter[diameter>xsep]
-    # y1 = dist[diameter<=xsep]
-    # y2 = dist[diameter>xsep]
-
-    num_x2_original = sum(dist[diameter > xsep] != 0)
-    num_x1_original = sum(dist[diameter <= xsep] != 0)
-
-    x2_test = standard_diameter[standard_diameter>xsep]
-    y2_test = data[i, 8:][standard_diameter>xsep]
-    y1_test = data[i, 8:][standard_diameter<=xsep]
-    # y2_test = savgol_filter(y2_test, 5, 3)
-    ind_sep_x2 = find_point(y2_test)
-    
-    if n_montains == 1 or ind_sep_x2 != 0:
-        valleys  = find_valleys(np.diff(y2_test[:ind_sep_x2]))
-    else:
-        valleys  = find_valleys(np.diff(y2_test))
-    
-    if len(valleys) > 1:
-        dist_new = savgol_filter(dist_new, 100, 3)
-    # # montains = np.diff(y2_test[:2])
-    # fig, ax = plt.subplots()
-    # ax.plot(x2_test[:-1], np.diff(y2_test,1), '-ob', label="valleys = %d, montains = %d"%(len(valleys), n_montains))
-    # ax.plot(np.ones(x2_test.shape[0]-1)*x2_test[ind_sep_x2], np.diff(y2_test,1), color="k")
-    # ax.legend()
-    # # ax.plot(x1, y1, '-r')
-    # ax.grid()
-    # plt.show()
-    x1 = diameter_new[diameter_new<=xsep]
-    x2 = diameter_new[diameter_new>xsep]
-    y1 = dist_new[diameter_new<=xsep]
-    y2 = dist_new[diameter_new>xsep]
-
-    n1 = integrate.simps(y1, x1)
-    n2 = integrate.simps(y2, x2)
-
-    m11  = integrate.simps(x1*y1, x1)/n1
-    m12  = integrate.simps(x1**2*y1,x1)/n1
-    var1 =  m12 - m11**2
-    nu1 = m11**2/var1
-    bt1 = var1/m11
-
-    m21  = integrate.simps(x2*y2, x2)/n2
-    m22  = integrate.simps(x2**2*y2,x2)/n2
-    var2 =  m12 - m11**2
-    nu2 = m21**2/var2
-    bt2 = var2/m21
-    
-    # num_non_zero2 = np.where(y2 != 0)[0].shape[0]
-    #print("Conc second mode",np.sum(y1), np.sum(y2))
-    fig, axs = plt.subplots(2, sharex=True, gridspec_kw={'height_ratios': [3, 1]})
-    f0       = axs[0].plot(diameter, dist, 'ob')
-    f1       = axs[0].plot(diameter_new, dist_new, '-m')
-    f30      = axs[0].plot(xnew[ind_sep], ynew[ind_sep], marker=">", color="k")
-    f11 = axs[0].fill_between([x1[0], x1[-1]], [max(dist), max(dist)], alpha=.5)
-    f12 = axs[0].fill_between([x2[0], x2[-1]], [max(dist), max(dist)], alpha=.5)
-    # axs[0].set_yscale('log')
-    # axs[0].set_ylim([.1, max(dist)+100])
-    # if x1.shape[0] > 5 and num_non_zero2 < 5: # If using original distribution, less resolution 
-
-    if num_x1_original > 3:
-        if y1_test.sum() > 10 and len(valleys) == 0 and n_montains == 1: # If using interpolated distribution
-            s_data = np.ones(x1.shape[0])
-            initial_params=[n1, nu1, bt1]
-            pcount, covcount = curve_fit(mixture_gamma, x1, y1, sigma=s_data, 
-                                p0=initial_params)
-            xnew = np.linspace(x1[0], x1[-1], 100)
-            fnew = mixture_gamma(xnew,*pcount)
-            residual  = y1 - mixture_gamma(x1,*pcount)
-            chi2 = sum(residual)**2
-            # print(bt1, pcount[2])
-            f1 = axs[0].plot(xnew, fnew, '-r', label=r"1 mode - $\nu$=%.1f, $\beta$=%.1f, $\xi$=%.1f"%(pcount[1], pcount[2], chi2))
-            axs[0].set_title("num_x2_original = %d, y2max = %.3f, n1/n0 = %.3f"%(num_x2_original, y2.max(), n1/n0))
-            axs[0].set_ylabel(r'Counts [#]')
-            axs[0].grid()  
-            axs[0].legend()
-            
-            f4 = axs[1].plot(x1, residual/max(abs(residual)), '--ob',markersize=4.)
-            axs[1].set_ylabel('Relative Res [#]')
-            axs[1].set_xlabel(r'Diameter [$\mu$m]')
-            axs[1].set_xlim([x1[0], x2[-1]])
-            #axs[1].set_ylim([-1.2,1.2])
-            axs[1].grid()
-            # plt.suptitle(file)
-            plt.show()
-
-        # elif num_non_zero2  > 5: # If using original distribution, less resolution
-        elif len(valleys) > 0 or n_montains > 1: 
-            # print(n2/n0, num_x2_original)
-            # initial_params=[n1, 2*n2, 12, 8, .3, .5]
-            initial_params=[n1, n2, nu1, nu2, bt1, bt2]
-            
-            # Find the indices where dist is non-zero
-            # non_zero_indices = np.where(dist != 0)[0]
-            # dist_new, diameter_new = dist[non_zero_indices], diameter[non_zero_indices]
-            s_data = np.ones(diameter_new.shape[0])
-
-            pcount, covcount = curve_fit(mixture_gamma, diameter_new, dist_new, sigma=s_data, 
-                                        p0=initial_params)
-            
-            dnew = np.arange(diameter_new[0], diameter_new[-1], .1)
-            fnew = mixture_gamma(dnew,*pcount)
-            residual  = dist_new - mixture_gamma(diameter_new,*pcount)
-            chi2 = sum(residual)**2
-            # print(nu1, pcount[2])
-            f1       = axs[0].plot(dnew, fnew, '-r', label="%.1f, %.1f, %.1f,%.1f, %.1f, %.1f"%(pcount[0],pcount[1],pcount[2], pcount[3],pcount[4],pcount[5]))
-            f2 = axs[0].plot(dnew, mixture_gamma(dnew, pcount[0],pcount[2],pcount[4]), '--r')
-            f3 = axs[0].plot(dnew, mixture_gamma(dnew, pcount[1],pcount[3],pcount[5]), '--g')
-            
-            axs[0].set_title("sum y2 = %d, chi2 = %.3f"%(y2.sum(), chi2))
-            axs[0].set_ylabel(r'Counts [#]')
-            axs[0].grid()
-            axs[0].legend()
-            # axs[0].set_yscale('log')
-
-            f4 = axs[1].plot(diameter_new, residual/max(abs(residual)), '--ob',markersize=4.)
-            axs[1].set_ylabel('Relative Res [#]')
-            axs[1].set_xlabel(r'Diameter [$\mu$m]')
-            axs[1].set_xlim([x1[0], x2[-1]])
-            axs[1].set_ylim([-1.2,1.2])
-            axs[1].grid()
-            # plt.suptitle(file)
-            plt.show()
+    if dist.sum() > 10:
+        dist = dist/integrate.simps(dist, diameter)
+        derivative = np.diff(dist)
+        ind_neg = np.where(derivative[:2] < 0)[0]
+        if ind_neg.any() and ind_neg.shape[0] < 2:
+            print("negative derivative")
+            dist = dist[ind_neg[0]+1:]
+            diameter = diameter[ind_neg[0]+1:]
         
+        dist = savgol_filter(dist, 9, 3)
+        ind_maxs       = find_mountains(dist, 0.001)
+        if ind_maxs:
+            ind_global_max = np.where(dist == max(dist[ind_maxs]))[0][0]
+            n_montains = len(ind_maxs)
+
+            if ind_global_max > ind_maxs[0]:
+                # dist = moving_average(dist, n_montains-1)
+                # diameter = moving_average(diameter, n_montains-1)
+                ind_to_exclude = np.where(ind_maxs < ind_global_max)[0][-1]
+                dist = dist[ind_to_exclude+1:]
+                diameter = diameter[ind_to_exclude+1:]
+                # dist = savgol_filter(dist, 9, 3)
+                n_montains = len(find_mountains(dist, 0.001))
+        # if n_montains > 1:
+        #     dist = savgol_filter(dist, 3, 2)
+
+        # # Create a new list with non-zero values from dist and corresponding values from diameter
+        # fig, ax = plt.subplots()
+        # ax.plot(diameter[:12], dist[:12], 'ob')
+        # ax.grid()
+        # plt.show()
+        #**************************************************************************************************
+        f = interpolate.interp1d(diameter, dist, kind='cubic')
+        diameter_interp = np.arange(diameter[0], diameter[-1], .01)
+        # diameter_interp = np.linspace(diameter[0], diameter[-1], diameter.shape[0]*5)
+        dist_interp     = f(diameter_interp)
+
+        # Remover zeros aqui, e nao precisa abaixo
+        mask_non_zero = np.where(dist_interp > 0)[0]
+        if mask_non_zero.any():
+            dist_new, diameter_new = dist_interp[mask_non_zero], diameter_interp[mask_non_zero]
+        n0 = integrate.simps(dist_new, diameter_new)
+        
+        # fig, ax = plt.subplots()
+        # ax.plot(diameter, dist, 'ob')
+        # ax.plot(diameter_new, dist_new, '-r')
+        # # ax.set_yscale('log')
+        # ax.grid()
+        # ax.set_ylabel(r'Counts [#]') 
+        # # ax.set_ylim([.1, max(dist)+100])
+        # plt.show()
+        #**************************************************************************************************
+        # data = np.loadtxt(PATH_SIZDIST+file, delimiter=',')
+        # num  = np.zeros(data[:, 8:].shape)
+        # for i in range(data.shape[0]):
+        #     app_pas  = data[i, 7]
+        #     volume   = app_pas*100*surface*10 # PAS * Area * time (10s)
+        #                                      # (m s^-1)*100 * cm^2 * s -> cm^3
+        #     num[i,:] = data[i, 8:]/volume
+        
+        # ntime       = data[:, 8:].shape[0]
+        # counts_mean = np.mean(data[:, 8:],axis=0)
+        # n0_count    = integrate.simps(counts_mean, diameter)
+        # std_count   = np.std(data[:, 8:], axis=0)/np.sqrt(ntime)
+        # #ipoints    = 17 # for more mode analisys
+        # ipoints     = 11 # for more mode analisys
+        # ***********************************************************
+        # # Perform polynomial interpolation
+        # interp_func = interpolate.interp1d(diameter, data[i,8+8:], kind='quaratic')
+        # xnew = np.arange(diameter[0], diameter[-1], .01)
+        # ynew = interp_func(xnew )
+        # maximus = argrelextrema(ynew, np.greater)
+        # minimus = argrelextrema(ynew, np.less)
+        # # first mode analysis ***************************************
+        # # x_data      = diameter[:ipoints]
+        # # y_data      = counts_mean[:ipoints]
+        # # s_data      = std_count[:ipoints]
+        # # ***********************************************************
+        # # second mode analysis **************************************
+        # # x_data      = diameter[ipoints-1:ipoints+8]
+        # # y_data      = counts_mean[ipoints-1:ipoints+8]
+        # # s_data      = std_count[ipoints-1:ipoints+8]
+        # # ************************************************************
+        # # first and second mode analysis *****************************
+        # x_data      = diameter[:ipoints+8]
+        # y_data      = counts_mean[:ipoints+8]
+        # s_data      = std_count[:ipoints+8]
+        # # ************************************************************
+        # #s_data = np.ones(ipoints)
+        # #s_data = np.ones(8)
+        # dnew        = np.arange(x_data[0], x_data[-1], .1)
+        #print((np.mean(y_data[:15])/np.std(y_data[:15]))**2)
+        # ************************************************************
+        aux_dist     = np.diff(dist_new)
+        global_min_x = np.argmin(aux_dist)
+        xnew         = diameter_new[global_min_x:]
+        ind_sep_aux  = np.where(aux_dist[global_min_x:] > -.0001)[0]
+        if ind_sep_aux.any():
+            ind_sep  = ind_sep_aux[0]
+        else:
+            ind_sep  = xnew.shape[0] -2
+        xsep         = xnew[ind_sep]
+        ynew         = dist_new[global_min_x:]
+
+        # aux_line = np.arange(min(aux_dist), max(aux_dist), 0.001)
+        # fig, ax  = plt.subplots()
+        # ax.plot(diameter_new[:-1], aux_dist, '-or')
+        # ax.plot(np.ones(aux_line.shape[0])*xnew[ind_sep], aux_line, color="k")
+        # plt.show()
+        # ************************************************************
+        # plt.figure()
+        # plt.plot(diameter_new[:-1], np.diff(dist_new))
+        # plt.show()
+        # x1 = diameter[diameter<=xsep]
+        # x2 = diameter[diameter>xsep]
+        # y1 = dist[diameter<=xsep]
+        # y2 = dist[diameter>xsep]
+
+        num_x2_original = sum(dist[diameter > xsep] != 0)
+        num_x1_original = sum(dist[diameter <= xsep] != 0)
+
+        x2_test = standard_diameter[standard_diameter>xsep]
+        y2_test = data[i, 8:][standard_diameter>xsep]
+        y1_test = data[i, 8:][standard_diameter<=xsep]
+        # y2_test = savgol_filter(y2_test, 5, 3)
+        ind_sep_x2 = find_point(y2_test)
+        
+        valleys  = find_valleys(np.diff(y2_test))
+
+        # if len(valleys) > 1 and y2_test.sum() > 10:
+        #     dist_new = savgol_filter(dist_new, 601, 3)
+        #     # dist_new = moving_average(dist_new, 201)
+        #     # diameter_new = moving_average(diameter_new, 201)
+
+        if n_montains == 1 or ind_sep_x2 != 0:
+            valleys  = find_valleys(np.diff(y2_test[:ind_sep_x2]))
+        
+        # if len(valleys) > 1:
+        #     # dist_new = savgol_filter(dist_new, 101, 3)
+        #     dist_new = moving_average(dist_new, 201)
+        #     diameter_new = moving_average(diameter_new, 201)
+
+        # # montains = np.diff(y2_test[:2])
+        fig, ax = plt.subplots()
+        ax.plot(x2_test[:-1], np.diff(y2_test,1), '-ob', label="valleys = %d, montains = %d"%(len(valleys), n_montains))
+        ax.plot(np.ones(x2_test.shape[0]-1)*x2_test[ind_sep_x2], np.diff(y2_test,1), color="k")
+        ax.legend()
+        # ax.plot(x1, y1, '-r')
+        ax.grid()
+        plt.show()
+        x1 = diameter_new[diameter_new<=xsep]
+        x2 = diameter_new[diameter_new>xsep]
+        y1 = dist_new[diameter_new<=xsep]
+        y2 = dist_new[diameter_new>xsep]
+
+        n1 = integrate.simps(y1, x1)
+        n2 = integrate.simps(y2, x2)
+
+        m11  = integrate.simps(x1*y1, x1)/n1
+        m12  = integrate.simps(x1**2*y1,x1)/n1
+        var1 =  m12 - m11**2
+        nu1 = m11**2/var1
+        bt1 = var1/m11
+
+        m21  = integrate.simps(x2*y2, x2)/n2
+        m22  = integrate.simps(x2**2*y2,x2)/n2
+        var2 =  m12 - m11**2
+        nu2 = m21**2/var2
+        bt2 = var2/m21
+        
+        # num_non_zero2 = np.where(y2 != 0)[0].shape[0]
+        #print("Conc second mode",np.sum(y1), np.sum(y2))
+        fig, axs = plt.subplots(2, sharex=True, gridspec_kw={'height_ratios': [3, 1]})
+        f0       = axs[0].plot(standard_diameter, data[i, 8:]/integrate.simps(data[i, 8:],standard_diameter ) , 'ob')
+        f1       = axs[0].plot(diameter_new, dist_new, '-m')
+        f30      = axs[0].plot(xnew[ind_sep], ynew[ind_sep], marker=">", color="k")
+        f11 = axs[0].fill_between([x1[0], x1[-1]], [max(dist), max(dist)], alpha=.5)
+        f12 = axs[0].fill_between([x2[0], x2[-1]], [max(dist), max(dist)], alpha=.5)
+        # axs[0].set_yscale('log')
+        # axs[0].set_ylim([.1, max(dist)+100])
+        # if x1.shape[0] > 5 and num_non_zero2 < 5: # If using original distribution, less resolution 
+        
+        if num_x1_original > 3 and data[i, 8:].sum() > 10:
+            if y1_test.sum() > 10 and len(valleys) == 0 and n_montains == 1: # If using interpolated distribution
+                s_data = np.ones(x1.shape[0])
+                initial_params=[n1, nu1, bt1]
+                pcount, covcount = curve_fit(mixture_gamma, x1, y1, sigma=s_data, 
+                                    p0=initial_params)
+                xnew = np.linspace(x1[0], x1[-1], 100)
+                fnew = mixture_gamma(xnew,*pcount)
+                residual  = y1 - mixture_gamma(x1,*pcount)
+                chi2 = sum(residual)**2
+                # print(bt1, pcount[2])
+                f1 = axs[0].plot(xnew, fnew, '-r', label=r"1 mode - $\nu$=%.1f, $\beta$=%.1f, $\xi$=%.1f"%(pcount[1], pcount[2], chi2))
+                axs[0].set_title("sum y2 original = %d, n_montain = %.3f, n2/n0 = %.3f"%(y2_test.sum(), n_montains, n2/n0))
+                axs[0].set_ylabel(r'Counts [#]')
+                axs[0].grid()  
+                axs[0].legend()
+                
+                f4 = axs[1].plot(x1, residual/max(abs(residual)), '--ob',markersize=4.)
+                axs[1].set_ylabel('Relative Res [#]')
+                axs[1].set_xlabel(r'Diameter [$\mu$m]')
+                axs[1].set_xlim([x1[0], x2[-1]])
+                #axs[1].set_ylim([-1.2,1.2])
+                axs[1].grid()
+                # plt.suptitle(file)
+                plt.show()
+
+            # elif num_non_zero2  > 5: # If using original distribution, less resolution
+            elif len(valleys) > 0 or n_montains > 1: 
+                # print(n2/n0, num_x2_original)
+                # initial_params=[n1, 2*n2, 12, 8, .3, .5]
+                initial_params=[n1, n2, nu1, nu2, bt1, bt2]
+                
+                # Find the indices where dist is non-zero
+                # non_zero_indices = np.where(dist != 0)[0]
+                # dist_new, diameter_new = dist[non_zero_indices], diameter[non_zero_indices]
+                s_data = np.ones(diameter_new.shape[0])
+
+                pcount, covcount = curve_fit(mixture_gamma, diameter_new, dist_new, sigma=s_data, 
+                                            p0=initial_params)
+                
+                dnew = np.arange(diameter_new[0], diameter_new[-1], .1)
+                fnew = mixture_gamma(dnew,*pcount)
+                residual  = dist_new - mixture_gamma(diameter_new,*pcount)
+                chi2 = sum(residual)**2
+                # print(nu1, pcount[2])
+                f1       = axs[0].plot(dnew, fnew, '-r', label="%.1f, %.1f, %.1f,%.1f, %.1f, %.1f"%(pcount[0],pcount[1],pcount[2], pcount[3],pcount[4],pcount[5]))
+                f2 = axs[0].plot(dnew, mixture_gamma(dnew, pcount[0],pcount[2],pcount[4]), '--r')
+                f3 = axs[0].plot(dnew, mixture_gamma(dnew, pcount[1],pcount[3],pcount[5]), '--g')
+                
+                axs[0].set_title("sum y2 = %d, chi2 = %.3f"%(y2.sum(), chi2))
+                axs[0].set_ylabel(r'Counts [#]')
+                axs[0].grid()
+                axs[0].legend()
+                # axs[0].set_yscale('log')
+
+                f4 = axs[1].plot(diameter_new, residual/max(abs(residual)), '--ob',markersize=4.)
+                axs[1].set_ylabel('Relative Res [#]')
+                axs[1].set_xlabel(r'Diameter [$\mu$m]')
+                axs[1].set_xlim([x1[0], x2[-1]])
+                axs[1].set_ylim([-1.2,1.2])
+                axs[1].grid()
+                # plt.suptitle(file)
+                plt.show()
+            # set_trace()
         # i_peaks  = identify_modes(dist, prominence=.1)
         # print(i_peaks)
         # ini      = 0

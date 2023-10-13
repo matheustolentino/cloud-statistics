@@ -1271,9 +1271,9 @@ file_extension = '.nc'
 chirp_layers = reading_dataset_chunking(root_folder, target_parent_folder)
 target_parent_folder = "lwp"
 chirp_lwp = reading_dataset_chunking(root_folder, target_parent_folder)
-target_parent_folder = "geometric_cloud_thickness"
-file_extension = '.json'
-chirp_cloud_thickness = reading_dataset_chunking(root_folder, target_parent_folder, file_extension=file_extension)
+# target_parent_folder = "geometric_cloud_thickness"
+# file_extension = '.json'
+# chirp_cloud_thickness = reading_dataset_chunking(root_folder, target_parent_folder, file_extension=file_extension)
 freq_str = "M"
 
 
@@ -1292,68 +1292,66 @@ lwp = xr.concat(lwp_list, dim='time').sortby('time')
 clouds_single_layer = cloud_layers.sel(time=mask_single)
 lwp_single_layer    = lwp.sel(time=mask_single)
 
-chirp_cloud_thickness_list = [ds for ds in chirp_cloud_thickness.values()]
-cloud_thickness = xr.concat(chirp_cloud_thickness_list, dim='time').sortby('time')
+# chirp_cloud_thickness_list = [ds for ds in chirp_cloud_thickness.values()]
+# cloud_thickness = xr.concat(chirp_cloud_thickness_list, dim='time').sortby('time')
 
-reindexed_clouds_layers = reindex_datasets(clouds_single_layer)
-reindexed_clouds_layers['multilayer'] = xr.DataArray(mask_multi.astype(np.float64), dims='time')
-reindexed_clouds_layers['no_clouds'] = xr.DataArray(mask_w_clouds.astype(np.float64), dims='time')
-reindexed_clouds_layers['missing'] = reindexed_clouds_layers.multilayer.isnull().astype(np.float64)
+# reindexed_clouds_layers = reindex_datasets(clouds_single_layer)
+# reindexed_clouds_layers['multilayer'] = xr.DataArray(mask_multi.astype(np.float64), dims='time')
+# reindexed_clouds_layers['no_clouds'] = xr.DataArray(mask_w_clouds.astype(np.float64), dims='time')
+# reindexed_clouds_layers['missing'] = reindexed_clouds_layers.multilayer.isnull().astype(np.float64)
 
-plot_cloud_frequency(reindexed_clouds_layers,
-                     freq_str, 
-                     figname=f"{PATH_FIG}cloud_frequency.png")
+# plot_cloud_frequency(reindexed_clouds_layers,
+#                      freq_str, 
+#                      figname=f"{PATH_FIG}cloud_frequency.png")
 
-plot_histograms_with_profiles(datasets=[lwp_single_layer.value.where(clouds_single_layer.Liquid.compute() == 1, drop=True).dropna(dim='time'),
-                                        lwp_single_layer.value.where(clouds_single_layer.Mixed_phase.compute() == 1, drop=True).dropna(dim='time')],
-                             bin_width=25,
-                             labels=["Liquid", "Mixed-phase"],
-                             x_label= r"LWP ($\delta$ LWP = 25 [g $m^{-2}$])",
-                             y_label="Frequency [%]",
-                             xticks_resolution=50,
-                             xlim=[0, 600],
-                             ylim=(0.1, 100),
-                             figname=f"{PATH_FIG}lwp_histograms.png")
+# plot_histograms_with_profiles(datasets=[lwp_single_layer.value.where(clouds_single_layer.Liquid.compute() == 1, drop=True).dropna(dim='time'),
+#                                         lwp_single_layer.value.where(clouds_single_layer.Mixed_phase.compute() == 1, drop=True).dropna(dim='time')],
+#                              bin_width=25,
+#                              labels=["Liquid", "Mixed-phase"],
+#                              x_label= r"LWP ($\delta$ LWP = 25 [g $m^{-2}$])",
+#                              y_label="Frequency [%]",
+#                              xticks_resolution=50,
+#                              xlim=[0, 600],
+#                              ylim=(0.1, 100),
+#                              figname=f"{PATH_FIG}lwp_histograms.png")
 
-plot_histograms_with_profiles(datasets=[cloud_thickness.Liquid.where(clouds_single_layer.Liquid.compute() == 1, drop=True).dropna(dim='time'),
-                                        cloud_thickness.Ice.where(clouds_single_layer.Ice.compute() == 1, drop=True).dropna(dim='time'),
-                                        cloud_thickness.Mixed_phase.where(clouds_single_layer.Mixed_phase.compute() == 1, drop=True).dropna(dim='time')],
-                             bin_width=200,
-                             labels=["Liquid", "Ice", "Mixed-phase"],
-                             x_label= r"CB ($\delta$ CTHICKNESS = 200 [m])",
-                             y_label="Frequency [%]",
-                             xticks_resolution=500,
-                             ylim=(0.1, 100),
-                             figname=f"{PATH_FIG}cloud_thickness_histograms.png")
+# plot_histograms_with_profiles(datasets=[cloud_thickness.Liquid.where(clouds_single_layer.Liquid.compute() == 1, drop=True).dropna(dim='time'),
+#                                         cloud_thickness.Ice.where(clouds_single_layer.Ice.compute() == 1, drop=True).dropna(dim='time'),
+#                                         cloud_thickness.Mixed_phase.where(clouds_single_layer.Mixed_phase.compute() == 1, drop=True).dropna(dim='time')],
+#                              bin_width=200,
+#                              labels=["Liquid", "Ice", "Mixed-phase"],
+#                              x_label= r"CB ($\delta$ CTHICKNESS = 200 [m])",
+#                              y_label="Frequency [%]",
+#                              xticks_resolution=500,
+#                              ylim=(0.1, 100),
+#                              figname=f"{PATH_FIG}cloud_thickness_histograms.png")
 # -----------------------------------------------------------------------------------------------
 # Cloud Geometric Properties Analysis
 # -----------------------------------------------------------------------------------------------
-# target_parent_folder = "height_cloud_base"
-# file_extension = '.json'
-# chirp_height_cb = reading_dataset_chunking(root_folder, target_parent_folder, file_extension=file_extension)
-# target_parent_folder = "height_cloud_top"
-# file_extension = '.json'
-# chirp_height_ct = reading_dataset_chunking(root_folder, target_parent_folder, file_extension=file_extension)
-# target_parent_folder = "geometric_cloud_thickness"
-# file_extension = '.json'
-# chirp_height_cg = reading_dataset_chunking(root_folder, target_parent_folder, file_extension=file_extension)
+target_parent_folder = "height_cloud_base"
+file_extension = '.json'
+chirp_height_cb = reading_dataset_chunking(root_folder, target_parent_folder, file_extension=file_extension)
+target_parent_folder = "height_cloud_top"
+file_extension = '.json'
+chirp_height_ct = reading_dataset_chunking(root_folder, target_parent_folder, file_extension=file_extension)
+target_parent_folder = "geometric_cloud_thickness"
+file_extension = '.json'
+chirp_height_cg = reading_dataset_chunking(root_folder, target_parent_folder, file_extension=file_extension)
 
-# freq_str = "M"
+freq_str = "M"
 
-# chirp_height_cb_list = [ds for ds in chirp_height_cb.values()]
-# cloud_prop_cb = xr.concat(chirp_height_cb_list, dim='time').sortby('time')
+chirp_height_cb_list = [ds for ds in chirp_height_cb.values()]
+cloud_prop_cb = xr.concat(chirp_height_cb_list, dim='time').sortby('time')
 
-# chirp_height_ct_list = [ds for ds in chirp_height_ct.values()]
-# cloud_prop_ct = xr.concat(chirp_height_ct_list, dim='time').sortby('time')
+chirp_height_ct_list = [ds for ds in chirp_height_ct.values()]
+cloud_prop_ct = xr.concat(chirp_height_ct_list, dim='time').sortby('time')
 
-# chirp_height_cg_list = [ds for ds in chirp_height_cg.values()]
-# cloud_prop_cg = xr.concat(chirp_height_cg_list, dim='time').sortby('time')
+chirp_height_cg_list = [ds for ds in chirp_height_cg.values()]
+cloud_prop_cg = xr.concat(chirp_height_cg_list, dim='time').sortby('time')
 
-
-
-# cloud_base_indexed_byseason = assign_season(cloud_prop_cb, SEASONS)
-# cloud_top_indexed_byseason  = assign_season(cloud_prop_ct, SEASONS)
-# cloud_thickness_indexed_byseason = assign_season(cloud_prop_cg, SEASONS)
+cloud_base_indexed_byseason = assign_season(cloud_prop_cb, SEASONS)
+cloud_top_indexed_byseason  = assign_season(cloud_prop_ct, SEASONS)
+cloud_thickness_indexed_byseason = assign_season(cloud_prop_cg, SEASONS)
 # -----------------------------------------------------------------------------------------------
 # Tests
 # -----------------------------------------------------------------------------------------------
@@ -1378,7 +1376,7 @@ plot_histograms_with_profiles(datasets=[cloud_thickness.Liquid.where(clouds_sing
 #     ax.set_title(f"Cloud Base Height - {season}")
 #     plt.show()
 
-# # Define the number of rows and columns for the subplots based on the number of variables
+# Define the number of rows and columns for the subplots based on the number of variables
 # num_rows = len(unique_vars)
 # num_cols = len(unique_season)
 
@@ -1411,13 +1409,12 @@ plot_histograms_with_profiles(datasets=[cloud_thickness.Liquid.where(clouds_sing
 # Plotting Histograms and Montlhy time evolution of cloud grometrics properties
 # -----------------------------------------------------------------------------------------------
 
-# def plot_seasonal_histograms(ds, save_path=None):
+# def plot_seasonal_histograms(ds, xname, save_path=None):
 #     """
 #     Create and display seasonal histograms for each variable in a dataset.
 
 #     Parameters:
 #     ds (xarray.Dataset): The input xarray dataset containing the data.
-#     seasons (dict): A dictionary that defines the season ranges in terms of months.
 #     save_path (str, optional): If provided, save the figure to this path.
 
 #     Returns:
@@ -1429,9 +1426,13 @@ plot_histograms_with_profiles(datasets=[cloud_thickness.Liquid.where(clouds_sing
 
 #     # Define the number of rows and columns for the subplots
 #     num_seasons = len(unique_season)
+#     num_cols = 2  # Set the number of columns to be 2
+
+#     # Calculate the number of rows needed
+#     num_rows = (num_seasons + num_cols - 1) // num_cols
 
 #     # Create a figure with subplots
-#     fig, axes = plt.subplots(num_seasons, 1, figsize=(10, 7 * num_seasons), sharex=True)
+#     fig, axes = plt.subplots(num_rows, num_cols, figsize=(15, 7 * num_rows), sharex=True)
 
 #     for i, season in enumerate(unique_season):
 #         mask_season = ds.season == season
@@ -1441,15 +1442,20 @@ plot_histograms_with_profiles(datasets=[cloud_thickness.Liquid.where(clouds_sing
 #             cloud_prop_cb_single_layer = ds[var_name].where(clouds_single_layer[var_name].compute() == 1, drop=True)
 #             data_season[var_name] = cloud_prop_cb_single_layer.where(mask_season, drop=True).values
 
-#         ax = axes[i]
+#         ax = axes[i // num_cols, i % num_cols]
 
 #         with sns.axes_style("whitegrid"):
 #             for var_name, values in data_season.items():
 #                 sns.histplot(values, kde=True, label=f"{var_name} ({len(values)} Profiles)", ax=ax)
 
 #         ax.set_title(f"Season - {season}")
-#         ax.set_xlabel("Values")
+#         ax.set_xlabel(xname)
 #         ax.legend()
+
+#     # Remove any empty subplots
+#     if num_seasons < num_rows * num_cols:
+#         for i in range(num_seasons, num_rows * num_cols):
+#             fig.delaxes(axes[i // num_cols, i % num_cols])
 
 #     # Adjust subplot layout and spacing
 #     if save_path:
@@ -1457,77 +1463,77 @@ plot_histograms_with_profiles(datasets=[cloud_thickness.Liquid.where(clouds_sing
 #     plt.tight_layout()
 #     plt.show()
 
-# plot_seasonal_histograms(cloud_base_indexed_byseason, save_path=f"{PATH_FIG}cloud_base_height_histograms.png")
-# plot_seasonal_histograms(cloud_top_indexed_byseason, save_path=f"{PATH_FIG}cloud_top_height_histograms.png")
-# plot_seasonal_histograms(cloud_thickness_indexed_byseason, save_path=f"{PATH_FIG}cloud_thickness_histograms.png")
+# plot_seasonal_histograms(cloud_base_indexed_byseason,"Cloud base height [m]" , save_path=f"{PATH_FIG}cloud_base_height_histograms.png")
+# plot_seasonal_histograms(cloud_top_indexed_byseason,"Cloud top height [m]" , save_path=f"{PATH_FIG}cloud_top_height_histograms.png")
+# plot_seasonal_histograms(cloud_thickness_indexed_byseason, "Cloud thickness [m]", save_path=f"{PATH_FIG}cloud_thickness_histograms.png")
 
 # # -----------------------------------------------------------------------------------------------
-# def plot_cloud_prop_along_time(ds, clouds_single_layer, lwp, save_path):
+def plot_cloud_prop_along_time(ds, clouds_single_layer, lwp, variable, save_path):
     
-#     time_complete = get_complete_time(ds)
-#     time_complete_df = pd.DataFrame({'datetime': time_complete})
-#     time_complete_df['month'] = time_complete_df['datetime'].dt.month
-#     count_complete = time_complete_df.groupby('month').count()['datetime']
+    time_complete = get_complete_time(ds)
+    time_complete_df = pd.DataFrame({'datetime': time_complete})
+    time_complete_df['month'] = time_complete_df['datetime'].dt.month
+    count_complete = time_complete_df.groupby('month').count()['datetime']
     
-#     for var_name in ds.data_vars:
-#         # Create a new figure and subplots for each var_name
-#         fig, axes = plt.subplots(2, 1, sharex=True, figsize=(10, 12))  # 2 rows, 1 column
+    for var_name in ds.data_vars:
+        # Create a new figure and subplots for each var_name
+        fig, axes = plt.subplots(2, 1, sharex=True, figsize=(10, 12))  # 2 rows, 1 column
 
-#         with sns.axes_style("darkgrid"):
-#             # Line plot (upper subplot)
-#             cond = clouds_single_layer[var_name].compute() == 1
-#             var = ds[var_name].where(cond, drop=True)
-#             new_lwp = lwp.where(cond, drop=True)
-#             sns.lineplot(
-#                 x=var.time.dt.month.values,
-#                 y=var.values/1e3,
-#                 ax=axes[0],
-#                 hue=var.time.dt.year.values,
-#                 palette="Set2",
-#                 errorbar="sd",
-#                 marker="o",
-#             )
-#             axes[0].set_title(f"Cloud Base Height - {var_name}")
-#             axes[0].set_ylabel("Height AGL [km]")
-#             axes[0].grid(True)
+        with sns.axes_style("darkgrid"):
+            # Line plot (upper subplot)
+            cond = clouds_single_layer[var_name].compute() == 1
+            var = ds[var_name].where(cond, drop=True)
+            new_lwp = lwp.where(cond, drop=True)
+            sns.lineplot(
+                x=var.time.dt.month.values,
+                y=var.values/1e3,
+                ax=axes[0],
+                hue=var.time.dt.year.values,
+                palette="Set2",
+                errorbar="sd",
+                marker="o",
+            )
+            axes[0].set_title(f"{variable} - {var_name}")
+            axes[0].set_ylabel(f"{variable} AGL [km]")
+            axes[0].grid(True)
 
-#             # Scatter plot (lower subplot)
-#             var['month'] = var['time'].dt.month
-#             monthly_data = var.groupby('month').mean()
-#             counts = var.groupby('month').count()
+            # Scatter plot (lower subplot)
+            var['month'] = var['time'].dt.month
+            monthly_data = var.groupby('month').mean()
+            counts = var.groupby('month').count()
 
-#             months = monthly_data['month'].values
-#             means = monthly_data.values / 1e3
+            months = monthly_data['month'].values
+            means = monthly_data.values / 1e3
 
-#             scatter = axes[1].scatter(months, means, c=counts.values/2880, cmap='jet', marker='o', s=100, edgecolor='k')
-#             cbar = plt.colorbar(scatter, ax=axes[1], orientation='horizontal', pad=0.2, shrink=0.8, aspect=30)
-#             cbar.set_label('Number of Days [a.u]')
+            scatter = axes[1].scatter(months, means, c=counts.values/2880, cmap='jet', marker='o', s=100, edgecolor='k')
+            cbar = plt.colorbar(scatter, ax=axes[1], orientation='horizontal', pad=0.2, shrink=0.8, aspect=30)
+            cbar.set_label('Number of Days [a.u]')
 
-#             std_dev = np.sqrt(var.groupby('month').var().values) / 1e3
-#             axes[1].errorbar(months, means, yerr=std_dev, fmt='none', c='k', capsize=4)
-#             axes[1].set_ylabel("Height AGL [km]")
-#             axes[1].set_xlabel("Month")
-#             axes[1].grid(True)
+            std_dev = np.sqrt(var.groupby('month').var().values) / 1e3
+            axes[1].errorbar(months, means, yerr=std_dev, fmt='none', c='k', capsize=4)
+            axes[1].set_ylabel(f"{variable} AGL [km]")
+            axes[1].set_xlabel("Month")
+            axes[1].grid(True)
 
-#             # Create a twin axes for the secondary y-axis on the right
-#             ax2 = axes[1].twinx()
-#             # Plot the new_lwp data on the twin axes
-#             new_lwp['month'] = new_lwp['time'].dt.month
-#             monthly_data_lwp = new_lwp.groupby('month').mean().value
-#             line_color = 'red'  # Get the color of the first line in the palette
-#             ax2.tick_params(axis='y', colors=line_color)
-#             ax2.plot(months, monthly_data_lwp.values/1e3, color=line_color, linestyle='--', marker='s', markersize=6)
-#             ax2.set_ylabel(r"LWP [kg $m^{-2}$]", color=line_color)  # You can replace 'units' with the actual unit for new_lwp
+            # Create a twin axes for the secondary y-axis on the right
+            ax2 = axes[1].twinx()
+            # Plot the new_lwp data on the twin axes
+            new_lwp['month'] = new_lwp['time'].dt.month
+            monthly_data_lwp = new_lwp.groupby('month').mean().value
+            line_color = 'red'  # Get the color of the first line in the palette
+            ax2.tick_params(axis='y', colors=line_color)
+            ax2.plot(months, monthly_data_lwp.values/1e3, color=line_color, linestyle='--', marker='s', markersize=6)
+            ax2.set_ylabel(r"LWP [kg $m^{-2}$]", color=line_color)  # You can replace 'units' with the actual unit for new_lwp
 
-#         # Adjust subplot layout and spacing
-#         plt.tight_layout()
-#         fig.savefig(f"{save_path}_{var_name}.png", dpi=300)
-#         # Show the plots for the current var_name
-#         plt.show()
+        # Adjust subplot layout and spacing
+        plt.tight_layout()
+        fig.savefig(f"{save_path}_{var_name}.png", dpi=300)
+        # Show the plots for the current var_name
+        plt.show()
 
-# plot_cloud_prop_along_time(cloud_base_indexed_byseason, clouds_single_layer, lwp, save_path=f"{PATH_FIG}cloud_base_height")
-# plot_cloud_prop_along_time(cloud_top_indexed_byseason, clouds_single_layer, lwp, save_path=f"{PATH_FIG}cloud_top_height")
-# plot_cloud_prop_along_time(cloud_thickness_indexed_byseason, clouds_single_layer, lwp, save_path=f"{PATH_FIG}cloud_thickness")
+plot_cloud_prop_along_time(cloud_base_indexed_byseason, clouds_single_layer, lwp, "CB Height", save_path=f"{PATH_FIG}cloud_base_height")
+plot_cloud_prop_along_time(cloud_top_indexed_byseason, clouds_single_layer, lwp, "CT Height", save_path=f"{PATH_FIG}cloud_top_height")
+plot_cloud_prop_along_time(cloud_thickness_indexed_byseason, clouds_single_layer, lwp, "CThick", save_path=f"{PATH_FIG}cloud_thickness")
 
 # -----------------------------------------------------------------------------------------------
 
