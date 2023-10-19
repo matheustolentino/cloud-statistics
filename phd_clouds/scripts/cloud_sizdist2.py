@@ -14,6 +14,10 @@ from scipy.signal import savgol_filter
 from scipy.ndimage import gaussian_filter1d
 from pdb import set_trace
 from scipy.stats import gaussian_kde
+from scipy.stats import mode
+from sklearn.mixture import GaussianMixture
+from itertools import chain
+import seaborn as sns
 
 plt.ion()
 plt.close('all')
@@ -52,23 +56,6 @@ for file in os.listdir(PATH_SIZDIST):
         filenames.append(file)
         #print(file)
 #**************************************************************************************************
-def identify_modes(data: np.ndarray, prominence: float = 0.1, width: float = 1) -> List[int]:
-    """
-    Identify the modes in a distribution.
-
-    Args:
-        data (np.ndarray): The data array.
-        prominence (float): The minimum prominence of a peak to be considered a mode.
-        width (float): The minimum width of a peak to be considered a mode.
-
-    Returns:
-        List[int]: A list of indices corresponding to the positions of the identified modes.
-    """
-    # Find peaks in the distribution
-    peaks, _ = find_peaks(data, prominence=prominence, width=width)
-
-    # Return the indices of the peaks (modes)
-    return peaks
 
 def mixture_gamma(x: np.ndarray, *params: float) -> np.ndarray:
     """
@@ -93,66 +80,129 @@ def mixture_gamma(x: np.ndarray, *params: float) -> np.ndarray:
         pdf += w * gamma.pdf(x, a, scale=b)
     return pdf
 
-def neg_log_likelihood(params):
-    weights = params[:3]
-    shapes = params[3:6]
-    scales = params[6:]
-    pdf = mixture_gamma(x_data, weights, shapes, scales)
-    log_likelihood = np.sum(np.log(pdf))
-    return -log_likelihood
+def find_modes_with_gmm(data, n_components=2, plot=True, nbin=60, title='Histogram'):
+    # Fit a Gaussian Mixture Model to the data
+    gmm = GaussianMixture(n_components=n_components)
+    gmm.fit(data.reshape(-1, 1))
 
-def find_point(dist_new):
-    aux_dist = np.diff(dist_new)
-    ind_sep_aux = np.where(aux_dist > -0.00001)[0]
+    # Get the means and covariances of the GMM components
+    means = gmm.means_.flatten()
+    covariances = gmm.covariances_.flatten()
+
+    # Sort components by mean (modes)
+    sorted_indices = np.argsort(means)
+    modes = means[sorted_indices]
+    mode_covariances = covariances[sorted_indices]
+
+    if plot:
+        # Plot the data and GMM components
+        plt.figure(figsize=(8, 6))
+        plt.hist(data, bins=nbin, density=True, alpha=0.5, color='blue', label='Data Histogram')
+        plt.xlabel('Value')
+        plt.ylabel('Density')
+        plt.title(f'GMM with Modes - {title}')
+        
+        for mode, mode_cov in zip(modes, mode_covariances):
+            x = np.linspace(mode - 3 * np.sqrt(mode_cov), mode + 3 * np.sqrt(mode_cov), 1000)
+            y = (1.0 / (np.sqrt(2 * np.pi * mode_cov))) * np.exp(-0.5 * ((x - mode) ** 2) / mode_cov)
+            plt.plot(x, y, label=f'Mode {mode:.2f}')
+
+        plt.legend()
+        plt.show()
+
+    return modes, mode_covariances
+
+def calculate_gamma_parameters(diameter, counts, peak_info=None, mode=0):
     
-    return ind_sep_aux[0]
+    if peak_info is None:
+        x = diameter
+        y = counts
+    else:
+        ini = peak_info['left_bases'][mode]
+        end = peak_info['right_bases'][mode]
+        x = diameter[ini:end]
+        y = counts[ini:end]
 
-def find_max_min(arr):
-    if len(arr) == 0:
-        return None, None  # Return None for both max and min if the array is empty
+    n = integrate.simps(y, x)
+    first_mom = integrate.simps(x*y, x)/n
+    second_mom  = integrate.simps(x**2*y,x)/n
+    var1  =  second_mom - first_mom**2
+    nu    = first_mom**2/var1
+    scale = var1/first_mom
 
-    max_val = min_val = arr[0]  # Initialize max and min with the first element
+    return  n, nu, scale, x, y
 
-    for element in arr:
-        if element > max_val:
-            max_val = element  # Update max if a larger element is found
-        elif element < min_val:
-            min_val = element  # Update min if a smaller element is found
+def plot_and_show_distributions(
+    param: List[float],
+    diameter: List[float],
+    filtered_dist: List[float],
+    diameter_interp: List[float],
+    dist_interp: List[float],
+    fnew: List[float],
+    residual: int | List[float],
+    get_params: bool,
+) -> None:
+    """
+    Plot and show distributions with parameter information.
 
-    return max_val, min_val
+    Args:
+        param (List[float]): List of parameters, including weights, shapes, and scales.
+        diameter (List[float]): List of diameters.
+        filtered_dist (List[float]): List of filtered distributions.
+        diameter_interp (List[float]): List of interpolated diameters.
+        dist_interp (List[float]): List of interpolated distributions.
+        fnew (List[float]): List of new distributions.
+        residual (List[float]): List of residuals.
+        peaks_res (int): Number of peaks for the residuals.
 
-def find_valleys(arr):
-    valleys = []
-    n = len(arr)
-    
-    for i in range(1, n - 1):
-        if arr[i] < arr[i - 1] and arr[i] < arr[i + 1]:
-            valleys.append(i)
-    
-    return valleys
+    Returns:
+        None
+    """
+    num_distributions = len(param) // 3
+    weights = param[:num_distributions]
+    shapes = param[num_distributions:2 * num_distributions]
+    scales = param[2 * num_distributions:]
+   
+    # Create the table format
+    table_format = f"{'weights':<10} {'shapes':<10} {'scales':<10}\n"
+    table_format += '-' * 40 + '\n'
 
-# def find_mountains(arr, epsilon):
-#     mountains = []
-#     n = len(arr)
-    
-#     for i in range(1, n - 1):
-#         if arr[i] - epsilon > arr[i - 1] and arr[i] - epsilon > arr[i + 1]:
-#             mountains.append(i)
-    
-#     return mountains
+    # Populate the table with data
+    for i in range(len(weights)):
+        table_format += f"{weights[i]:<10.1f} {shapes[i]:<10.2f} {scales[i]:<10.2f}\n"
 
-def find_mountains(arr):
-    mountains = []
-    n = len(arr)
-    
-    for i in range(1, n - 1):
-        if arr[i] > arr[i - 1] and arr[i] > arr[i + 1]:
-            mountains.append(i)
-    
-    return mountains
+    # Add parameter information as text
+    text_x = 0.3  # X-coordinate for text annotations
+    text_y = 0.8  # Y-coordinate for text annotations
 
-def moving_average(x, w):
-    return np.convolve(x, np.ones(w), 'valid') / w
+    fig, axs = plt.subplots(2, sharex=True, gridspec_kw={'height_ratios': [3, 1]})
+    f0 = axs[0].plot(diameter, filtered_dist, 'om')
+    # axs[0].plot(diameter_interp, dist_interp, '--m')
+    axs[0].plot(diameter_interp, fnew, '-r')
+    if num_distributions > 1:
+        for i in range(num_distributions):
+            # axs[0].plot(diameter_interp, weights[i] * gamma.pdf(diameter_interp, shapes[i], scale=scales[i]), '--')
+            axs[0].plot(diameter_interp, mixture_gamma(diameter_interp, weights[i], shapes[i], scales[i]), '--')
+    # axs[0].set_yscale('log')
+    # Create a white background text box for the table
+    axs[0].text(
+        text_x,
+        text_y,
+        table_format,
+        transform=axs[0].transAxes,
+        backgroundcolor='white',
+        fontsize=10,  # Adjust font size as needed
+        verticalalignment='top'  # Adjust vertical alignment as needed
+    )
+    axs[0].grid()
+
+    f1 = axs[1].plot(diameter_interp, residual, '--ob', markersize=4., label='get_params = %r'%get_params)
+    axs[1].set_ylabel(' Res [#]')
+    axs[1].set_xlabel(r'Diameter [$\mu$m]')
+    axs[1].set_xlim([diameter_interp[0], diameter_interp[-1]])
+    axs[1].legend()
+    axs[1].grid()
+    plt.show()
 
 #**************************************************************************************************
 # Teste mixture of gamma functions
@@ -207,94 +257,248 @@ def moving_average(x, w):
 # ax.legend()
 # plt.show()
 #**************************************************************************************************
+SHAPE_THRESHOLD = 50
+DISTANCE_MODE_THRESHOLD = 3
+
 standard_diameter    = np.loadtxt(PATH_SIZDIST+'diameters.csv', delimiter=',')
 surface     = 0.24*10**(-2) # mm ^2 -> cm^2
+display     = False
 #fitted_dist = np.zeros((len(filenames), diameter.shape[0]))
-
-file = filenames[1]
-# 7 deu problema, maybe 3 modes
-data = np.loadtxt(PATH_SIZDIST+file, delimiter=',')
-# # for i,file in enumerate(filenames):
-# for i in range(data.shape[0]):
-for i in range(3):
-    dist     = data[i, 8:]
-    diameter = standard_diameter
-   
-    if dist.max() > 5:
-        # dist = dist/integrate.simps(dist, diameter)
-        # derivative = np.diff(dist)
-        # ind_neg = np.where(derivative[:2] < 0)[0]
-        # if ind_neg.any() and ind_neg.shape[0] < 2:
-        #     print("negative derivative")
-        #     dist = dist[ind_neg[0]+1:]
-        #     diameter = diameter[ind_neg[0]+1:]
+diameters_eff  = []
+diameters_mean = []
+fitted_weights = []
+fitted_shapes  = []
+fitted_scales  = []
+count_occurence = 0
+dic_param      = {}
+count_distributions = 0
+count_used_distributions = 0
+for file in filenames:
+    data = np.loadtxt(PATH_SIZDIST+file, delimiter=',')
+    # # for i,file in enumerate(filenames):
+    # fitted_v = np.zeros((data.shape[0], 5))
+    # fitted_reff = np.zeros((data.shape[0], 5))
+    # fitted_rmode = np.zeros((data.shape[0], 5))
+    # fitted_rmean = np.zeros((data.shape[0], 5))
+    for i_file in range(data.shape[0]):
+    # for i_file in range(50):
+        dist     = data[i_file, 8:]
+        diameter = standard_diameter
         
-        # dist = savgol_filter(dist, 9, 3)
+        if dist.max() > 5:
+            # Apply Gaussian filter to smooth the distribution
+            filtered_dist = gaussian_filter1d(dist, 1)
+            
+            # Interpolate the distribution
+            f = interpolate.interp1d(diameter, filtered_dist, kind='cubic')
+            delta_diameter = .01
+            diameter_interp = np.arange(diameter[0], diameter[-1], delta_diameter)
+            dist_interp     = f(diameter_interp)
+
+            # Find peaks in the distribution
+            peaks, peak_info = find_peaks(dist_interp, height=5, prominence=5)
+            # HEIGHT: This parameter specifies the minimum height (amplitude) 
+            # that a point must have to be considered a peak. 
+            # Any point in the input array with a value less than this height will 
+            # be ignored. This can be used to filter out small or insignificant peaks.
+            
+            # PROMINENCE: This parameter specifies the minimum prominence of peaks.
+            # The prominence of a peak is the minimum height by which a peak is separated 
+            # from its neighboring valleys. If a peak's prominence is less than 
+            # the specified value, it will not be considered a peak.
+
+            # print("diameter = %f, peaks = %r, left_diameter = %r, right_diameter = %r"%(data[i, 0], 
+            #                                                                          peaks, 
+            #                                                                          diameter_interp[peak_info['left_bases']], 
+            #                                                                          diameter_interp[peak_info['right_bases']]))
+
+            try:
+                if not peaks.any():
+                    n, nu, scale, _, _ = calculate_gamma_parameters(diameter_interp, dist_interp)
+                    initial_params=[n, nu, scale]
+
+                    param, pcov = curve_fit(mixture_gamma, diameter_interp, dist_interp, 
+                                            p0=initial_params)
+
+                elif peaks.shape[0] == 1:
+                    n, nu, scale, x, y = calculate_gamma_parameters(diameter_interp, 
+                                                                    dist_interp, 
+                                                                    peak_info)
+                    initial_params=[n, nu, scale]
+                    
+                    param, pcov = curve_fit(mixture_gamma, x, y, 
+                                            p0=initial_params)
+                    
+                    fnew = mixture_gamma(x, *param)
+                    residual  = y - fnew
+
+                    peaks_res, peak_res_info = find_peaks(residual, height=5, prominence=10, width=5/delta_diameter)
+                    # WIDTH: The width parameter can be used to specify the minimum width of peaks. 
+                    # It sets the minimum number of data points between the left 
+                    # and right bases of a peak. If a peak is narrower than this width, 
+                    # it will not be considered a peak.
+                    
+                    if peaks_res.any():
+                        n, nu, scale, _, _ = calculate_gamma_parameters(x, y, peak_res_info)
+                        initial_params=[param[0], n, param[1], nu, param[2], scale]
+                        n_param = len(initial_params)
+                        # bounds = (0, n_param*[np.inf])
+                        # print(initial_params)
+                        param_aux, pcov_aux = curve_fit(mixture_gamma, x, y, 
+                                            p0=initial_params, maxfev=2000)
+                        
+                        frac = param_aux[1]/param_aux[0]
+                        # param_aux[2] > 5
+                        # param_aux[3] > 5
+
+                        if param_aux[1] > 0 and param_aux[2] > 5 and param_aux[3] > 5 and frac > .1 and frac < 2:
+                            param = param_aux
+                            pcov  = pcov_aux
+                
+                elif peaks.shape[0] > 1:
+                    # display = True
+                    ns     = []
+                    nus    = []
+                    scales = []
+                    for i, peak in enumerate(peaks):
+                        n, nu, scale, _, _ = calculate_gamma_parameters(diameter_interp,
+                                                                dist_interp,
+                                                                peak_info,
+                                                                i)
+                        ns.append(n)
+                        nus.append(nu)
+                        scales.append(scale)
+                    initial_params = ns + nus + scales
+                    n_param = len(initial_params)
+                    bounds = (0, n_param*[np.inf])
+
+                    param, pcov = curve_fit(mixture_gamma, diameter_interp, dist_interp, 
+                                            p0=initial_params, maxfev=2000, bounds=bounds)
+                    
+                
+
+                num_distributions = len(param) // 3
+                weights = param[:num_distributions]
+                shapes = param[num_distributions:2 * num_distributions]
+                scales = param[2 * num_distributions:]
+
+                dmode_aux = (shapes-1)*scales
+                dmean_aux = scales*shapes
+                deff_aux  = scales*(shapes + 2)
+                
+                n_modes = len(dmode_aux)
+                distance_mode = 999*np.ones(n_modes)
+                if n_modes > 1:
+                    distance_mode = np.abs(np.diff(dmode_aux))
+
+                fnew = mixture_gamma(diameter_interp, *param)
+                residual = dist_interp - fnew
+                chi = np.mean(residual)
+                
+                possible_shape = np.all(shapes < SHAPE_THRESHOLD)
+                possible_mode_distance = np.all(distance_mode > DISTANCE_MODE_THRESHOLD)
+
+                get_params = np.all([possible_shape,possible_mode_distance])
+
+                if display and n_modes > 1:
+                    count_occurence += 1
+                    plot_and_show_distributions(param, diameter, filtered_dist, diameter_interp, dist_interp, fnew, residual, get_params)
+                    if count_occurence > 40:
+                        set_trace()
+                        plt.close('all')
+                        count_occurence = 0
+                    display = False
+                
+                # if display:
+                #     plot_and_show_distributions(param, diameter, filtered_dist, diameter_interp, dist_interp, fnew, residual, distance_mode)
+                #     display = False
+                
+                if get_params:
+                    diameters_mean.append(dmean_aux.tolist())
+                    diameters_eff.append(deff_aux.tolist())
+                    fitted_weights.append(weights.tolist())
+                    fitted_shapes.append(shapes.tolist())
+                    fitted_scales.append(scales.tolist())
+                    count_used_distributions += 1
+
+            except RuntimeError as e:
+                print(f"Error - Curve_fit failed: {e}")
+                fig, ax = plt.subplots()
+                ax.plot(diameter, filtered_dist, 'or')
+                ax.plot(diameter_interp, dist_interp, '--m')
+                ax.grid()
+                plt.show()
         
+        count_distributions += 1
 
-        filtered_dist = gaussian_filter1d(dist, 1)
-        
-        # if n_montains > 1:
-        #     dist = savgol_filter(dist, 3, 2)
+flattened_diameter_mean = np.array( list(chain(*diameters_mean)) )
+flattened_diameter_eff = np.array( list(chain(*diameters_eff)) )
+flattened_weights = np.array( list(chain(*fitted_weights)) )
+flattened_shapes = np.array( list(chain(*fitted_shapes)) )
+flattened_scales = np.array( list(chain(*fitted_scales)) )
 
-        # # Create a new list with non-zero values from dist and corresponding values from diameter
-        # fig, ax = plt.subplots()
-        # ax.plot(diameter[:12], dist[:12], 'ob')
-        # ax.grid()
-        # plt.show()
-        #**************************************************************************************************
-        f = interpolate.interp1d(diameter, filtered_dist, kind='cubic')
-        diameter_interp = np.arange(diameter[0], diameter[-1], .01)
-        # diameter_interp = np.linspace(diameter[0], diameter[-1], diameter.shape[0]*5)
-        dist_interp     = f(diameter_interp)
+with sns.axes_style("darkgrid"):
+    fig, axs = plt.subplots(1, 2, sharex=True, figsize=(10, 6))
+    f0 = sns.histplot(flattened_diameter_mean, stat='density',
+                            binwidth=1, 
+                            kde=True, 
+                            color='red', 
+                            alpha=0.4,
+                            linewidth=1.2, 
+                            element='bars',
+                            ax=axs[0])
+    axs[0].set_xlabel('Mean Diameter [um]')
+    axs[0].set_ylabel('Density')
 
-        
-        # Calculate the first derivative (approximate) using finite differences
-        first_derivative = np.diff(dist_interp)  # This is an approximation
-        
-        # Find the indices where the first derivative changes from negative to positive
-        minima_indices = np.where((np.diff(np.sign(first_derivative)) > 0))[0]
+    f1 = sns.histplot(flattened_diameter_eff, stat='density',
+                            binwidth=1, 
+                            kde=True, 
+                            color='green', 
+                            alpha=0.4,
+                            linewidth=1.2, 
+                            element='bars',
+                            ax=axs[1])
+    axs[1].set_xlabel('Effective Diameter [um]')
+    axs[1].set_ylabel('Density')
+    axs[1].set_xlim([0, 30])
+    # putting sup title
+    fig.suptitle('Total number of distributions = %d,\n Number of used distributions = %d'%(count_distributions, count_used_distributions))
+    fig.savefig(PATH_FIG+'histogram_mean_eff_diameters.png', dpi=300)
+    plt.tight_layout()
+    plt.show()
 
-        # Find the indices where the first derivative changes from positive to negative
-        maxima_indices = np.where((np.diff(np.sign(first_derivative)) < 0))[0]
-        
-        threshold = 2
-        index_valid_modes = maxima_indices[dist_interp[maxima_indices] > threshold]
-        # if index_valid_modes:
+    # find_modes_with_gmm(flattened_diameter_mean, 2, nbin=40, title='Histogram of Mean Diameters')
+    # find_modes_with_gmm(flattened_diameter_eff, 2, nbin=40, title='Histogram of Effective Diameters')
 
 
-        # else:
-        #     second_derivative = np.diff(dist_interp,2)
-        #     # Find the indices where the sign of the second derivative changes
-        #     inflection_indices = np.where(np.diff(np.sign(second_derivative)))[0]
-
-        # # Get the corresponding x and y values for inflection points
-        # inflection_points_x = diameter_interp[inflection_indices]
-        # inflection_points_y = dist_interp[inflection_indices]
-
-        index_mountains = find_mountains(dist_interp)
-        index_valleys   = find_valleys(dist_interp)
-        print(diameter_interp[index_valleys])
-        
-        fig, ax = plt.subplots()
-        ax.plot(diameter_interp[:-1], np.diff(dist_interp,1), '--b')
-
-        # ax.plot(x1, y1, '-r')
-        ax.grid()
-        plt.show()
-
-        # Remover zeros aqui, e nao precisa abaixo
-        mask_non_zero = np.where(dist_interp == 0)[0]
-        if mask_non_zero.any():
-            print("heve zeros")
-            dist_new, diameter_new = dist_interp[~mask_non_zero], diameter_interp[~mask_non_zero]
-        n0 = integrate.simps(dist_interp, diameter_interp)
-
-        fig, ax = plt.subplots()
-        ax.plot(diameter, dist, 'ob')
-        ax.plot(diameter, filtered_dist, 'or')
-        ax.plot(diameter_interp, dist_interp, '--m')
-        ax.grid()
-        plt.show()
-
-        #**************************************************************************************************
+# Plot the second histogram
+    fig, axs = plt.subplots(1, 2, figsize=(10, 6))
+    f0 = sns.histplot(flattened_shapes, stat='density',
+                        binwidth=2, 
+                        kde=True, 
+                        color='magenta', 
+                        alpha=0.4, 
+                        linewidth=1.2, 
+                        element='bars',
+                        ax=axs[0])
+    axs[0].set(xlabel=r'$\nu$', ylabel='Density')
+    axs[0].set_title('Histogram of Shapes')
+    plt.show()
+    # Plot the third histogram
+    f2 = sns.histplot(flattened_scales, stat='density', 
+                    bins=40, 
+                    kde=True,
+                    binwidth=.1, 
+                    color='blue',
+                    alpha=0.4,  
+                    linewidth=1.2, 
+                    ax=axs[1])
+    axs[1].set(xlabel=r'$\theta$', ylabel='Density')
+    axs[1].set_title('Histogram of Scales')
+    axs[1].set_xlim([0, 3])
+    fig.suptitle('Total number of distributions = %d,\n Number of used distributions = %d'%(count_distributions, count_used_distributions))
+    fig.savefig(PATH_FIG+'histogram_shapes_scales.png', dpi=300)
+    plt.tight_layout()
+    plt.show()
+    # find_modes_with_gmm(flattened_shapes, 1, nbin=30, title='Histogram of Shapes')
+    # find_modes_with_gmm(flattened_scales, 2, nbin=40, title='Histogram of Scales')

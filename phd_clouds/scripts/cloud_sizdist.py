@@ -11,6 +11,7 @@ from scipy.signal import argrelextrema, find_peaks
 from typing import List, Union
 import os
 from scipy.signal import savgol_filter
+from scipy.ndimage import gaussian_filter1d
 from pdb import set_trace
 
 plt.ion()
@@ -199,12 +200,12 @@ standard_diameter    = np.loadtxt(PATH_SIZDIST+'diameters.csv', delimiter=',')
 surface     = 0.24*10**(-2) # mm ^2 -> cm^2
 #fitted_dist = np.zeros((len(filenames), diameter.shape[0]))
 
-file = filenames[7]
+file = filenames[8]
 # 7 deu problema, maybe 3 modes
 data = np.loadtxt(PATH_SIZDIST+file, delimiter=',')
 # # for i,file in enumerate(filenames):
 # for i in range(data.shape[0]):
-for i in range(10):
+for i in range(50):
     dist     = data[i, 8:]
     diameter = standard_diameter
    
@@ -217,7 +218,8 @@ for i in range(10):
             dist = dist[ind_neg[0]+1:]
             diameter = diameter[ind_neg[0]+1:]
         
-        dist = savgol_filter(dist, 9, 3)
+        # dist = savgol_filter(dist, 9, 3)
+        dist = gaussian_filter1d(dist, 1)
         ind_maxs       = find_mountains(dist, 0.001)
         if ind_maxs:
             ind_global_max = np.where(dist == max(dist[ind_maxs]))[0][0]

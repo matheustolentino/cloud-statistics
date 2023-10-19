@@ -11,7 +11,7 @@ from datetime import timedelta
 import matplotlib.dates as mdates
 import datetime
 import pandas as pd
-from pandas import DataFrame
+from scipy import integrate, interpolate
 import os
 from functools import reduce
 import operator
@@ -20,7 +20,7 @@ import itertools
 import xarray as xr
 import seaborn as sns
 import colorcet as cc  # Import the colorcet library
-import multiprocessing
+# import multiprocessing 
 import time as time_module
 from pdb import set_trace
 # import seaborn as sns
@@ -29,6 +29,7 @@ from cloudnetpy.products import generate_lwc
 from cloudnetpy.products import generate_iwc
 from cloudnetpy.products import generate_der
 from cloudnetpy.products.der import Parameters
+from cloudnetpy.categorize import generate_categorize
 #-------------------------------------------------------------------------------------------------------
 plt.ion()
 plt.close('all')
@@ -41,9 +42,9 @@ PATH_CLASS        = '../../../data/classification/'
 PATH_CATE         = '../../../data/categorize/'
 PATH_RADAR        = '../../../data/radar/'
 PATH_FIG          = '../figures/'
-PATH_CLOUDNET_LWC = '../../tests/output_retrievals/lwc/'
-PATH_CLOUDNET_IWC = '../../tests/output_retrievals/iwc/'
-PATH_CLOUDNET_DER = '../../tests/output_retrievals/der/'
+PATH_CLOUDNET_LWC = '../../../output_retrievals/lwc/'
+PATH_CLOUDNET_IWC = '../../../output_retrievals/'
+PATH_CLOUDNET_DER = '../../../tests/output_retrievals/der/'
 #-------------------------------------------------------------------------------------------------------
 # constants
 #-------------------------------------------------------------------------------------------------------
@@ -78,7 +79,8 @@ CLASSIFICATION_TICK_LABELS = ['Clear  sky',
                'Melting & droplets', 
                'Aerosol',
                'Insect', 
-               'Aerosol & insect']
+               'Aerosol & insect',
+               'No Data']
         
 HYDRO_TYPES = { "Liquid"          : [CLOUD_LIQUID,DRIZZLE_OR_RAIN,DRIZZLE_OR_RAIN_LIQUID_DROPLETS],
                 "Ice"             : [ICE_PARTICLES],
@@ -336,12 +338,21 @@ def handle_serialization(column):
 
 def plot_cloud_type(df_class, df_ze, cloud_filter, name_title, z_min, z_max, color_names):
     
+    time_series    = df_class.index
+    new_start_time = time_series.min().replace(hour=0, minute=0, second=15, microsecond=0)
+    new_end_time   = time_series.max().replace(hour=23, minute=59, second=59, microsecond=0)
+    new_time_index = pd.date_range(start=new_start_time, end=new_end_time, freq="30S")
 
     df_ze = df_ze[cloud_filter.cloud_mask()]
     df_class_filtered = df_class[cloud_filter.cloud_mask()]
+
+    df_class_complete_time = df_class.reindex(index=new_time_index, fill_value=11)
+    df_ze_complete_time = df_ze.reindex(index=new_time_index, fill_value=np.nan)
+    df_class_filtered_complete_time = df_class_filtered.reindex(index=new_time_index, fill_value=11)
+
     # List of manually specified colors (replace these with your desired colors)
-    manual_colors = ["#FFFFFF","#2077D6", "#0A2658", "#FFFF00", "#4EF6C1",\
-                      "#D05BAC", "#BFBD8D", "#118527","#8794B3", "#DA6F49", "#88183E"]
+    manual_colors = ["#57A1F7","#007CFF", "#0A2658", "#FFFF00", "#4EF6C1",\
+                      "#D05BAC", "#BFBD8D", "#118527","#8794B3", "#DA6F49", "#88183E", "#DDDEDA"]
     ncolors = len(color_names)
     # Create a figure and an array of subplots
     fig, axs = plt.subplots(3, sharex=True, sharey=True, figsize=(15, 10))
@@ -350,12 +361,12 @@ def plot_cloud_type(df_class, df_ze, cloud_filter, name_title, z_min, z_max, col
     manual_cmap = plt.cm.colors.ListedColormap(manual_colors)
 
     # Plot the classification heatmap
-    f0 = axs[0].pcolormesh(df_class.index, 
-                            df_class.columns/1000, 
-                            np.transpose(df_class),
+    f0 = axs[0].pcolormesh(df_class_complete_time.index, 
+                            df_class_complete_time.columns/1000, 
+                            np.transpose(df_class_complete_time),
                             cmap=manual_cmap,
                             vmin=0,
-                            vmax=ncolors)
+                            vmax=ncolors-1)
 
     i = 0
     for sublist in cloud_filter.cloud_base:
@@ -370,9 +381,9 @@ def plot_cloud_type(df_class, df_ze, cloud_filter, name_title, z_min, z_max, col
     axs[0].grid()
     
     # Plot the mixed phase categories heatmap
-    f1 = axs[1].pcolormesh(df_class_filtered.index, 
-                          df_class_filtered.columns/1000, 
-                          np.transpose(df_class_filtered),
+    f1 = axs[1].pcolormesh(df_class_filtered_complete_time.index, 
+                          df_class_filtered_complete_time.columns/1000, 
+                          np.transpose(df_class_filtered_complete_time),
                           cmap=manual_cmap,
                           vmin=0,
                           vmax=ncolors)
@@ -400,9 +411,9 @@ def plot_cloud_type(df_class, df_ze, cloud_filter, name_title, z_min, z_max, col
 
 
     # Plot the mixed phase Ze heatmap
-    f2 = axs[2].pcolormesh(df_ze.index, 
-                          df_ze.columns/1000, 
-                          np.transpose(df_ze),
+    f2 = axs[2].pcolormesh(df_ze_complete_time.index, 
+                          df_ze_complete_time.columns/1000, 
+                          np.transpose(df_ze_complete_time),
                           cmap='viridis',
                           vmin=-40,
                           vmax=10)
@@ -419,7 +430,7 @@ def plot_cloud_type(df_class, df_ze, cloud_filter, name_title, z_min, z_max, col
     
     # Set y-axis limits
     axs[2].set_ylim([z_min, z_max])
-    
+    axs[2].set_xlim([time_series.min(), time_series.max()])
     axs[2].grid()
     plt.suptitle(name_title)
     plt.show()
@@ -467,26 +478,60 @@ def plot_cloud_mask(df_complete, df_mask, name_title, z_min, z_max):
     plt.suptitle(name_title)
     plt.show()
 
+def plot_integrated_variables(df_integrated_variables):
+    # Create a figure and axis
+    fig, ax1 = plt.subplots(figsize=(10, 6))
+
+    # Plot the 'LWP' data on the first y-axis
+    color = 'tab:blue'
+    ax1.set_xlabel('Time [UTC]')
+    ax1.set_ylabel('LWP [g m$^{-2}$]', color=color)
+    ax1.plot(df_integrated_variables.index, df_integrated_variables['LWP'], color=color)
+    ax1.tick_params(axis='y', labelcolor=color)
+
+    # Create a second y-axis
+    ax2 = ax1.twinx()
+
+    # Plot the 'IWP' data on the second y-axis
+    color = 'tab:red'
+    ax2.set_ylabel('IWP [g m$^{-2}]$', color=color)
+    ax2.plot(df_integrated_variables.index, df_integrated_variables['IWP']*1e3, color=color)
+    ax2.tick_params(axis='y', labelcolor=color)
+
+    # Format x-axis labels to display hour and minute
+    ax1.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+
+    # Set the super title with the date
+    plt.suptitle(df_integrated_variables.index[0].strftime("%Y-%m-%d"))
+
+    # Show the plot
+    plt.title('LWP and IWP over Time')
+    plt.show()
+
 #------------------------------------------------------------------------------------------------
 # cloudnet algorithm to generate netcdf files with liquid water content (lwc) and droplet 
 # effective radius (der)
 #------------------------------------------------------------------------------------------------
-def generate_cloudnet_products(date, path_cate, path_cloudnet_lwc, path_cloudnet_iwc, path_cloudnet_der):
+def generate_cloudnet_products(date, path_cate, path_cloudnet_lwc = None, path_cloudnet_iwc = None, path_cloudnet_der = None):
+ 
     # Generate LWC
-    lwc_input_path = os.path.join(path_cate, date.strftime('%Y%m%d') + "_granada_categorize.nc")
-    lwc_output_path = os.path.join(path_cloudnet_lwc, date.strftime('%Y%m%d') + "_granada_" + 'lwc.nc')
-    generate_lwc(lwc_input_path, lwc_output_path)
+    if path_cloudnet_lwc is not None:
+        lwc_input_path = os.path.join(path_cate, date.strftime('%Y%m%d') + "_granada_categorize.nc")
+        lwc_output_path = os.path.join(path_cloudnet_lwc, date.strftime('%Y%m%d') + "_granada_" + 'lwc.nc')
+        generate_lwc(lwc_input_path, lwc_output_path)
 
     # Generate IWC
-    iwc_input_path = os.path.join(path_cate, date.strftime('%Y%m%d') + "_granada_categorize.nc")
-    iwc_output_path = os.path.join(path_cloudnet_iwc, date.strftime('%Y%m%d') + "_granada_" + 'iwc.nc')
-    generate_iwc(iwc_input_path, iwc_output_path)
+    if path_cloudnet_iwc is not None:
+        iwc_input_path = os.path.join(path_cate, date.strftime('%Y%m%d') + "_granada_categorize.nc")
+        iwc_output_path = os.path.join(path_cloudnet_iwc, date.strftime('%Y%m%d') + "_granada_" + 'iwc.nc')
+        generate_iwc(iwc_input_path, iwc_output_path)
 
     # Generate DER
-    der_input_path = os.path.join(path_cate, date.strftime('%Y%m%d') + "_granada_categorize.nc")
-    der_output_path = os.path.join(path_cloudnet_der, date.strftime('%Y%m%d') + "_granada_" + 'der.nc')
-    params = Parameters(2.0, 100.0e6, 200.0e6, 0.25, 0.1, 5.0e-3)
-    generate_der(der_input_path, der_output_path, parameters=params)
+    if path_cloudnet_der is not None:
+        der_input_path = os.path.join(path_cate, date.strftime('%Y%m%d') + "_granada_categorize.nc")
+        der_output_path = os.path.join(path_cloudnet_der, date.strftime('%Y%m%d') + "_granada_" + 'der.nc')
+        params = Parameters(2.0, 100.0e6, 200.0e6, 0.25, 0.1, 5.0e-3)
+        generate_der(der_input_path, der_output_path, parameters=params)
 
 def check_time_resolution(classification, categorize, date):
     try:
@@ -514,6 +559,12 @@ def rechunk_dataset(ds, chunks):
 def process_cloud_data_parallel(args):
     # Unpack the arguments
     (height, nchirp, date, chirp_res)  = args
+    # ------------------------------------------------------------------------------------------------
+    # generate some cloudnet products
+    #------------------------------------------------------------------------------------------------
+    generate_cloudnet_products(date, 
+                                PATH_CATE, 
+                                path_cloudnet_iwc=PATH_CLOUDNET_IWC)
     #------------------------------------------------------------------------------------------------
     # reading categorize, classification and radar files
     #------------------------------------------------------------------------------------------------
@@ -533,9 +584,12 @@ def process_cloud_data_parallel(args):
     # if not np.array_equal(height, categorize['height'][:]-categorize['altitude'][:]):
     #     print(f"Warning: radar and categorize files with different height bins - {date} : {radar.range.size} vs {height.size}")
     # if not np.array_equal(radar.range.values, height):
+    
+    # ------------------------------------------------------------------------------------------------
+    # reading some cloudnet products
     # ------------------------------------------------------------------------------------------------
     # cloudnet_lwc = nc.Dataset(PATH_CLOUDNET_LWC+date.strftime('%Y%m%d')+"_granada_"+'lwc.nc')
-    # cloudnet_iwc = nc.Dataset(PATH_CLOUDNET_IWC+date.strftime('%Y%m%d')+"_granada_"+'iwc.nc')
+    cloudnet_iwc = xr.open_dataset(PATH_CLOUDNET_IWC+date.strftime('%Y%m%d')+"_granada_"+'iwc.nc')
     # cloudnet_der = nc.Dataset(PATH_CLOUDNET_DER+date.strftime('%Y%m%d')+"_granada_"+'der.nc')
     # ------------------------------------------------------------------------------------------------
     # dataframes_list_ze.append(radar.Zh)
@@ -554,14 +608,19 @@ def process_cloud_data_parallel(args):
     df_reflectivity   = pd.DataFrame(data =categorize['Z'][:],
                                         index =time,
                                         columns=height)
-    df_lwp            = pd.DataFrame(data  =categorize['lwp'][:], 
-                                    index =time, 
-                                    columns=["value"])
-
+    
     df_classification = pd.DataFrame(data=classification['target_classification'][:],
                                         index  =time,
                                         columns=height)
-    # ------------------------------------------------------------------------------------------------
+    df_integrated_variables = pd.DataFrame({'LWP': categorize['lwp'][:], 
+                                            'IWP': np.trapz(cloudnet_iwc.iwc, height, axis=1)
+                                            }, index=time)
+    xr_radar_variables = xr.merge([xr.DataArray(categorize['Z'][:], coords={'time': time, 'range': height}, name='Z'),
+                           xr.DataArray(categorize['v'][:], coords={'time': time, 'range': height}, name='v')], compat='no_conflicts', join='exact')
+    
+    plot_integrated_variables(df_integrated_variables)
+    return None # remove this line to run the rest of the code
+    # -----------------------------------------------------------------------------------------------
     # df_cloudnet_lwc   = pd.DataFrame(data   =1.0e3*cloudnet_lwc['lwc'][:],
     #                                     index  =time,
     #                                     columns= height) # g m^-3
@@ -573,8 +632,8 @@ def process_cloud_data_parallel(args):
     #                                     columns=height) # um
     # ------------------------------------------------------------------------------------------------
     try: 
-        process_cloud_data(date, radar, df_classification,
-                       df_reflectivity, df_lwp,
+        process_cloud_data(date, xr_radar_variables, df_classification,
+                       df_reflectivity, df_integrated_variables,
                        number_of_layers,
                        height_cloud_base, 
                        height_cloud_top, 
@@ -587,10 +646,10 @@ def process_cloud_data_parallel(args):
     # ------------------------------------------------------------------------------------------------
 
 def process_cloud_data(date: datetime.datetime,
-                        radar_data: xr.Dataset,
+                        xr_radar_variables: xr.Dataset,
                         df_classification: pd.DataFrame,
                         df_reflectivity: pd.DataFrame,
-                        df_lwp: pd.DataFrame,
+                        df_integrated_variables: pd.DataFrame,
                         number_of_layers: pd.DataFrame,
                         height_cloud_base: pd.DataFrame,
                         height_cloud_top: pd.DataFrame,
@@ -644,16 +703,15 @@ def process_cloud_data(date: datetime.datetime,
         #                     classification_filter, 
         #                     cloud, .1, 12., CLASSIFICATION_TICK_LABELS)
     #------------------------------------------------------------------------------------------------
-    ds_radar_var       = xr.merge([radar_data.Zh, radar_data.v], compat='no_conflicts', join='exact')
-    df_lwp.index.name  = 'time'
-    ds_lwp             = xr.Dataset.from_dataframe(df_lwp)
+    df_integrated_variables.index.name  = 'time'
+    df_integrated_variables             = xr.Dataset.from_dataframe(df_integrated_variables)
     number_of_layers.index.name = 'time'
     ds_layers          = xr.Dataset.from_dataframe(number_of_layers)
-    name_folders_nc    = ["radar_variables", "lwp", "hydrometeor", "number_of_layers"]
+    name_folders_nc    = ["radar_variables", "integrated_variables", "hydrometeor", "number_of_layers"]
     # ------------------------------------------------------------------------------------------------
     # Save the dataset as a NetCDF file inside the chirp folder
     # ------------------------------------------------------------------------------------------------
-    for ds, name in zip([ds_radar_var, ds_lwp, ds_hydrometeor, ds_layers], name_folders_nc):
+    for ds, name in zip([xr_radar_variables, df_integrated_variables, ds_hydrometeor, ds_layers], name_folders_nc):
         folder_name = f"../../../processed_data/chirp_{nchirp}/{name}/"
         if not os.path.exists(folder_name):
             os.makedirs(folder_name)
@@ -1096,25 +1154,55 @@ class CloudProcess:
                 current_count = 0
 
         return max_count, start_index, end_index
+
 #--------------------------------------------------------------------------------------------------------
 # Define variables:
 #--------------------------------------------------------------------------------------------------------
 paths     = [PATH_RADAR, PATH_CATE, PATH_CLASS]
 extension = '.nc'
 database_intersection  = common_prefix_of_filenames(paths, extension)
-start_date = min(database_intersection) # first date of database
-end_date   = max(database_intersection) # last date of database
+# start_date = min(database_intersection) # first date of database
+# end_date   = max(database_intersection) # last date of database
 
-# start_date = datetime.datetime(2018, 4, 25)
-# end_date   = datetime.datetime(2018, 4, 26)
+# start_date = datetime.datetime(2021, 4, 16)
+# end_date   = datetime.datetime(2021, 4, 16, 23, 59, 59)
+
+start_date = datetime.datetime(2023, 1, 1)
+end_date   = datetime.datetime(2023, 2, 1)
 
 #TODO: should create a loop to iterate over all chirp configurations
 # chirp_ini, chirp_final, chirp_zres, chirp_height, selected_interval = compare_radar_chirp_configurations(start_date, end_date, database_intersection, PATH_RADAR)
 intervals_dic, height_dic = compare_radar_chirp_configurations(start_date, end_date, database_intersection, PATH_RADAR)
-for renge_res, interval in intervals_dic.items():
-    print(f"Chirp resolution: {renge_res} m, Intervals Count: {len(interval)}")
-print("\nRemoving all cloudnet files of LWC and Reff from its directory...")
+for range_res, interval in intervals_dic.items():
+    print(f"Chirp resolution: {range_res} m, Intervals Count: {len(interval)}")
+    # height_dic[range_res]
+    # set_trace()
     
+print("\nRemoving all cloudnet files of LWC and Reff from its directory...")
+# min_chirp_range = min([height_dic[var].min() for var in height_dic])
+# max_chirp_range = max([height_dic[var].max() for var in height_dic])
+# max_size_chirp_range = max([height_dic[var].size for var in height_dic])ç
+
+# Finding common height range between all chirp configurations:
+# Round the heights in each array to a specified number of decimal places
+# decimal_places = 1
+# rounded_height_dic = {key: [np.around(height, decimal_places) for height in heights] for key, heights in height_dic.items()}
+
+# # Create a set to store unique merged heights
+# merged_heights_set = set()
+
+# # Iterate through the original dictionary and add heights to the set
+# for heights in rounded_height_dic.values():
+#     merged_heights_set.update(heights)
+
+# # Convert the set to a list and sort it in ascending order
+# merged_heights = sorted(merged_heights_set)
+
+# min_chirp_range = 104.344696
+# max_chirp_range = 13491.768
+# max_size_chirp_range = 860
+# new_range = np.linspace(min_chirp_range, max_chirp_range, max_size_chirp_range)
+
 os.system("rm "+PATH_CLOUDNET_LWC+"*lwc.nc") # remove all lwc files from lwc path 
 os.system("rm "+PATH_CLOUDNET_DER+"*der.nc") # remove all der files from der path
 os.system("rm "+PATH_CLOUDNET_IWC+"*iwc.nc") # remove all der files from der path
@@ -1138,25 +1226,26 @@ for nchirp, key_res in enumerate(intervals_dic):
         #                            PATH_CLOUDNET_IWC, 
         #                            PATH_CLOUDNET_DER)
         #------------------------------------------------------------------------------------------------
-        processing_args.append((height, nchirp, date, key_res))
-        # process_cloud_data_parallel((height, nchirp, date, key_res))
+        # processing_args.append((height, nchirp, date, key_res))
+        process_cloud_data_parallel((height, nchirp, date, key_res))
+
 # end_time = time_module.time()
 #------------------------------------------------------------------------------------------------
 # Parallel execution using multiprocessing.Pool
 # ------------------------------------------------------------------------------------------------
-num_processes = 4  # You can adjust this as needed
-# Start the timer for parallel execution
-print("Starting parallel execution...")
-start_time = time_module.time()
-# Parallel execution using multiprocessing.Pool
-with multiprocessing.Pool(processes=num_processes) as pool:
-    pool.map(process_cloud_data_parallel, processing_args)
-end_time = time_module.time()
-print("Parallel execution finished.")
-# ------------------------------------------------------------------------------------------------
-# Calculate and print the execution time
-execution_time = (end_time - start_time) / 60
-print(f"Execution time: {execution_time:.2f} minutes")
+# num_processes = 4  # You can adjust this as needed
+# # Start the timer for parallel execution
+# print("Starting parallel execution...")
+# start_time = time_module.time()
+# # Parallel execution using multiprocessing.Pool
+# with multiprocessing.Pool(processes=num_processes) as pool:
+#     pool.map(process_cloud_data_parallel, processing_args)
+# end_time = time_module.time()
+# print("Parallel execution finished.")
+# # ------------------------------------------------------------------------------------------------
+# # Calculate and print the execution time
+# execution_time = (end_time - start_time) / 60
+# print(f"Execution time: {execution_time:.2f} minutes")
 
 # if __name__ == "__main__":
 #     main()
