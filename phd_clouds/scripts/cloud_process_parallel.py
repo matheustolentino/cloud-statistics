@@ -613,9 +613,11 @@ def process_cloud_data_parallel(args):
     df_classification = pd.DataFrame(data=classification['target_classification'][:],
                                         index  =time,
                                         columns=height)
+    # ------------------------------------------------------------------------------------------------
     mask_outliers_lwp = categorize['lwp'][:] > THRESHOLD_LWP
     if np.any(mask_outliers_lwp):
         categorize['lwp'][mask_outliers_lwp] = np.nan
+    # ------------------------------------------------------------------------------------------------
     df_integrated_variables = pd.DataFrame({'LWP': categorize['lwp'][:], 
                                             'IWP': np.trapz(cloudnet_iwc.iwc, height, axis=1)
                                             }, index=time)
