@@ -64,6 +64,7 @@ NBINS_BETWEEN_HYDRO             = 1
 NBINS_CLOUD                     = 3
 THRESHOLD_BELLOW                = 100 # [ m ]
 THRESHOLD_ABOVE                 = 100 # [ m ]
+THRESHOLD_LWP                   = 5e3 # [ g m-2 ]
 FONT                            = {'family': 'serif',
                                    'color':  'black',
                                    'weight': 'normal',
@@ -612,6 +613,9 @@ def process_cloud_data_parallel(args):
     df_classification = pd.DataFrame(data=classification['target_classification'][:],
                                         index  =time,
                                         columns=height)
+    mask_outliers_lwp = categorize['lwp'][:] > THRESHOLD_LWP
+    if np.any(mask_outliers_lwp):
+        categorize['lwp'][mask_outliers_lwp] = np.nan
     df_integrated_variables = pd.DataFrame({'LWP': categorize['lwp'][:], 
                                             'IWP': np.trapz(cloudnet_iwc.iwc, height, axis=1)
                                             }, index=time)
@@ -619,7 +623,7 @@ def process_cloud_data_parallel(args):
                            xr.DataArray(categorize['v'][:], coords={'time': time, 'range': height}, name='v')], compat='no_conflicts', join='exact')
     
     plot_integrated_variables(df_integrated_variables)
-    return None # remove this line to run the rest of the code
+    # return None # remove this line to run the rest of the code
     # -----------------------------------------------------------------------------------------------
     # df_cloudnet_lwc   = pd.DataFrame(data   =1.0e3*cloudnet_lwc['lwc'][:],
     #                                     index  =time,
@@ -1164,11 +1168,11 @@ database_intersection  = common_prefix_of_filenames(paths, extension)
 # start_date = min(database_intersection) # first date of database
 # end_date   = max(database_intersection) # last date of database
 
-# start_date = datetime.datetime(2021, 4, 16)
-# end_date   = datetime.datetime(2021, 4, 16, 23, 59, 59)
+start_date = datetime.datetime(2021, 4, 16)
+end_date   = datetime.datetime(2021, 4, 16, 23, 59, 59)
 
-start_date = datetime.datetime(2023, 1, 1)
-end_date   = datetime.datetime(2023, 2, 1)
+# start_date = datetime.datetime(2023, 1, 1)
+# end_date   = datetime.datetime(2023, 3, 1)
 
 #TODO: should create a loop to iterate over all chirp configurations
 # chirp_ini, chirp_final, chirp_zres, chirp_height, selected_interval = compare_radar_chirp_configurations(start_date, end_date, database_intersection, PATH_RADAR)
