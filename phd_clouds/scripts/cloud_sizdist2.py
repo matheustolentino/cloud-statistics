@@ -21,6 +21,7 @@ import seaborn as sns
 
 plt.ion()
 plt.close('all')
+sns.set_context("paper", font_scale=2, rc={"lines.linewidth": 2.5})
 #**************************************************************************************************
 PATH_SIZDIST = '../../../data/cloud_sizdist/'
 PATH_FIG     = '../figures/'
@@ -175,15 +176,16 @@ def plot_and_show_distributions(
     text_x = 0.3  # X-coordinate for text annotations
     text_y = 0.8  # Y-coordinate for text annotations
 
-    fig, axs = plt.subplots(2, sharex=True, gridspec_kw={'height_ratios': [3, 1]})
-    f0 = axs[0].plot(diameter, filtered_dist, 'om')
+    fig, axs = plt.subplots(2, sharex=True, gridspec_kw={'height_ratios': [3, 1]}, figsize=(7, 6))
+    f0 = axs[0].plot(diameter, filtered_dist, 'om', label='Smoothed distribution')   
     # axs[0].plot(diameter_interp, dist_interp, '--m')
-    axs[0].plot(diameter_interp, fnew, '-r')
+    axs[0].plot(diameter_interp, fnew, '-r', label='Fit')
     if num_distributions > 1:
         for i in range(num_distributions):
             # axs[0].plot(diameter_interp, weights[i] * gamma.pdf(diameter_interp, shapes[i], scale=scales[i]), '--')
             axs[0].plot(diameter_interp, mixture_gamma(diameter_interp, weights[i], shapes[i], scales[i]), '--')
     # axs[0].set_yscale('log')
+    axs[0].set_ylabel(' Count [#]')
     # Create a white background text box for the table
     axs[0].text(
         text_x,
@@ -195,8 +197,9 @@ def plot_and_show_distributions(
         verticalalignment='top'  # Adjust vertical alignment as needed
     )
     axs[0].grid()
+    axs[0].legend()
 
-    f1 = axs[1].plot(diameter_interp, residual, '--ob', markersize=4., label='get_params = %r'%get_params)
+    f1 = axs[1].plot(diameter_interp, residual, '--ob', markersize=5., label='get_params = %r'%get_params)
     axs[1].set_ylabel(' Res [#]')
     axs[1].set_xlabel(r'Diameter [$\mu$m]')
     axs[1].set_xlim([diameter_interp[0], diameter_interp[-1]])
@@ -321,6 +324,7 @@ for file in filenames:
                                             p0=initial_params)
 
                 elif peaks.shape[0] == 1:
+                    # display = True
                     n, nu, scale, x, y = calculate_gamma_parameters(diameter_interp, 
                                                                     dist_interp, 
                                                                     peak_info)
@@ -438,8 +442,8 @@ flattened_shapes = np.array( list(chain(*fitted_shapes)) )
 flattened_scales = np.array( list(chain(*fitted_scales)) )
 
 with sns.axes_style("darkgrid"):
-    fig, axs = plt.subplots(1, 2, sharex=True, figsize=(10, 6))
-    f0 = sns.histplot(flattened_diameter_mean, stat='density',
+    fig, axs = plt.subplots(1, 2, sharex=True, figsize=(17, 9))
+    f0 = sns.histplot(flattened_diameter_mean, stat='count',
                             binwidth=1, 
                             kde=True, 
                             color='red', 
@@ -448,9 +452,9 @@ with sns.axes_style("darkgrid"):
                             element='bars',
                             ax=axs[0])
     axs[0].set_xlabel('Mean Diameter [um]')
-    axs[0].set_ylabel('Density')
+    axs[0].set_ylabel('Count')
 
-    f1 = sns.histplot(flattened_diameter_eff, stat='density',
+    f1 = sns.histplot(flattened_diameter_eff, stat='count',
                             binwidth=1, 
                             kde=True, 
                             color='green', 
@@ -459,10 +463,10 @@ with sns.axes_style("darkgrid"):
                             element='bars',
                             ax=axs[1])
     axs[1].set_xlabel('Effective Diameter [um]')
-    axs[1].set_ylabel('Density')
+    axs[1].set_ylabel('Count')
     axs[1].set_xlim([0, 30])
     # putting sup title
-    fig.suptitle('Total number of distributions = %d,\n Number of used distributions = %d'%(count_distributions, count_used_distributions))
+    fig.suptitle(r'N$_{dist}$ = %d, N$_{used}$ = %d'%(count_distributions, count_used_distributions))
     fig.savefig(PATH_FIG+'histogram_mean_eff_diameters.png', dpi=300)
     plt.tight_layout()
     plt.show()
@@ -472,8 +476,8 @@ with sns.axes_style("darkgrid"):
 
 
 # Plot the second histogram
-    fig, axs = plt.subplots(1, 2, figsize=(10, 6))
-    f0 = sns.histplot(flattened_shapes, stat='density',
+    fig, axs = plt.subplots(1, 2, figsize=(17, 9))
+    f0 = sns.histplot(flattened_shapes, stat='count',
                         binwidth=2, 
                         kde=True, 
                         color='magenta', 
@@ -481,11 +485,11 @@ with sns.axes_style("darkgrid"):
                         linewidth=1.2, 
                         element='bars',
                         ax=axs[0])
-    axs[0].set(xlabel=r'$\nu$', ylabel='Density')
+    axs[0].set(xlabel=r'$\nu$', ylabel='Count')
     axs[0].set_title('Histogram of Shapes')
     plt.show()
     # Plot the third histogram
-    f2 = sns.histplot(flattened_scales, stat='density', 
+    f2 = sns.histplot(flattened_scales, stat='count', 
                     bins=40, 
                     kde=True,
                     binwidth=.1, 
@@ -493,10 +497,10 @@ with sns.axes_style("darkgrid"):
                     alpha=0.4,  
                     linewidth=1.2, 
                     ax=axs[1])
-    axs[1].set(xlabel=r'$\theta$', ylabel='Density')
+    axs[1].set(xlabel=r'$\theta$', ylabel='Count')
     axs[1].set_title('Histogram of Scales')
     axs[1].set_xlim([0, 3])
-    fig.suptitle('Total number of distributions = %d,\n Number of used distributions = %d'%(count_distributions, count_used_distributions))
+    fig.suptitle(r'N$_{dist}$ = %d, N$_{used}$ = %d'%(count_distributions, count_used_distributions))
     fig.savefig(PATH_FIG+'histogram_shapes_scales.png', dpi=300)
     plt.tight_layout()
     plt.show()

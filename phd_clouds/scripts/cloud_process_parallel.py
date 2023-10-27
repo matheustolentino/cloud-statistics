@@ -20,10 +20,11 @@ import itertools
 import xarray as xr
 import seaborn as sns
 import colorcet as cc  # Import the colorcet library
-# import multiprocessing 
+import multiprocessing 
 import time as time_module
 from pdb import set_trace
-# import seaborn as sns
+import seaborn as sns
+import glob
 #-------------------------------------------------------------------------------------------------------
 from cloudnetpy.products import generate_lwc
 from cloudnetpy.products import generate_iwc
@@ -33,14 +34,14 @@ from cloudnetpy.categorize import generate_categorize
 #-------------------------------------------------------------------------------------------------------
 plt.ion()
 plt.close('all')
-
+sns.set_context("paper", font_scale=2.5, rc={"lines.linewidth": 2.5})
 #from cloud_classes import Intersection_products, HMmodel, CloudProcess
 #-------------------------------------------------------------------------------------------------------
 # paths
 #-------------------------------------------------------------------------------------------------------
-PATH_CLASS        = '../../../data/classification/'
-PATH_CATE         = '../../../data/categorize/'
-PATH_RADAR        = '../../../data/radar/'
+PATH_CLASS        = '/media/matheustolen/Seagate Basic/cloudnet/classification/'
+PATH_CATE         = '/media/matheustolen/Seagate Basic/cloudnet/categorize/'
+PATH_RADAR        = '/media/matheustolen/Seagate Basic/cloudnet/radar/'
 PATH_FIG          = '../figures/'
 PATH_CLOUDNET_LWC = '../../../output_retrievals/lwc/'
 PATH_CLOUDNET_IWC = '../../../output_retrievals/'
@@ -62,6 +63,7 @@ AERO_WITH_INSECT_NO_CLOUD       = 10  # Aerosol coexisting with insects, no clou
 NBINS_BETWEEN_CLOUD             = 5
 NBINS_BETWEEN_HYDRO             = 1
 NBINS_CLOUD                     = 3
+NBINS_GET_RAIN                  = 20
 THRESHOLD_BELLOW                = 100 # [ m ]
 THRESHOLD_ABOVE                 = 100 # [ m ]
 THRESHOLD_LWP                   = 5e3 # [ g m-2 ]
@@ -100,7 +102,7 @@ CLOUD_TYPES = { "Liquid"          : [CLOUD_LIQUID,DRIZZLE_OR_RAIN_LIQUID_DROPLET
                     "Mixed_phase"     : [CLOUD_LIQUID,ICE_PARTICLES,ICE_WITH_SUP_WATER,\
                                         MELTING_ICE, MELTING_ICE_LIQUID_DROPLETS],
                     "Pre_liquid"      : [CLOUD_LIQUID,DRIZZLE_OR_RAIN_LIQUID_DROPLETS],
-                    "Pre_mixed_phase" : [ICE_PARTICLES,ICE_WITH_SUP_WATER,MELTING_ICE,\
+                    "Pre_mixed_phase" : [CLOUD_LIQUID, ICE_PARTICLES,ICE_WITH_SUP_WATER,MELTING_ICE,\
                                         MELTING_ICE_LIQUID_DROPLETS]
                 }  
 
@@ -124,7 +126,7 @@ TARG_TO_FILTER = {"Liquid"          : [DRIZZLE_OR_RAIN, ICE_PARTICLES, ICE_WITH_
                     "Pre_mixed_phase" : []}
 
 TARG_TO_GET_BELLOW = {"Pre_liquid"      : [DRIZZLE_OR_RAIN],
-                        "Pre_mixed_phase" : [CLOUD_LIQUID, DRIZZLE_OR_RAIN, DRIZZLE_OR_RAIN_LIQUID_DROPLETS]}
+                        "Pre_mixed_phase" : [DRIZZLE_OR_RAIN, DRIZZLE_OR_RAIN_LIQUID_DROPLETS]}
 
 CLOUD_PHASE = ["single_phase", "single_phase", "mixed_phase", "single_phase", "mixed_phase", "single_phase"]
 #-------------------------------------------------------------------------------------------------------
@@ -308,10 +310,13 @@ def compare_radar_chirp_configurations(start_date: datetime,
     resolution_dict = {}
     height_dict = {}
     current_resolution = None
+    radar_file_pattern = '_granada_rpg-fmcw-94*.nc'
     
     # Loop through the filtered dates and compare chirp configurations
     for date in valid_dates:
-        radar = nc.Dataset(path_radar + date.strftime('%Y%m%d') + "_granada_rpg-fmcw-94.nc")
+        radar_file_pattern = date.strftime('%Y%m%d')+'_granada_rpg-fmcw-94*.nc'
+        file_paths = glob.glob(os.path.join(path_radar,radar_file_pattern))[0]
+        radar = nc.Dataset(file_paths)
         new_resolution = tuple(radar['range_resolution'][:])
         
         if current_resolution is None:
@@ -337,7 +342,8 @@ def handle_serialization(column):
         return column.filled(np.nan).tolist()
     return column
 
-def plot_cloud_type(df_class, df_ze, cloud_filter, name_title, z_min, z_max, color_names):
+def plot_cloud_type(df_class, df_ze, cloud_filter, name_title, z_min, z_max, color_names, plot_ze=True, 
+                    cloud_type= List[int], targ_between_cloud= List[int], integrated_variables=pd.DataFrame()):
     
     time_series    = df_class.index
     new_start_time = time_series.min().replace(hour=0, minute=0, second=15, microsecond=0)
@@ -356,85 +362,156 @@ def plot_cloud_type(df_class, df_ze, cloud_filter, name_title, z_min, z_max, col
                       "#D05BAC", "#BFBD8D", "#118527","#8794B3", "#DA6F49", "#88183E", "#DDDEDA"]
     ncolors = len(color_names)
     # Create a figure and an array of subplots
-    fig, axs = plt.subplots(3, sharex=True, sharey=True, figsize=(15, 10))
 
-    # Create a ListedColormap using the manual colors
-    manual_cmap = plt.cm.colors.ListedColormap(manual_colors)
+    if plot_ze:
+        fig, axs = plt.subplots(3, sharex=True, sharey=True, figsize=(15, 10))
 
-    # Plot the classification heatmap
-    f0 = axs[0].pcolormesh(df_class_complete_time.index, 
-                            df_class_complete_time.columns/1000, 
-                            np.transpose(df_class_complete_time),
+        # Create a ListedColormap using the manual colors
+        manual_cmap = plt.cm.colors.ListedColormap(manual_colors)
+
+        # Plot the classification heatmap
+        f0 = axs[0].pcolormesh(df_class_complete_time.index, 
+                                df_class_complete_time.columns/1000, 
+                                np.transpose(df_class_complete_time),
+                                cmap=manual_cmap,
+                                vmin=0,
+                                vmax=ncolors-1)
+
+        i = 0
+        for sublist in cloud_filter.cloud_base:
+            axs[0].plot(np.tile(cloud_filter.time_cbt[i], len(sublist)), df_class.columns[sublist]/1000, "*", color='black', markersize=3)
+            i += 1
+        i = 0
+        for sublist in cloud_filter.cloud_top:
+            axs[0].plot(np.tile(cloud_filter.time_cbt[i], len(sublist)), df_class.columns[sublist]/1000, "*", color='red', markersize=3)
+            i += 1
+
+        axs[0].set_ylabel(r'Height [km]')
+        axs[0].grid()
+        
+        # Plot the mixed phase categories heatmap
+        f1 = axs[1].pcolormesh(df_class_filtered_complete_time.index, 
+                            df_class_filtered_complete_time.columns/1000, 
+                            np.transpose(df_class_filtered_complete_time),
                             cmap=manual_cmap,
                             vmin=0,
-                            vmax=ncolors-1)
+                            vmax=ncolors)
+        
+        i = 0
+        for sublist in cloud_filter.cloud_base:
+            axs[1].plot(np.tile(cloud_filter.time_cbt[i], len(sublist)), df_class.columns[sublist]/1000, "*", color='black', markersize=3)
+            i += 1
+        i = 0
+        for sublist in cloud_filter.cloud_top:
+            axs[1].plot(np.tile(cloud_filter.time_cbt[i], len(sublist)), df_class.columns[sublist]/1000, "*", color='red', markersize=3)
+            i += 1
 
-    i = 0
-    for sublist in cloud_filter.cloud_base:
-        axs[0].plot(np.tile(cloud_filter.time_cbt[i], len(sublist)), df_class.columns[sublist]/1000, "*", color='black', markersize=3)
-        i += 1
-    i = 0
-    for sublist in cloud_filter.cloud_top:
-        axs[0].plot(np.tile(cloud_filter.time_cbt[i], len(sublist)), df_class.columns[sublist]/1000, "*", color='red', markersize=3)
-        i += 1
+        axs[1].set_ylabel(r'Height [km]')
+        axs[1].grid()
+        
+        # Create a colorbar with custom color patches and labels (vertical)
+        colorbar1 = fig.colorbar(f1, ax=axs[0:2], ticks=[], orientation='vertical')
 
-    axs[0].set_ylabel(r'Height [km]')
-    axs[0].grid()
-    
-    # Plot the mixed phase categories heatmap
-    f1 = axs[1].pcolormesh(df_class_filtered_complete_time.index, 
-                          df_class_filtered_complete_time.columns/1000, 
-                          np.transpose(df_class_filtered_complete_time),
-                          cmap=manual_cmap,
-                          vmin=0,
-                          vmax=ncolors)
-    
-    i = 0
-    for sublist in cloud_filter.cloud_base:
-        axs[1].plot(np.tile(cloud_filter.time_cbt[i], len(sublist)), df_class.columns[sublist]/1000, "*", color='black', markersize=3)
-        i += 1
-    i = 0
-    for sublist in cloud_filter.cloud_top:
-        axs[1].plot(np.tile(cloud_filter.time_cbt[i], len(sublist)), df_class.columns[sublist]/1000, "*", color='red', markersize=3)
-        i += 1
-
-    axs[1].set_ylabel(r'Height [km]')
-    axs[1].grid()
-    
-    # Create a colorbar with custom color patches and labels (vertical)
-    colorbar1 = fig.colorbar(f1, ax=axs[0:2], ticks=[], orientation='vertical')
-
-    # Adjust the position of colorbar and add color patches with names
-    for idx, (color, name) in enumerate(zip(manual_cmap.colors, color_names)):
-        rect = plt.Rectangle((0, idx), 1, 1, color=color)
-        colorbar1.ax.add_patch(rect)
-        colorbar1.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=10)
+        # Adjust the position of colorbar and add color patches with names
+        for idx, (color, name) in enumerate(zip(manual_cmap.colors, color_names)):
+            rect = plt.Rectangle((0, idx), 1, 1, color=color)
+            colorbar1.ax.add_patch(rect)
+            colorbar1.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=17)
 
 
-    # Plot the mixed phase Ze heatmap
-    f2 = axs[2].pcolormesh(df_ze_complete_time.index, 
-                          df_ze_complete_time.columns/1000, 
-                          np.transpose(df_ze_complete_time),
-                          cmap='viridis',
-                          vmin=-40,
-                          vmax=10)
+        # Plot the mixed phase Ze heatmap
+        f2 = axs[2].pcolormesh(df_ze_complete_time.index, 
+                            df_ze_complete_time.columns/1000, 
+                            np.transpose(df_ze_complete_time),
+                            cmap='viridis',
+                            vmin=-40,
+                            vmax=10)
 
-    axs[2].set_ylabel(r'Height [km]')
-    axs[2].set_xlabel(r'Time [UTC]')
-    colorbar2 = fig.colorbar(f2, ax=axs[2:3])
-    colorbar2.set_label('Ze [dBz]')  # Add a label to the colorbar
-    axs[2].xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
-    
-    # Customize x-axis limits based on hour_s and hour_e
-    # axs[2].set_xlim([cloud_filter.classification.index.date[0] + pd.DateOffset(hour=hour_s), 
-    #             cloud_filter.classification.index.date[0] + pd.DateOffset(hour=hour_e)])
-    
-    # Set y-axis limits
-    axs[2].set_ylim([z_min, z_max])
-    axs[2].set_xlim([time_series.min(), time_series.max()])
-    axs[2].grid()
-    plt.suptitle(name_title)
-    plt.show()
+        axs[2].set_ylabel(r'Height [km]')
+        axs[2].set_xlabel(r'Time [UTC]')
+        colorbar2 = fig.colorbar(f2, ax=axs[2:3])
+        colorbar2.set_label('Ze [dBz]')  # Add a label to the colorbar
+        axs[2].xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+        
+        # Customize x-axis limits based on hour_s and hour_e
+        # axs[2].set_xlim([cloud_filter.classification.index.date[0] + pd.DateOffset(hour=11), 
+        #              cloud_filter.classification.index.date[0] + pd.DateOffset(hour=17)])
+        
+        # Set y-axis limits
+        axs[2].set_ylim([z_min, z_max])
+        axs[2].set_xlim([time_series.min(), time_series.max()])
+        axs[2].grid()
+        plt.suptitle(name_title)
+        plt.show()
+    else:
+        fig, axs = plt.subplots(2, sharex=True, sharey=True, figsize=(15, 10))
+        
+        # Create a ListedColormap using the manual colors
+        manual_cmap = plt.cm.colors.ListedColormap(manual_colors)
+
+        # Plot the classification heatmap
+        f0 = axs[0].pcolormesh(df_class_complete_time.index, 
+                                df_class_complete_time.columns/1000, 
+                                np.transpose(df_class_complete_time),
+                                cmap=manual_cmap,
+                                vmin=0,
+                                vmax=ncolors-1)
+
+        i = 0
+        for sublist in cloud_filter.cloud_base:
+            axs[0].plot(np.tile(cloud_filter.time_cbt[i], len(sublist)), df_class.columns[sublist]/1000, "*", color='black', markersize=3)
+            i += 1
+        i = 0
+        for sublist in cloud_filter.cloud_top:
+            axs[0].plot(np.tile(cloud_filter.time_cbt[i], len(sublist)), df_class.columns[sublist]/1000, "*", color='red', markersize=3)
+            i += 1
+
+        axs[0].set_ylabel(r'Height [km]')
+        axs[0].grid()
+        
+        # Plot the mixed phase categories heatmap
+        f1 = axs[1].pcolormesh(df_class_filtered_complete_time.index, 
+                            df_class_filtered_complete_time.columns/1000, 
+                            np.transpose(df_class_filtered_complete_time),
+                            cmap=manual_cmap,
+                            vmin=0,
+                            vmax=ncolors)
+        
+        i = 0
+        for sublist in cloud_filter.cloud_base:
+            axs[1].plot(np.tile(cloud_filter.time_cbt[i], len(sublist)), df_class.columns[sublist]/1000, "*", color='black', markersize=3)
+            i += 1
+        i = 0
+        for sublist in cloud_filter.cloud_top:
+            axs[1].plot(np.tile(cloud_filter.time_cbt[i], len(sublist)), df_class.columns[sublist]/1000, "*", color='red', markersize=3)
+            i += 1
+
+        axs[1].set_ylabel(r'Height [km]')
+        axs[1].grid()
+        
+        # Create a colorbar with custom color patches and labels (vertical)
+        colorbar1 = fig.colorbar(f1, ax=axs[0:2], ticks=[], orientation='vertical')
+
+        # Adjust the position of colorbar and add color patches with names
+        for idx, (color, name) in enumerate(zip(manual_cmap.colors, color_names)):
+            rect = plt.Rectangle((0, idx), 1, 1, color=color)
+            colorbar1.ax.add_patch(rect)
+            colorbar1.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=20)
+        
+        axs[1].xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+        
+        # Customize x-axis limits based on hour_s and hour_e
+        axs[1].set_xlim([cloud_filter.classification.index.date[0] + pd.DateOffset(hour=12), 
+                     cloud_filter.classification.index.date[0] + pd.DateOffset(hour=17)])
+        
+        axs[1].set_xlabel(r'Time [UTC]')
+        # Set y-axis limits
+        axs[1].set_ylim([z_min, z_max])
+        # axs[1].set_xlim([time_series.min(), time_series.max()])
+        axs[1].grid()
+        plt.suptitle(f"{name_title} Cloud ({cloud_type}) - {df_class_filtered_complete_time.index.date[0]}\nB/W cloud: {np.array(color_names)[targ_between_cloud]}")
+        # fig.savefig(PATH_FIG + name_title + '_example.png', dpi=300)
+        plt.show()
 
 # Example usage:
 # plot_classification_and_phases(df_classification, mixed_phase_cat, mixed_phase_ze, classification_filter, cloud_base, name_title, hour_s, hour_e, z_min, z_max)
@@ -569,9 +646,12 @@ def process_cloud_data_parallel(args):
     #------------------------------------------------------------------------------------------------
     # reading categorize, classification and radar files
     #------------------------------------------------------------------------------------------------
+    radar_file_pattern = '_granada_rpg-fmcw-94*.nc'
+    radar_file_path    = glob.glob(os.path.join(PATH_RADAR, date.strftime('%Y%m%d')+radar_file_pattern))[0]
+
     categorize     = nc.Dataset(PATH_CATE+date.strftime('%Y%m%d')+"_granada_categorize.nc")
     classification = nc.Dataset(PATH_CLASS+date.strftime('%Y%m%d')+"_granada_classification.nc")
-    radar          = xr.open_dataset(PATH_RADAR+date.strftime('%Y%m%d')+"_granada_rpg-fmcw-94.nc")
+    radar          = xr.open_dataset(radar_file_path)
     # ------------------------------------------------------------------------------------------------
     # check if categorize and classification files have the same time resolution 
     # ------------------------------------------------------------------------------------------------
@@ -676,10 +756,13 @@ def process_cloud_data(date: datetime.datetime,
                                              CLOUD_PHASE[i],
                                              NBINS_CLOUD)
         for target in TARG_TO_FILTER[cloud]:
-            classification_filter.filter_species(target, 400, 200)
+            if target == DRIZZLE_OR_RAIN:
+                classification_filter.filter_species(target, 10000, 200)
+            else:
+                classification_filter.filter_species(target, NBINS_BETWEEN_CLOUD, NBINS_BETWEEN_CLOUD)
         
         if cloud == "Pre_liquid" or cloud == "Pre_mixed_phase":
-            classification_filter.get_specie_below(TARG_TO_GET_BELLOW[cloud], 10)
+            classification_filter.get_specie_below(TARG_TO_GET_BELLOW[cloud], NBINS_GET_RAIN)
         classification_filter.calculate_cloud_properties(height_cloud_base,
                                                         height_cloud_top,
                                                         height_cloud_mean,
@@ -687,11 +770,16 @@ def process_cloud_data(date: datetime.datetime,
                                                         cloud)
         
         number_of_layers.loc[classification_filter.time_cbt, cloud] = sublist_lengths(classification_filter.cloud_base)
-        # with sns.axes_style("whitegrid"):
-        #     plot_cloud_type(df_classification,
-        #                     df_reflectivity, 
-        #                     classification_filter, 
-        #                     cloud, .1, 12., CLASSIFICATION_TICK_LABELS)
+        with sns.axes_style("whitegrid"):
+            plot_cloud_type(df_classification,
+                            df_reflectivity, 
+                            classification_filter, 
+                            cloud, .1, 5., 
+                            CLASSIFICATION_TICK_LABELS, 
+                            plot_ze=False,
+                            cloud_type= CLOUD_TYPES[cloud],
+                            targ_between_cloud= TARG_BET_CLOUD[cloud],
+                            integrated_variables = df_integrated_variables)
     #------------------------------------------------------------------------------------------------
     # Analisis hydrometeors 
     #------------------------------------------------------------------------------------------------ 
@@ -1025,15 +1113,19 @@ class CloudProcess:
                         self.classification.iloc[i_time, cloud_thickness[0]:cloud_thickness[-1]+1] = np.nan
         
                     if not np.isnan(ibl):
-                        dzb = self.height[cloud_thickness[0]] - self.height[ibl]
+                        # dzb = self.height[cloud_thickness[0]] - self.height[ibl]
                         #print(dzb)
-                        if dzb <= dzb_max:
+                        # if dzb <= dzb_max:
+                        delta_bin = cloud_thickness[0] - ibl
+                        if delta_bin < dzb_max:
                             self.classification.iloc[i_time, cloud_thickness[0]:cloud_thickness[-1]+1] = np.nan
                             # layer_to_remove.append(j)
                         #self.classification.iloc[i_time, cloud_thickness[0]:cloud_thickness[-1]+1] = np.nan
                     if not np.isnan(iab):
-                        dzt = self.height[iab] - self.height[cloud_thickness[-1]]
-                        if dzt <= dzt_max:
+                        # dzt = self.height[iab] - self.height[cloud_thickness[-1]]
+                        delta_bin = iab - cloud_thickness[-1]
+                        # if dzt <= dzt_max:
+                        if delta_bin < dzt_max:
                             self.classification.iloc[i_time, cloud_thickness[0]:cloud_thickness[-1]+1] = np.nan
                             # layer_to_remove.append(j)
                         #self.classification.iloc[i_time, cloud_thickness[0]:cloud_thickness[-1]+1] = np.nan
@@ -1170,11 +1262,11 @@ database_intersection  = common_prefix_of_filenames(paths, extension)
 # start_date = min(database_intersection) # first date of database
 # end_date   = max(database_intersection) # last date of database
 
-start_date = datetime.datetime(2021, 4, 16)
-end_date   = datetime.datetime(2021, 4, 16, 23, 59, 59)
+start_date = datetime.datetime(2021, 4, 21)
+end_date   = datetime.datetime(2021, 4, 21, 23, 59, 59)
 
-# start_date = datetime.datetime(2023, 1, 1)
-# end_date   = datetime.datetime(2023, 3, 1)
+# start_date = datetime.datetime(2018, 6, 1)
+# end_date   = datetime.datetime(2018, 11, 1)
 
 #TODO: should create a loop to iterate over all chirp configurations
 # chirp_ini, chirp_final, chirp_zres, chirp_height, selected_interval = compare_radar_chirp_configurations(start_date, end_date, database_intersection, PATH_RADAR)
@@ -1183,7 +1275,7 @@ for range_res, interval in intervals_dic.items():
     print(f"Chirp resolution: {range_res} m, Intervals Count: {len(interval)}")
     # height_dic[range_res]
     # set_trace()
-    
+
 print("\nRemoving all cloudnet files of LWC and Reff from its directory...")
 # min_chirp_range = min([height_dic[var].min() for var in height_dic])
 # max_chirp_range = max([height_dic[var].max() for var in height_dic])
@@ -1236,9 +1328,9 @@ for nchirp, key_res in enumerate(intervals_dic):
         process_cloud_data_parallel((height, nchirp, date, key_res))
 
 # end_time = time_module.time()
-#------------------------------------------------------------------------------------------------
-# Parallel execution using multiprocessing.Pool
-# ------------------------------------------------------------------------------------------------
+# #------------------------------------------------------------------------------------------------
+# # Parallel execution using multiprocessing.Pool
+# # ------------------------------------------------------------------------------------------------
 # num_processes = 4  # You can adjust this as needed
 # # Start the timer for parallel execution
 # print("Starting parallel execution...")
