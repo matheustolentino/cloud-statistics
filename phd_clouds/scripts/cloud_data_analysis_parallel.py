@@ -26,6 +26,7 @@ import dask.config
 import time as time_module
 from dateutil.relativedelta import relativedelta
 from scipy.interpolate import RectBivariateSpline, RegularGridInterpolator, griddata
+from itertools import chain
 # import seaborn as sns 
 
 # Set the option to split large chunks
@@ -1262,9 +1263,9 @@ month_mask         = nan_count_by_month < .7
 #     create_hydromet_box_plot(freq_pr_reindex,figname=f"{PATH_FIG}hydrometeor_boxplot_plot.png")
 
 # get values comple
-freq_str = "M"
-with sns.axes_style("ticks"):
-    create_data_availability_plot(reindexed_variable, freq_str, figname=f"{PATH_FIG}data_availability.png")
+# freq_str = "M"
+# with sns.axes_style("ticks"):
+#     create_data_availability_plot(reindexed_variable, freq_str, figname=f"{PATH_FIG}data_availability.png")
 
 # # Create a figure and axis
 # fig, ax = plt.subplots(figsize=(10, 6))  # Adjust the figure size as needed
@@ -1467,42 +1468,42 @@ reindexed_clouds_layers['missing'] = reindexed_clouds_layers.multilayer.isnull()
 #                      freq_str, 
 #                      figname=f"{PATH_FIG}cloud_frequency_subplots_by_year.png")
 
-plot_cloud_frequency3(reindexed_clouds_layers,
-                     freq_str, 
-                     figname=f"{PATH_FIG}cloud_freq_plot_by_year")
+# plot_cloud_frequency3(reindexed_clouds_layers,
+#                      freq_str, 
+#                      figname=f"{PATH_FIG}cloud_freq_plot_by_year")
 
-plot_histograms_with_profiles(datasets=[integrated_var_single_layer.LWP.where(clouds_single_layer.Liquid.compute() == 1, drop=True).dropna(dim='time'),
-                                        integrated_var_single_layer.LWP.where(clouds_single_layer.Mixed_phase.compute() == 1, drop=True).dropna(dim='time')],
-                             bin_width=.025,
-                             labels=["Liquid", "Mixed-phase"],
-                             x_label= r"LWP ($\Delta$LWP = .025 [kg m$^{-2}$])",
-                             y_label="Frequency [%]",
-                             xticks_resolution=.050,
-                             xlim=[0, .5],
-                             ylim=(0.1, 100),
-                             figname=f"{PATH_FIG}lwp_histograms.png")
+# plot_histograms_with_profiles(datasets=[integrated_var_single_layer.LWP.where(clouds_single_layer.Liquid.compute() == 1, drop=True).dropna(dim='time'),
+#                                         integrated_var_single_layer.LWP.where(clouds_single_layer.Mixed_phase.compute() == 1, drop=True).dropna(dim='time')],
+#                              bin_width=.025,
+#                              labels=["Liquid", "Mixed-phase"],
+#                              x_label= r"LWP ($\Delta$LWP = .025 [kg m$^{-2}$])",
+#                              y_label="Frequency [%]",
+#                              xticks_resolution=.050,
+#                              xlim=[0, .5],
+#                              ylim=(0.1, 100),
+#                              figname=f"{PATH_FIG}lwp_histograms.png")
 
-plot_histograms_with_profiles(datasets=[integrated_var_single_layer.IWP.where(clouds_single_layer.Ice.compute() == 1, drop=True).dropna(dim='time'),
-                                        integrated_var_single_layer.IWP.where(clouds_single_layer.Mixed_phase.compute() == 1, drop=True).dropna(dim='time')],
-                             bin_width=.025,
-                             labels=["Ice", "Mixed-phase"],
-                             x_label= r"IWP ($\Delta$IWP = .025 kg m$^{-2}$)",
-                             y_label="Frequency [%]",
-                             xticks_resolution=.050,
-                             xlim=[0, 1.],
-                             ylim=(0.1, 100),
-                             figname=f"{PATH_FIG}ice_histograms.png")
+# plot_histograms_with_profiles(datasets=[integrated_var_single_layer.IWP.where(clouds_single_layer.Ice.compute() == 1, drop=True).dropna(dim='time'),
+#                                         integrated_var_single_layer.IWP.where(clouds_single_layer.Mixed_phase.compute() == 1, drop=True).dropna(dim='time')],
+#                              bin_width=.025,
+#                              labels=["Ice", "Mixed-phase"],
+#                              x_label= r"IWP ($\Delta$IWP = .025 kg m$^{-2}$)",
+#                              y_label="Frequency [%]",
+#                              xticks_resolution=.050,
+#                              xlim=[0, 1.],
+#                              ylim=(0.1, 100),
+#                              figname=f"{PATH_FIG}ice_histograms.png")
 
-plot_histograms_with_profiles(datasets=[cloud_thickness.Liquid.where(clouds_single_layer.Liquid.compute() == 1, drop=True).dropna(dim='time'),
-                                        cloud_thickness.Ice.where(clouds_single_layer.Ice.compute() == 1, drop=True).dropna(dim='time'),
-                                        cloud_thickness.Mixed_phase.where(clouds_single_layer.Mixed_phase.compute() == 1, drop=True).dropna(dim='time')],
-                             bin_width=200,
-                             labels=["Liquid", "Ice", "Mixed-phase"],
-                             x_label= r"Cloud Thickness ($\Delta$Z = 200 m)",
-                             y_label="Frequency [%]",
-                             xticks_resolution=500,
-                             ylim=(0.1, 100),
-                             figname=f"{PATH_FIG}cloud_thickness_histograms.png")
+# plot_histograms_with_profiles(datasets=[cloud_thickness.Liquid.where(clouds_single_layer.Liquid.compute() == 1, drop=True).dropna(dim='time'),
+#                                         cloud_thickness.Ice.where(clouds_single_layer.Ice.compute() == 1, drop=True).dropna(dim='time'),
+#                                         cloud_thickness.Mixed_phase.where(clouds_single_layer.Mixed_phase.compute() == 1, drop=True).dropna(dim='time')],
+#                              bin_width=200,
+#                              labels=["Liquid", "Ice", "Mixed-phase"],
+#                              x_label= r"Cloud Thickness ($\Delta$Z = 200 m)",
+#                              y_label="Frequency [%]",
+#                              xticks_resolution=500,
+#                              ylim=(0.1, 100),
+#                              figname=f"{PATH_FIG}cloud_thickness_histograms.png")
 
 # -----------------------------------------------------------------------------------------------
 # Cloud Geometric Properties Analysis
@@ -1642,15 +1643,20 @@ def plot_seasonal_histograms(ds, xname, save_path=None):
                 if var_name == 'Liquid' and season == 'summer':
                     data[var_name].append(np.nan)
                 else:
-                    data[var_name].append(median_value)
+                    data[var_name].append(values)
                 print(f"Season: {season}, Variable: {var_name}, Meadian: {median_value}") 
                 # print(f"Season: {season}, Variable: {var_name}, Meadian: {np.nanmedian(values)}, 25th Percentile: {np.nanpercentile(values, 25)}, 75th Percentile: {np.nanpercentile(values, 75)}")
         ax.set_title(f"Season - {season}")
         ax.set_xlabel(xname)
         ax.legend()
     
-    for var_name, values in data.items():
-        print(f"Variable: {var_name}, Mean: {np.nanmean(values)/1000}, Std: {np.nanstd(values)/1000}")
+    for var_name, nested_list in data.items():
+        if len(nested_list) > 0:
+            # Flatten the list of values
+            flattened_list = list(chain.from_iterable(sublist if isinstance(sublist, np.ndarray) else [sublist] for sublist in nested_list if not (isinstance(sublist, float) and np.isnan(sublist))))
+            print(f"Variable: {var_name}, Mean: {np.nanmean(flattened_list)/1000}, Std: {np.nanstd(flattened_list)/1000}, Median: {np.nanmedian(flattened_list)/1000}")
+            # print(f"Variable: {var_name}, Mean: {np.nanmean(values)/1000}, Std: {np.nanstd(values)/1000}, Median: {np.nanmedian(values)/1000}")
+    
     
     # Remove any empty subplots
     if num_seasons < num_rows * num_cols:
@@ -1663,7 +1669,6 @@ def plot_seasonal_histograms(ds, xname, save_path=None):
     plt.tight_layout()
     plt.show()
     
-
 # cloud_base_by_season         = cloud_base_indexed_byseason.sel(time=mask_single) # Select only single layer clouds
 # cloud_top_by_season          = cloud_top_indexed_byseason.sel(time=mask_single) # Select only single layer clouds
 # cloud_thickness_by_season    = cloud_thickness_indexed_byseason.sel(time=mask_single) # Select only single layer clouds
@@ -1674,7 +1679,7 @@ plot_seasonal_histograms(cloud_base_indexed_byseason.sel(time=mask_single),
 plot_seasonal_histograms(cloud_top_indexed_byseason.sel(time=mask_single),
                          "Cloud top height [m]" , 
                          save_path=f"{PATH_FIG}cloud_top_height_histograms.png")
-plot_seasonal_histograms(cloud_thickness_indexed_byseason.sel(time=mask_single), 
+plot_seasonal_histograms(cloud_thickness_indexed_byseason.sel(time=mask_single),
                          "Cloud thickness [m]", 
                          save_path=f"{PATH_FIG}cloud_thickness_histograms.png")
 # # -----------------------------------------------------------------------------------------------
@@ -1751,15 +1756,15 @@ cloud_base_by_season         = cloud_base_indexed_byseason.sel(time=mask_single)
 cloud_top_by_season          = cloud_top_indexed_byseason.sel(time=mask_single) # Select only single layer clouds
 cloud_thickness_by_season    = cloud_thickness_indexed_byseason.sel(time=mask_single) # Select only single layer clouds
 
-plot_cloud_prop_along_time(cloud_base_by_season, 
-                           clouds_single_layer, 
-                           integrated_var_single_layer, r"CB Height a.g.l", save_path=f"{PATH_FIG}cloud_base_height")
-plot_cloud_prop_along_time(cloud_top_by_season, 
-                           clouds_single_layer, 
-                           integrated_var_single_layer, r"CT Height a.g.l", save_path=f"{PATH_FIG}cloud_top_height")
-plot_cloud_prop_along_time(cloud_thickness_by_season, 
-                           clouds_single_layer, 
-                           integrated_var_single_layer, r"$\Delta$Z", save_path=f"{PATH_FIG}cloud_thickness")
+# plot_cloud_prop_along_time(cloud_base_by_season, 
+#                            clouds_single_layer, 
+#                            integrated_var_single_layer, r"CB Height a.g.l", save_path=f"{PATH_FIG}cloud_base_height")
+# plot_cloud_prop_along_time(cloud_top_by_season, 
+#                            clouds_single_layer, 
+#                            integrated_var_single_layer, r"CT Height a.g.l", save_path=f"{PATH_FIG}cloud_top_height")
+# plot_cloud_prop_along_time(cloud_thickness_by_season, 
+#                            clouds_single_layer, 
+#                            integrated_var_single_layer, r"$\Delta$Z", save_path=f"{PATH_FIG}cloud_thickness")
 
 # -----------------------------------------------------------------------------------------------
 
