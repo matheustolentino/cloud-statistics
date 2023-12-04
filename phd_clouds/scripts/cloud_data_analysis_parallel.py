@@ -11,6 +11,7 @@ import pandas as pd
 import os
 import xarray as xr
 from scipy.stats import gaussian_kde
+import scipy.stats as stats
 import locale
 import seaborn as sns
 from pdb import set_trace
@@ -22,6 +23,7 @@ from dask.array.core import Array
 from datetime import timedelta
 from datetime import datetime, timedelta
 import dask.config
+import time as time_module
 from dateutil.relativedelta import relativedelta
 from scipy.interpolate import RectBivariateSpline, RegularGridInterpolator, griddata
 # import seaborn as sns 
@@ -185,7 +187,7 @@ def plot_cloud_frequency(reindexed_variable: xr.DataArray, freq_str: str, fignam
     """
     # includinf new variable to reindexed_variable:
     # including new variable to reindexed_variable:
-    colors = ["#f953d2", "#53d2f9", "#c9b337", "#2521b6", "#fc564f", "#49eb34","#bf1717","#ffffff"]
+    colors = ["#f953d2", "#53d2f9", "#c9b337", "#2521b6", "#fc564f", "#49eb34","#ababab","#ffffff"]
 
     cloud_frequency = (reindexed_variable == 1).resample(time=freq_str).mean() 
     # df = reindexed_variable.to_dataframe()
@@ -200,7 +202,7 @@ def plot_cloud_frequency(reindexed_variable: xr.DataArray, freq_str: str, fignam
         if i==0:
             bot = np.zeros(freq.time.shape[0])
         p = ax.bar(freq.time, 100*freq.values,
-                label=var_name,
+                label=var_name.replace('_', '-').title(),
                 bottom=bot,
                 color=colors[i],
                 edgecolor="black",
@@ -219,15 +221,132 @@ def plot_cloud_frequency(reindexed_variable: xr.DataArray, freq_str: str, fignam
     fig.savefig(figname, dpi=300)
     plt.show()
 
-def plot_2d_and_vertical_frequency(dataset1, freq_str: str, path: str):
+def plot_cloud_frequency2(reindexed_variable: xr.DataArray, freq_str: str, figname: str):
+    """
+    Create a data availability plot using Dask arrays.
+
+    Parameters:
+        reindexed_variable (xr.DataArray): xarray DataArray to plot.
+        freq_str (str): Frequency string for resampling (e.g., 'D' for daily, 'H' for hourly).
+        figname (str): Filepath to save the figure.
+
+    Returns:
+        None
+    """
+    # includinf new variable to reindexed_variable:
+    # including new variable to reindexed_variable:
+    colors = ["#f953d2", "#53d2f9", "#c9b337", "#2521b6", "#fc564f", "#49eb34","#ababab","#ffffff"]
+
+    cloud_frequency = (reindexed_variable == 1).resample(time=freq_str).mean() 
+    
+    years = np.unique(cloud_frequency.time.dt.year)  # Get unique years
+    
+    fig, axs = plt.subplots(len(years), 1, figsize=(12, 8*len(years)))  # Create subplots for each year
+
+    for i, year in enumerate(years):
+        ax = axs[i] if len(years) > 1 else axs  # Use the same axis if there's only one year
+        year_data = cloud_frequency.sel(time=cloud_frequency.time.dt.year == year)  # Select data for the current year
+    
+        bar_width = (year_data.time.max().values - year_data.time.min().values) / year_data.time.shape[0]
+        bot = np.zeros(year_data.time.shape[0])
+        for j, var_name in enumerate(year_data.data_vars):
+            freq = year_data[var_name]
+            p = ax.bar(freq.time, 100*freq.values,
+                    label=var_name.replace('_', '-').title(),
+                    bottom=bot,
+                    color=colors[j],
+                    edgecolor="black",
+                    width=bar_width)
+            bot += 100*freq.values
+
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%y'))
+        ax.set_xlabel("Month/Year")
+        ax.set_ylabel("Frequency [%]")
+        ax.set_ylim([0, 100])
+        ax.set_xticks(year_data.time[::1])
+
+        if i == 0:  # Add legend only for the first subplot
+            ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15), ncol=len(year_data.data_vars)/2, frameon=False)
+        
+        # Remove spines, save the figure, and show the plot
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['bottom'].set_visible(True)
+        ax.spines['left'].set_visible(True)
+        plt.xticks(rotation=45)
+
+    plt.tight_layout()
+    fig.savefig(figname, dpi=300)
+    plt.show()
+
+def plot_cloud_frequency3(reindexed_variable: xr.DataArray, freq_str: str, figname: str):
+    """
+    Create a data availability plot using Dask arrays.
+
+    Parameters:
+        reindexed_variable (xr.DataArray): xarray DataArray to plot.
+        freq_str (str): Frequency string for resampling (e.g., 'D' for daily, 'H' for hourly).
+        figname (str): Filepath to save the figure.
+
+    Returns:
+        None
+    """
+    # includinf new variable to reindexed_variable:
+    # including new variable to reindexed_variable:
+    colors = ["#f953d2", "#53d2f9", "#c9b337", "#2521b6", "#fc564f", "#49eb34","#ababab","#ffffff"]
+
+    cloud_frequency = (reindexed_variable == 1).resample(time=freq_str).mean() 
+    
+    years = np.unique(cloud_frequency.time.dt.year)  # Get unique years
+
+    for year in years:
+        year_data = cloud_frequency.sel(time=cloud_frequency.time.dt.year == year)  # Select data for the current year
+        
+        fig, ax = plt.subplots(figsize=(14, 9))  # Create a new figure and axis for each year
+
+        bar_width = (year_data.time.max().values - year_data.time.min().values) / year_data.time.shape[0]
+        bot = np.zeros(year_data.time.shape[0])
+        for j, var_name in enumerate(year_data.data_vars):
+            freq = year_data[var_name]
+            p = ax.bar(freq.time, 100*freq.values,
+                    label=var_name.replace('_', '-').title(),
+                    bottom=bot,
+                    color=colors[j],
+                    edgecolor="black",
+                    width=bar_width)
+            bot += 100*freq.values
+            # print(f"Frequency of {var_name} in {year}: {freq.values*100:.2f}%")
+
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%y'))
+        ax.set_xlabel("Month/Year")
+        ax.set_ylabel("Frequency [%]")
+        ax.set_xticks(year_data.time[::1])
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15), ncol=len(year_data.data_vars)/2, frameon=False)
+         
+        # Remove spines, save the figure, and show the plot
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['bottom'].set_visible(True)
+        ax.spines['left'].set_visible(True)
+        plt.xticks(rotation=30)
+        fig.savefig(f"{figname}_{year}.png", dpi=300, bbox_inches='tight')
+        plt.show()  
+        plt.close(fig)
+
+def plot_2d_and_vertical_frequency(dataset1, month_mask, freq_str: str, path: str):
     # Get variable names excluding the first and last two from dataset1
     variable_names = list(dataset1.data_vars)
     # Iterate through the variables
     for var_name in variable_names:
-        # mask_hydromet = dataset1[var_name] == 1
-        # variable = reindex_datasets(mask_hydromet, 700).resample(time=freq_str).mean().compute()
-        # variable = mask_hydromet.resample(time=freq_str).mean().compute()
+        
+        # Average variable monthly and remove months with 
         variable = 100*dataset1[var_name].resample(time=freq_str).mean().compute()
+        variable = variable.sel(time=month_mask)
+
+        # reindexing the variable to fill the missing months with NaNs
+        new_time_index = pd.date_range(start=variable.time.values.min(), end=variable.time.values.max(), freq="M")
+        variable = variable.reindex(time=new_time_index)
+
         # Create the figure and GridSpec layout
         fig = plt.figure(figsize=(15, 8))
         gs = gridspec.GridSpec(1, 3, width_ratios=[3.5, 0.09, 1])  # Four columns: heatmap, spacer, line plot, colorbar
@@ -963,12 +1082,17 @@ def add_season_coordinate(data):
     # Return the updated data with 'season' as a coordinate
     return data
 
-def reindex_datasets(chunked_dataset, chunk_size: int = 1000):
+def reindex_datasets(chunked_dataset, month=[], chunk_size: int = 1000):
+    
     time_series = chunked_dataset.indexes['time'] # Convert to pandas DateTimeIndex
-
     # Calculate the new start time as the first 15 seconds of the day
-    new_start_time = time_series.min().replace(day=1, hour=0, minute=0, second=15, microsecond=0)
-    new_end_time = time_series.max().replace(day=1, hour=23, minute=59, second=59, microsecond=0) + relativedelta(day=31)
+    if month:
+        new_start_time = time_series.min().replace(month = month[0], day=1, hour=0, minute=0, second=15, microsecond=0)
+        new_end_time = time_series.max().replace(month = month[1], day=1, hour=23, minute=59, second=59, microsecond=0) + relativedelta(day=31)
+    else:
+        new_start_time = time_series.min().replace(day=1, hour=0, minute=0, second=15, microsecond=0)
+        new_end_time = time_series.max().replace(day=1, hour=23, minute=59, second=59, microsecond=0) + relativedelta(day=31)
+    
 
     # Create a new time index starting from the new_start_time and ending at the end of the day
     new_time_index = pd.date_range(start=new_start_time, end=new_end_time, freq="30S")
@@ -1125,14 +1249,19 @@ reindexed_variable = reindex_datasets(chirp_concatenated_hydrometeors)
 
 # Create a mask where NaN values are True
 nan_mask_no_data = freq_pr_reindex.isnull()
+# not_null_mask = ~nan_mask_no_data
+
+# for i in range(freq_pr_reindex.shape[0]):
+#     print(f"Time: {freq_pr_reindex.time[i].values}, NaN: {nan_mask_no_data[i]}")
 
 # Count NaN values by month
-nan_count_by_month = nan_mask_no_data.resample(time='1M').sum()
-cond_remove_month=nan_count_by_month/2880 > 12
+nan_count_by_month = nan_mask_no_data.resample(time='1M').mean(dim='time').values
+month_mask         = nan_count_by_month < .7
 
-with sns.axes_style("ticks"):    
-    create_hydromet_box_plot(freq_pr_reindex,figname=f"{PATH_FIG}hydrometeor_boxplot_plot.png")
+# with sns.axes_style("ticks"):    
+#     create_hydromet_box_plot(freq_pr_reindex,figname=f"{PATH_FIG}hydrometeor_boxplot_plot.png")
 
+# get values comple
 freq_str = "M"
 with sns.axes_style("ticks"):
     create_data_availability_plot(reindexed_variable, freq_str, figname=f"{PATH_FIG}data_availability.png")
@@ -1189,29 +1318,53 @@ with sns.axes_style("ticks"):
 # -----------------------------------------------------------------------------------------------
 # Plotting 2D Histograms
 # -----------------------------------------------------------------------------------------------
-freq_str = "M"
+# freq_str = "M"
 
-# hydromet_dataset_list   = list(chirp_hydromet.values())
+# # hydromet_dataset_list   = list(chirp_hydromet.values())
 
-min_chirp_range = min([var.range.values.min() for var in chirp_hydromet.values()])
-max_chirp_range = max([var.range.values.max() for var in chirp_hydromet.values()])
-max_size_chirp_range = max([var.range.values.size for var in chirp_hydromet.values()])
+# min_chirp_range = min([var.range.values.min() for var in chirp_hydromet.values()])
+# max_chirp_range = max([var.range.values.max() for var in chirp_hydromet.values()])
+# max_size_chirp_range = max([var.range.values.size for var in chirp_hydromet.values()])
 
-delta_range = 60
-bin_edges = np.arange(0, max_chirp_range+delta_range, delta_range) 
-time_binned_data  = [var.resample(time="1D").mean().dropna(dim='time', how='all') for var in chirp_hydromet.values()]
-range_binned_data = [var.groupby_bins('range', bin_edges, labels=bin_edges[1:]).mean() for var in time_binned_data]
-hydro_freq_occurence = xr.concat(range_binned_data, dim='time').sortby('time')
+# delta_range = 60
+# bin_edges = np.arange(0, max_chirp_range+delta_range, delta_range) 
 
-with sns.axes_style("ticks"):
-    plot_2d_and_vertical_frequency(hydro_freq_occurence, freq_str, path=f"{PATH_FIG}")
+# import concurrent.futures
 
-# Example: Slice data for fall across all years
+# # Define a function to process each variable in parallel
+# def process_variable(var):
+#     return var.groupby_bins('range', bin_edges, labels=bin_edges[1:]).max()
+
+# # Create a ThreadPoolExecutor with the desired number of threads
+# start_time = time_module.time()
+# with concurrent.futures.ThreadPoolExecutor() as executor:
+#     # Submit each variable to the executor for processing
+#     futures = [executor.submit(process_variable, var) for var in chirp_hydromet.values()]
+
+#     # Wait for all the futures to complete and get the results
+#     range_binned_data = [future.result() for future in concurrent.futures.as_completed(futures)]
+
+# end_time = time_module.time()
+# # Calculate the execution time
+# execution_time = (end_time - start_time) / 60
+# print(f"Execution time: {execution_time} minutes")
+
+# hydro_freq_occurence = xr.concat(range_binned_data, dim='time').sortby('time')
+
+# # range_binned_data = [var.groupby_bins('range', bin_edges, labels=bin_edges[1:]).max() for var in chirp_hydromet.values()]
+# # time_binned_data  = [var.resample(time=freq_str).mean().dropna(dim='time', how='all') for var in range_binned_data]
+# # hydro_freq_occurence = xr.concat(time_binned_data, dim='time').sortby('time')
+
+# # time_binned_data  = [var.resample(time="1D").mean().dropna(dim='time', how='all') for var in chirp_hydromet.values()]
+# # range_binned_data = [var.groupby_bins('range', bin_edges, labels=bin_edges[1:]).mean() for var in time_binned_data]
+# # hydro_freq_occurence = xr.concat(range_binned_data, dim='time').sortby('time')
 
 
-# fall_data = slice_data_by_season(merged_hydromet_dataset)
+# with sns.axes_style("ticks"):
+#     plot_2d_and_vertical_frequency(hydro_freq_occurence, month_mask, freq_str, path=f"{PATH_FIG}")
+# set_trace()
 
-# test_end     = reindex_datasets((merged_hydromet_dataset.Liquid == 1)).resample(time="M").mean().compute()
+
 # -----------------------------------------------------------------------------------------------
 # Testing interpolation
 # -----------------------------------------------------------------------------------------------
@@ -1304,14 +1457,19 @@ integrated_var_single_layer = integrated_var.sel(time=mask_single) # Select inte
 chirp_cloud_thickness_list = [ds for ds in chirp_cloud_thickness.values()]
 cloud_thickness = xr.concat(chirp_cloud_thickness_list, dim='time').sortby('time')
 
-reindexed_clouds_layers = reindex_datasets(clouds_single_layer)
+reindexed_clouds_layers = reindex_datasets(clouds_single_layer, month=[1, 12])
+
 reindexed_clouds_layers['multilayer'] = xr.DataArray(mask_multi.astype(np.float64), dims='time')
 reindexed_clouds_layers['no_clouds'] = xr.DataArray(mask_w_clouds.astype(np.float64), dims='time')
 reindexed_clouds_layers['missing'] = reindexed_clouds_layers.multilayer.isnull().astype(np.float64)
 
-plot_cloud_frequency(reindexed_clouds_layers,
+# plot_cloud_frequency2(reindexed_clouds_layers,
+#                      freq_str, 
+#                      figname=f"{PATH_FIG}cloud_frequency_subplots_by_year.png")
+
+plot_cloud_frequency3(reindexed_clouds_layers,
                      freq_str, 
-                     figname=f"{PATH_FIG}cloud_frequency.png")
+                     figname=f"{PATH_FIG}cloud_freq_plot_by_year")
 
 plot_histograms_with_profiles(datasets=[integrated_var_single_layer.LWP.where(clouds_single_layer.Liquid.compute() == 1, drop=True).dropna(dim='time'),
                                         integrated_var_single_layer.LWP.where(clouds_single_layer.Mixed_phase.compute() == 1, drop=True).dropna(dim='time')],
@@ -1459,7 +1617,7 @@ def plot_seasonal_histograms(ds, xname, save_path=None):
 
     # Create a figure with subplots
     fig, axes = plt.subplots(num_rows, num_cols, figsize=(15, 8 * num_rows), sharex=True)
-
+    data = {var_name: [] for var_name in unique_vars}
     for i, season in enumerate(unique_season):
         mask_season = ds.season == season
         data_season = {}
@@ -1469,15 +1627,31 @@ def plot_seasonal_histograms(ds, xname, save_path=None):
             data_season[var_name] = cloud_prop_cb_single_layer.where(mask_season, drop=True).values
 
         ax = axes[i // num_cols, i % num_cols]
-
         with sns.axes_style("whitegrid"):
             for var_name, values in data_season.items():
-                sns.histplot(values, kde=True, label=f"{var_name} ({len(values)} Profiles)", ax=ax)
-
+                sns.histplot(values, kde=True, bins=30, label=f"{var_name} ({len(values)} Profiles)", ax=ax)
+                # print(f"Season: {season}, Variable: {var_name}, Mean: {np.nanmean(values)}, Std: {np.nanstd(values)}, Skew: {stats.skew(np.asarray(values, dtype=np.float64))}, Kurtosis: {stats.kurtosis(np.asarray(values, dtype=np.float64))}")
+                # Get the histogram data
+                hist, bin_edges = np.histogram(values, bins=30, density=True)
+                # Calculate cumulative distribution function (CDF)
+                cdf = np.cumsum(hist * np.diff(bin_edges))
+                # Find the bin where the CDF crosses 0.5 (median)
+                median_bin = np.searchsorted(cdf, 0.5)
+                # Estimate the median value
+                median_value = (bin_edges[median_bin] + bin_edges[median_bin + 1]) / 2
+                if var_name == 'Liquid' and season == 'summer':
+                    data[var_name].append(np.nan)
+                else:
+                    data[var_name].append(median_value)
+                print(f"Season: {season}, Variable: {var_name}, Meadian: {median_value}") 
+                # print(f"Season: {season}, Variable: {var_name}, Meadian: {np.nanmedian(values)}, 25th Percentile: {np.nanpercentile(values, 25)}, 75th Percentile: {np.nanpercentile(values, 75)}")
         ax.set_title(f"Season - {season}")
         ax.set_xlabel(xname)
         ax.legend()
-
+    
+    for var_name, values in data.items():
+        print(f"Variable: {var_name}, Mean: {np.nanmean(values)/1000}, Std: {np.nanstd(values)/1000}")
+    
     # Remove any empty subplots
     if num_seasons < num_rows * num_cols:
         for i in range(num_seasons, num_rows * num_cols):
@@ -1488,6 +1662,7 @@ def plot_seasonal_histograms(ds, xname, save_path=None):
         fig.savefig(save_path, dpi=300)
     plt.tight_layout()
     plt.show()
+    
 
 # cloud_base_by_season         = cloud_base_indexed_byseason.sel(time=mask_single) # Select only single layer clouds
 # cloud_top_by_season          = cloud_top_indexed_byseason.sel(time=mask_single) # Select only single layer clouds
@@ -1502,7 +1677,6 @@ plot_seasonal_histograms(cloud_top_indexed_byseason.sel(time=mask_single),
 plot_seasonal_histograms(cloud_thickness_indexed_byseason.sel(time=mask_single), 
                          "Cloud thickness [m]", 
                          save_path=f"{PATH_FIG}cloud_thickness_histograms.png")
-
 # # -----------------------------------------------------------------------------------------------
 def plot_cloud_prop_along_time(ds, clouds_single_layer, chirp_integrated_var, variable, save_path):
     
@@ -1546,11 +1720,11 @@ def plot_cloud_prop_along_time(ds, clouds_single_layer, chirp_integrated_var, va
             cbar.set_label('Number of Profiles')
 
             std_dev = np.sqrt(var.groupby('month').var().values) / 1e3
+            print(f"Variable: {var_name}, Mean of Means: {np.nanmean(means)}, Std of Means: {np.nanstd(means)}")
             axes[1].errorbar(months, means, yerr=std_dev, fmt='none', c='k', capsize=4)
             axes[1].set_ylabel(f"{variable} [km]")
             axes[1].set_xlabel("Month")
             axes[1].grid(True)
-
             # Create a twin axes for the secondary y-axis on the right
             ax2 = axes[1].twinx()
             

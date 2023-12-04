@@ -23,6 +23,7 @@ bottleneck = "^1.3.7"
 distributed = "^2023.9.1"
 vaex = "^4.17.0"
 scikit-learn = "^1.3.1"
+cloudnetpy-qc = "^1.14.5"
 
 [build-system]
 requires = ["poetry-core"]

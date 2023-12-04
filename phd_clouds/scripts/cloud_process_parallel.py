@@ -15,7 +15,7 @@ from scipy import integrate, interpolate
 import os
 from functools import reduce
 import operator
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Any
 import itertools
 import xarray as xr
 import seaborn as sns
@@ -25,12 +25,16 @@ import time as time_module
 from pdb import set_trace
 import seaborn as sns
 import glob
+from matplotlib import cm
+from matplotlib.patches import Patch
+# from cloudnetpy_qc import quality
 #-------------------------------------------------------------------------------------------------------
 from cloudnetpy.products import generate_lwc
 from cloudnetpy.products import generate_iwc
 from cloudnetpy.products import generate_der
 from cloudnetpy.products.der import Parameters
 from cloudnetpy.categorize import generate_categorize
+import pandas as pd
 #-------------------------------------------------------------------------------------------------------
 plt.ion()
 plt.close('all')
@@ -675,7 +679,7 @@ def process_cloud_data_parallel(args):
     # ------------------------------------------------------------------------------------------------
     # dataframes_list_ze.append(radar.Zh)
     # dataframes_list_vd.append(radar.v)
-    ds_hydrometeor    = xr.Dataset(coords={'time': time, 'range': height})
+    ds_hydrometeor            = xr.Dataset(coords={'time': time, 'range': height})
     number_of_layers          = pd.DataFrame(index=time,
                                 columns=["Liquid", "Ice", "Mixed_phase", "Pre_liquid", "Pre_mixed_phase"])
     height_cloud_base         = pd.DataFrame(index=time, 
@@ -1253,97 +1257,299 @@ class CloudProcess:
 
         return max_count, start_index, end_index
 
+
+def get_date_from_files_wo_ldr(path):
+    """
+    Reads all netCDF files in a given directory using xarray.
+    
+    Args:
+    path (str): Path to directory containing netCDF files.
+    
+    Returns:
+    list: List of xarray.Dataset objects, one for each netCDF file in the directory.
+    
+    The following code was copied from Cloudnet quality check github repository:
+    https://github.com/actris-cloudnet/cloudnetpy-qc/blob/v1.13.6/cloudnetpy_qc/quality.py
+    
+    class TestLDR(Test):
+    def run(self):
+        has_ldr = "ldr" in self.nc.variables or "sldr" in self.nc.variables
+        has_v = "v" in self.nc.variables
+        if has_v and has_ldr:
+            v = self.nc["v"][:]
+            ldr = (
+                self.nc["ldr"][:] if "ldr" in self.nc.variables else self.nc["sldr"][:]
+            )
+            v_count = ma.count(v)
+            ldr_count = ma.count(ldr)
+            if v_count > 0 and (ldr_count / v_count * 100) < 0.1:
+                self._add_warning("LDR exists in less than 0.1 % of pixels.")
+
+    """
+    files = [f for f in os.listdir(path) if f.endswith('.nc')]
+    date = []
+    for file in files:
+        
+        dataset = nc.Dataset(os.path.join(path, file))
+        ldr_count = np.ma.count(dataset['ldr']) 
+        v_count   = np.ma.count(dataset['v'])
+        if v_count > 0 and (ldr_count / v_count * 100) < 0.1:
+            print(f"File: {file[:8]} - LDR exists in less than 0.1 % of pixels.")
+            date.append(datetime.datetime.strptime(file[:8], '%Y%m%d'))
+    return date
+
+
+def break_into_sequences(timestamps: List[datetime.datetime]):
+    """
+    Breaks a list of timestamps into sequences of consecutive dates.
+    
+    Args:
+        timestamps (List[datetime.datetime]): List of timestamps.
+        
+    Returns:
+        List[List[datetime.datetime]]: List of sequences of consecutive dates.
+    """
+    sequences = []
+    current_sequence = [timestamps[0]]
+
+    for i in range(1, len(timestamps)):
+        if timestamps[i] - timestamps[i-1] == timedelta(days=1):
+            current_sequence.append(timestamps[i])
+        else:
+            sequences.append(current_sequence)
+            current_sequence = [timestamps[i]]
+
+    sequences.append(current_sequence)
+    return sequences
+
+def get_total_folder_size(path: str):
+    """
+    Calculates the total size of folders in a given path.
+    
+    Args:
+        path (str): The path to the folder.
+        
+    Returns:
+        None
+    """
+    # Get the dates without LDR from the files in the given path
+    dates_without_ldr = sorted(get_date_from_files_wo_ldr(path))
+    
+    # Define the path to the radar NAS folder
+    path_radar_nas = "/home/matheustolen/shared/NAS_raw_data/UGR/nephele"
+    
+    # Create a list of folder paths in the NAS folder corresponding to the dates without LDR
+    folders_path_nephele_nas = [os.path.join(path_radar_nas, date.strftime('%Y/%m/%d')) for date in dates_without_ldr]
+
+    # Initialize the total size variable
+    total_size = 0
+    
+    # Iterate over each folder path
+    for folder_path in folders_path_nephele_nas:
+        try:
+            # Calculate the size of each file in the folder and sum them up
+            folder_size = sum(os.path.getsize(os.path.join(folder_path, f)) for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f)))
+            
+            # Convert the size to gigabytes
+            folder_size_gb = folder_size / (1024**3)
+            
+            # Add the folder size to the total size
+            total_size += folder_size_gb
+            
+            # Print the folder size
+            print(f"Folder {folder_path} size: {folder_size_gb:.3f} GB")
+        except FileNotFoundError as e:
+            print(f"Folder {folder_path} does not exist")
+    
+    # Print the total size
+    print(f"Total size: {total_size:.3f} GB")
+
+def plot_chirp_intervals(intervals_dic: Dict[Any, Any], height_dic: Dict[Any, Any], PATH_FIG: str) -> None:
+    """
+    Plots chirp intervals based on input dictionaries of intervals and heights.
+
+    Parameters:
+    - intervals_dic (Dict[Any, Any]): Dictionary containing chirp intervals.
+    - height_dic (Dict[Any, Any]): Dictionary containing height data.
+    - PATH_FIG (str): Path where the generated plot will be saved.
+
+    Returns:
+    - None
+    """
+
+    # Initialize an empty DataFrame to store interval data
+    df = pd.DataFrame(columns=['start_times', 'end_times', 'range_res'])
+
+    # Iterate through range resolutions and corresponding intervals
+    for range_res, interval in intervals_dic.items():
+        height = height_dic[range_res].data[:]
+        time_intervals = break_into_sequences(interval)
+        start_times = [min(time_interval) for time_interval in time_intervals]
+        end_times   = [max(time_interval) for time_interval in time_intervals]
+        
+        # Process height data to identify changes
+        diff_range = np.round(np.diff(height), 1)
+        change_indices   = np.where(np.diff(diff_range) != 0)[0] + 2
+        height_intervals = [height[0], *height[change_indices], height[-1]]
+        print(height_intervals)
+
+        # Concatenate interval data to the DataFrame
+        df = pd.concat([df, pd.DataFrame({'start_times': start_times, 'end_times': end_times, 'range_res': [range_res]*len(start_times)})], ignore_index=True)
+
+    # Sort the DataFrame by start times
+    df = df.sort_values(by='start_times')
+
+    # Extract year, month, day, and width information
+    df['year'] = df['start_times'].dt.year
+    df['month'] = df['start_times'].dt.month
+    df['day'] = df['start_times'].dt.day
+    df['width'] = df['end_times'] - df['start_times'] + timedelta(days=1)
+    df['width'] = pd.to_timedelta(df['width'])
+    df['range_res'] = df['range_res'].apply(lambda x: tuple(round(val, 2) for val in x))
+    
+    # Group the DataFrame by range resolution
+    grouped_df = df.groupby('range_res')
+
+    # Create a figure and axis for the plot
+    fig, ax = plt.subplots(figsize=(15, 8))
+    color_dict = {}
+    
+    decimals = 1
+    # Iterate through each group in the grouped DataFrame
+    for i, (range_res, group) in enumerate(grouped_df):
+        color = cm.Set1(i / len(grouped_df))
+        
+        # Iterate through each row in the group
+        for index, row in group.iterrows():
+            start_date = row['start_times']
+            end_date = start_date + row['width']
+
+            # Plot the bar with horizontal width according to the 'width' column
+            ax.barh(row['year'], width=row['width'].days, left=(start_date - pd.Timestamp(start_date.year, 1, 1)).days,
+                color=color, alpha=0.9)
+        
+        # Convert each element to a string with the specified number of decimals
+        formatted_elements = [f"{element:.{decimals}f}" for element in range_res]
+        # Join the formatted elements with "-"
+        result_string = "--".join(formatted_elements)
+        # Add the range_res and color to the dictionary
+        color_dict[result_string] = color
+
+    # Set labels and title
+    ax.set_xlabel('Day/Month')
+
+    # Customize the x-axis to represent days of the year and format ticks as day/month
+    days_in_year = (pd.Timestamp('2023-01-01') - pd.Timestamp('2022-01-01')).days
+    ax.set_xlim(0, days_in_year)
+    ax.set_xticks(range(0, days_in_year, 30))
+    ax.set_xticklabels([(pd.Timestamp('2022-01-01') + timedelta(days=i)).strftime('%d/%m') for i in range(0, days_in_year, 30)])
+    ax.grid()
+
+    # Create custom legend handles with colored bars
+    legend_handles = [Patch(color=color_dict[label], label=str(label)) for label in color_dict.keys()]
+
+    # Add a single legend outside the loop with custom handles
+    legend = ax.legend(handles=legend_handles, loc='upper center', bbox_to_anchor=(0.5, 1.2), ncol=3)
+
+    # Remove super title
+    fig.suptitle('')
+
+    # Remove legend border
+    legend.get_frame().set_linewidth(0)
+
+    # Adjust layout to make room for the legend
+    plt.tight_layout()
+
+    # Remove spines, save the figure, and show the plot
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['bottom'].set_visible(True)
+    ax.spines['left'].set_visible(True)
+
+    fig.savefig(PATH_FIG + "chirp_intervals.png", bbox_inches='tight', dpi=300, bbox_inches='tight')
+    plt.show()
+
 #--------------------------------------------------------------------------------------------------------
-# Define variables:
+# Define procedures to perform
 #--------------------------------------------------------------------------------------------------------
+check_files_without_ldr = False
+plot_chirp_time_series  = True
+process_database        = False
+#-------------------------------------------------------------------------------------------------------
+# Check the size day folder withot LDR for nephele in NAS
+#-------------------------------------------------------------------------------------------------------
+if check_files_without_ldr:
+    get_total_folder_size(PATH_RADAR)
+#--------------------------------------------------------------------------------------------------------
+# Startind data processing
+#--------------------------------------------------------------------------------------------------------
+
 paths     = [PATH_RADAR, PATH_CATE, PATH_CLASS]
 extension = '.nc'
 database_intersection  = common_prefix_of_filenames(paths, extension)
-# start_date = min(database_intersection) # first date of database
-# end_date   = max(database_intersection) # last date of database
+start_date = min(database_intersection) # first date of database
+end_date   = max(database_intersection) # last date of database
 
-start_date = datetime.datetime(2021, 4, 21)
-end_date   = datetime.datetime(2021, 4, 21, 23, 59, 59)
+# start_date = datetime.datetime(2021, 4, 21)
+# end_date   = datetime.datetime(2021, 4, 21, 23, 59, 59)
 
 # start_date = datetime.datetime(2018, 6, 1)
 # end_date   = datetime.datetime(2018, 11, 1)
 
 #TODO: should create a loop to iterate over all chirp configurations
-# chirp_ini, chirp_final, chirp_zres, chirp_height, selected_interval = compare_radar_chirp_configurations(start_date, end_date, database_intersection, PATH_RADAR)
 intervals_dic, height_dic = compare_radar_chirp_configurations(start_date, end_date, database_intersection, PATH_RADAR)
-for range_res, interval in intervals_dic.items():
-    print(f"Chirp resolution: {range_res} m, Intervals Count: {len(interval)}")
-    # height_dic[range_res]
-    # set_trace()
 
 print("\nRemoving all cloudnet files of LWC and Reff from its directory...")
-# min_chirp_range = min([height_dic[var].min() for var in height_dic])
-# max_chirp_range = max([height_dic[var].max() for var in height_dic])
-# max_size_chirp_range = max([height_dic[var].size for var in height_dic])ç
-
-# Finding common height range between all chirp configurations:
-# Round the heights in each array to a specified number of decimal places
-# decimal_places = 1
-# rounded_height_dic = {key: [np.around(height, decimal_places) for height in heights] for key, heights in height_dic.items()}
-
-# # Create a set to store unique merged heights
-# merged_heights_set = set()
-
-# # Iterate through the original dictionary and add heights to the set
-# for heights in rounded_height_dic.values():
-#     merged_heights_set.update(heights)
-
-# # Convert the set to a list and sort it in ascending order
-# merged_heights = sorted(merged_heights_set)
-
-# min_chirp_range = 104.344696
-# max_chirp_range = 13491.768
-# max_size_chirp_range = 860
-# new_range = np.linspace(min_chirp_range, max_chirp_range, max_size_chirp_range)
 
 os.system("rm "+PATH_CLOUDNET_LWC+"*lwc.nc") # remove all lwc files from lwc path 
 os.system("rm "+PATH_CLOUDNET_DER+"*der.nc") # remove all der files from der path
 os.system("rm "+PATH_CLOUDNET_IWC+"*iwc.nc") # remove all der files from der path
 
 print("All file removed")
-# Create a list of arguments for parallel processing
-processing_args = []
-for nchirp, key_res in enumerate(intervals_dic):
-    height     = height_dic[key_res]
-    # time_complete     = pd.date_range(start=start_date+timedelta(seconds=15),
-    #                                   end=end_date + pd.Timedelta(days=1),
-    #                                   freq='30S')
-    # ----------------------------------------------------------------------------------------------------
-    # for ind_day, date in enumerate([database_intersection.date[18]]):
-    # start_time = time_module.time()
-    for date in intervals_dic[key_res]:
-        #------------------------------------------------------------------------------------------------
-        # generate_cloudnet_products(date, 
-        #                            PATH_CATE, 
-        #                            PATH_CLOUDNET_LWC, 
-        #                            PATH_CLOUDNET_IWC, 
-        #                            PATH_CLOUDNET_DER)
-        #------------------------------------------------------------------------------------------------
-        # processing_args.append((height, nchirp, date, key_res))
-        process_cloud_data_parallel((height, nchirp, date, key_res))
 
-# end_time = time_module.time()
-# #------------------------------------------------------------------------------------------------
-# # Parallel execution using multiprocessing.Pool
-# # ------------------------------------------------------------------------------------------------
-# num_processes = 4  # You can adjust this as needed
-# # Start the timer for parallel execution
-# print("Starting parallel execution...")
-# start_time = time_module.time()
-# # Parallel execution using multiprocessing.Pool
-# with multiprocessing.Pool(processes=num_processes) as pool:
-#     pool.map(process_cloud_data_parallel, processing_args)
-# end_time = time_module.time()
-# print("Parallel execution finished.")
-# # ------------------------------------------------------------------------------------------------
-# # Calculate and print the execution time
-# execution_time = (end_time - start_time) / 60
-# print(f"Execution time: {execution_time:.2f} minutes")
+if plot_chirp_time_series:
+    plot_chirp_intervals(intervals_dic, height_dic, PATH_FIG)
+
+if process_database:
+    # Create a list of arguments for parallel processing
+    processing_args = []
+    
+    for nchirp, key_res in enumerate(intervals_dic):
+        height     = height_dic[key_res]
+        # time_complete     = pd.date_range(start=start_date+timedelta(seconds=15),
+        #                                   end=end_date + pd.Timedelta(days=1),
+        #                                   freq='30S')
+        # ----------------------------------------------------------------------------------------------------
+        # for ind_day, date in enumerate([database_intersection.date[18]]):
+        # start_time = time_module.time()
+        for date in intervals_dic[key_res]:
+            #------------------------------------------------------------------------------------------------
+            # generate_cloudnet_products(date, 
+            #                            PATH_CATE, 
+            #                            PATH_CLOUDNET_LWC, 
+            #                            PATH_CLOUDNET_IWC, 
+            #                            PATH_CLOUDNET_DER)
+            #------------------------------------------------------------------------------------------------
+            # processing_args.append((height, nchirp, date, key_res))
+            process_cloud_data_parallel((height, nchirp, date, key_res))
+
+    # end_time = time_module.time()
+    # #------------------------------------------------------------------------------------------------
+    # # Parallel execution using multiprocessing.Pool
+    # # ------------------------------------------------------------------------------------------------
+    # num_processes = 4  # You can adjust this as needed
+    # # Start the timer for parallel execution
+    # print("Starting parallel execution...")
+    # start_time = time_module.time()
+    # # Parallel execution using multiprocessing.Pool
+    # with multiprocessing.Pool(processes=num_processes) as pool:
+    #     pool.map(process_cloud_data_parallel, processing_args)
+    # end_time = time_module.time()
+    # print("Parallel execution finished.")
+    # # ------------------------------------------------------------------------------------------------
+    # # Calculate and print the execution time
+    # execution_time = (end_time - start_time) / 60
+    # print(f"Execution time: {execution_time:.2f} minutes")
 
 # if __name__ == "__main__":
 #     main()

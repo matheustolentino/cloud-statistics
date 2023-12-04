@@ -255,6 +255,23 @@ files = [
 ]
 
 [[package]]
+name = "cfchecker"
+version = "4.1.0"
+description = "The NetCDF Climate Forecast Conventions compliance checker"
+optional = false
+python-versions = ">3"
+files = [
+    {file = "cfchecker-4.1.0-py3-none-any.whl", hash = "sha256:97d58377acda15f34977e14928329e6311081d6a56e0bcaee06f516724b66873"},
+    {file = "cfchecker-4.1.0.tar.gz", hash = "sha256:10b86748565c9e0f4c959e4d82fe83b00344551db3db3c7d0d2f8c31449aa1b9"},
+]
+
+[package.dependencies]
+cfunits = ">=3.0.0"
+future = "*"
+netCDF4 = "*"
+numpy = ">=1.7"
+
+[[package]]
 name = "cffi"
 version = "1.15.1"
 description = "Foreign Function Interface for Python calling C code."
@@ -364,6 +381,26 @@ files = [
 numpy = ">1.13.3"
 
 [[package]]
+name = "cfunits"
+version = "3.3.6"
+description = "A python interface to UNIDATA's UDUNITS-2 package with CF extensions"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "cfunits-3.3.6.tar.gz", hash = "sha256:fb209bae52e84eed44ed9e7efe10d8237861137aad4a648aa4b69c2535c40fbc"},
+]
+
+[package.dependencies]
+cftime = ">=1.5.0"
+numpy = ">=1.15"
+packaging = ">=20.0"
+
+[package.extras]
+documentation = ["sphinx (>=2,<=4)", "sphinx-copybutton", "sphinx-toggleprompt", "sphinxcontrib-spelling"]
+"pre-commit hooks" = ["black", "docformatter", "flake8", "pre-commit", "pydocstyle"]
+"required c libraries" = ["udunits2 (==2.2.20)"]
+
+[[package]]
 name = "charset-normalizer"
 version = "3.2.0"
 description = "The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet."
@@ -460,6 +497,27 @@ files = [
 
 [package.dependencies]
 colorama = {version = "*", markers = "platform_system == \"Windows\""}
+
+[[package]]
+name = "cloudnetpy-qc"
+version = "1.14.5"
+description = "Quality control routines for CloudnetPy products"
+optional = false
+python-versions = ">=3.10"
+files = [
+    {file = "cloudnetpy_qc-1.14.5-py3-none-any.whl", hash = "sha256:c11437cd9b14618c44bacb6d151d697401777447e1c44f1f63f81b8b51b0f1b0"},
+    {file = "cloudnetpy_qc-1.14.5.tar.gz", hash = "sha256:395c8a9c7b0a21a868577ece7a22ae81fe5fa7b5f38d53219bc11a703fb9ca6f"},
+]
+
+[package.dependencies]
+cfchecker = "*"
+netCDF4 = "*"
+numpy = "*"
+requests = "*"
+scipy = "*"
+
+[package.extras]
+test = ["mypy", "pylint", "pytest-flakefinder", "types-requests"]
 
 [[package]]
 name = "cloudpickle"
@@ -3487,4 +3545,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "6ef144e82ecf6bbbd3c419055b86001995194fc664c3a72667f1d39daf843afa"
+content-hash = "d981c53aa08f749305e97da52c52a1800ef8b75945371deeb45164965357c999"
