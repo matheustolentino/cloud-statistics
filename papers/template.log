@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2022/dev/Debian) (preloaded format=pdflatex 2023.5.31)  31 JAN 2024 17:24
+This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2022/dev/Debian) (preloaded format=pdflatex 2023.5.31)  2 FEB 2024 08:53
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -2984,11 +2984,7 @@ File: t1ptm.fd 2001/06/04 font definitions for T1/ptm.
 LaTeX Warning: Unused global option(s):
     [journalabbreviation].
 
-(./template.aux
-
-LaTeX Warning: Label `fig:product_vs_intrument' multiply defined.
-
-)
+(./template.aux)
 \openout1 = `template.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 81.
@@ -3009,7 +3005,8 @@ LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 81.
 LaTeX Font Info:    ... okay on input line 81.
 LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 81.
 LaTeX Font Info:    ... okay on input line 81.
- (/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
+
+(/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
 \scratchcounter=\count331
 \scratchdimen=\dimen266
@@ -3078,10 +3075,11 @@ LaTeX Font Info:    Font shape `T1/phv/m/n' will be
 Package natbib Warning: Citation `Illingworth2007XXX' on page 1 undefined on in
 put line 136.
 
-<figures/Granada_station2.png, id=5, 1684.2925pt x 1086.0575pt>
-File: figures/Granada_station2.png Graphic file (type png)
-<use figures/Granada_station2.png>
-Package pdftex.def Info: figures/Granada_station2.png  used on input line 142.
+<../phd_clouds/figures/Granada_station2.png, id=5, 1684.2925pt x 1086.0575pt>
+File: ../phd_clouds/figures/Granada_station2.png Graphic file (type png)
+<use ../phd_clouds/figures/Granada_station2.png>
+Package pdftex.def Info: ../phd_clouds/figures/Granada_station2.png  used on in
+put line 142.
 (pdftex.def)             Requested size: 503.61377pt x 324.72601pt.
 
 Package natbib Warning: Citation `Illingworth2007XXX' on page 1 undefined on in
@@ -3108,26 +3106,27 @@ e 150.
 [1
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}]
-<figures/chirp_intervals.png, id=28, 1012.9845pt x 498.663pt>
-File: figures/chirp_intervals.png Graphic file (type png)
-<use figures/chirp_intervals.png>
-Package pdftex.def Info: figures/chirp_intervals.png  used on input line 154.
+<../phd_clouds/figures/chirp_intervals.png, id=28, 1012.9845pt x 498.663pt>
+File: ../phd_clouds/figures/chirp_intervals.png Graphic file (type png)
+<use ../phd_clouds/figures/chirp_intervals.png>
+Package pdftex.def Info: ../phd_clouds/figures/chirp_intervals.png  used on inp
+ut line 154.
 (pdftex.def)             Requested size: 503.61377pt x 247.9156pt.
 
 
 LaTeX Warning: Reference `XXX' on page 2 undefined on input line 176.
 
-<figures/cloudnet_products.png, id=30, 953.964pt x 822.07124pt>
-File: figures/cloudnet_products.png Graphic file (type png)
-<use figures/cloudnet_products.png>
-Package pdftex.def Info: figures/cloudnet_products.png  used on input line 181.
-
+<../phd_clouds/figures/cloudnet_products.png, id=30, 953.964pt x 822.07124pt>
+File: ../phd_clouds/figures/cloudnet_products.png Graphic file (type png)
+<use ../phd_clouds/figures/cloudnet_products.png>
+Package pdftex.def Info: ../phd_clouds/figures/cloudnet_products.png  used on i
+nput line 181.
 (pdftex.def)             Requested size: 503.61377pt x 433.98973pt.
 
 Package natbib Warning: Citation `XXX' on page 2 undefined on input line 188.
 
-[2 <./figures/Granada_station2.png>] [3 <./figures/chirp_intervals.png>]
-[4 <./figures/cloudnet_products.png>]
+[2 <../phd_clouds/figures/Granada_station2.png>] [3 <../phd_clouds/figures/chir
+p_intervals.png>] [4 <../phd_clouds/figures/cloudnet_products.png>]
 
 Package natbib Warning: Citation `PirloagaXXX' on page 5 undefined on input lin
 e 195.
@@ -3140,18 +3139,34 @@ e 195.
 Package natbib Warning: Citation `Pirloaga and NokomovaXXX' on page 5 undefined
  on input line 195.
 
-[5] [6pdfTeX warning (ext4): destination with the same identifier (name{appendi
-x.A}) has been already used, duplicate ignored
+[5]
+<../phd_clouds/figures/mwr_time_series_RH.png, id=58, 589.4823pt x 354.3639pt>
+File: ../phd_clouds/figures/mwr_time_series_RH.png Graphic file (type png)
+<use ../phd_clouds/figures/mwr_time_series_RH.png>
+Package pdftex.def Info: ../phd_clouds/figures/mwr_time_series_RH.png  used on 
+input line 202.
+(pdftex.def)             Requested size: 503.61377pt x 302.74635pt.
+<../phd_clouds/figures/Liquid_2d_histogram_hydrometeors.png, id=63, 1084.05pt x
+ 578.16pt>
+File: ../phd_clouds/figures/Liquid_2d_histogram_hydrometeors.png Graphic file (
+type png)
+<use ../phd_clouds/figures/Liquid_2d_histogram_hydrometeors.png>
+Package pdftex.def Info: ../phd_clouds/figures/Liquid_2d_histogram_hydrometeors
+.png  used on input line 213.
+(pdftex.def)             Requested size: 503.61377pt x 268.5946pt.
+ [6 <../phd_clouds/figures/mwr_time_series_RH.png>] [7 <../phd_clouds/figures/L
+iquid_2d_histogram_hydrometeors.png>] [8pdfTeX warning (ext4): destination with
+ the same identifier (name{appendix.A}) has been already used, duplicate ignore
+d
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.297 \disclaimer{TEXT}
-                        %% optional sectionpdfTeX warning (ext4): destination w
-ith the same identifier (name{appendix.A}) has been already used, duplicate ign
-ored
+l.338 \begin{thebibliography}{}
+                               pdfTeX warning (ext4): destination with the same
+ identifier (name{appendix.A}) has been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.297 \disclaimer{TEXT}
-                        %% optional section] [7] [8]
+l.338 \begin{thebibliography}{}
+                               ] [9]
 
 Package natbib Warning: There were undefined citations.
 
@@ -3159,15 +3174,12 @@ Package natbib Warning: There were undefined citations.
 
 LaTeX Warning: There were undefined references.
 
-
-LaTeX Warning: There were multiply-defined labels.
-
  ) 
 Here is how much of TeX's memory you used:
- 18556 strings out of 478287
- 271193 string characters out of 5849289
- 612996 words of memory out of 5000000
- 36443 multiletter control sequences out of 15000+600000
+ 18586 strings out of 478287
+ 272602 string characters out of 5849289
+ 613203 words of memory out of 5000000
+ 36466 multiletter control sequences out of 15000+600000
  499576 words of font info for 69 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  75i,16n,77p,2151b,457s stack positions out of 5000i,500n,10000p,200000b,80000s
@@ -3181,10 +3193,10 @@ onts/cm/cmsy7.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/helvetic/uhvr8
 a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/sha
 re/texlive/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/share/texlive/texm
 f-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on template.pdf (8 pages, 2621796 bytes).
+Output written on template.pdf (9 pages, 3057041 bytes).
 PDF statistics:
- 146 PDF objects out of 1000 (max. 8388607)
- 108 compressed objects within 2 object streams
- 39 named destinations out of 1000 (max. 500000)
- 16 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 163 PDF objects out of 1000 (max. 8388607)
+ 120 compressed objects within 2 object streams
+ 44 named destinations out of 1000 (max. 500000)
+ 26 words of extra memory for PDF output out of 10000 (max. 10000000)
 

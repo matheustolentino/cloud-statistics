@@ -550,28 +550,31 @@ if quicklook_humidity:
     # plt.show()
 
 # Plotting the Humidity and Relative Humidity variables using pcolormesh
+# df = mwr_rh.to_dataframe()
+# # Check for duplicated time values
+# duplicated_times = df.index[df.index.duplicated()]
+
 
 mwr_h = mwr_h.drop_duplicates('time', keep='first')
 mwr_rh = mwr_rh.drop_duplicates('time', keep='first')
 mwr_temp = mwr_temp.drop_duplicates('time', keep='first')
 # # Pressure profile from standar atmosphere
 
-hb = 0
-dh = 7.5
-tb = mwr_temp['temperature'][0, 0] # Temperature at ground [K]
-pb = 940 # Pressure at ground [hPa]
+# hb = 0
+# dh = 7.5
+# tb = mwr_temp['temperature'][0, 0] # Temperature at ground [K]
+# pb = 940 # Pressure at ground [hPa]
 
-h_std_at, t_std_at, p_std_at = mwr_data.standardAtmosphere(hb, dh, tb, pb)
-temp_potential = mwr_temp['temperature'] * (1000/ p_std_at) ** (287.058 / 1004.5)
+# h_std_at, t_std_at, p_std_at = mwr_data.standardAtmosphere(hb, dh, tb, pb)
+# temp_potential = mwr_temp['temperature'] * (1000/ p_std_at) ** (287.058 / 1004.5)
 
 mwr_profiles = mwr_data.merge_mwr_ds([mwr_rh, mwr_h, mwr_temp], dim='time')
-# mwr_data.remove_months('1M', .9, mwr_profiles)
 
-
-# mwr_profiles = mwr_data.merge_mwr_ds([mwr_rh, mwr_h], dim='time')
-# df = mwr_rh.to_dataframe()
-# # Check for duplicated time values
-# duplicated_times = df.index[df.index.duplicated()]
+folder_to_save_mwr_ds = f"../../../processed_data/mwr_profiles/"
+if not os.path.exists(folder_to_save_mwr_ds):
+    os.makedirs(folder_to_save_mwr_ds)
+    # Save mwr_profiles as NetCDF file
+    mwr_profiles.to_netcdf(folder_to_save_mwr_ds + 'mwr_profiles.nc')
 
 # Resampling the dataset to monthly frequency
 resampled_merged_mwr = mwr_profiles.resample(time='1M').mean()

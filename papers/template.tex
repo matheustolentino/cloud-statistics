@@ -139,7 +139,7 @@ and radiometer humidity and temperature profiles. These products were inferred b
 
 \begin{figure}[htbp]
       \centering
-      \includegraphics[width=1.\textwidth]{figures/Granada_station2.png}
+      \includegraphics[width=1.\textwidth]{../phd_clouds/figures/Granada_station2.png}
       \caption{Geographic location of the ACTRIS CCRES Granada station. Red area is the province of granada, while blue poligon indicates the station facility, the Andalusian Institute for Earth System Research. Image adapted from \href{https://en.wikipedia.org/wiki/Province_of_Granada}{wikipedia} with Google Earth software.}
       \label{fig:granada_station}
 \end{figure}
@@ -151,7 +151,7 @@ High level data included in the analysis were target classification, liquid wate
 
 \begin{figure}[htbp]
       \centering
-      \includegraphics[width=1.\textwidth]{figures/chirp_intervals.png}
+      \includegraphics[width=1.\textwidth]{../phd_clouds/figures/chirp_intervals.png}
       \caption{Overview of cloud radar vertical bin sizes depending chirp table configuration.}
       \label{fig:radar_vertical_res}
 \end{figure}
@@ -178,7 +178,7 @@ Typical variables of each instruments in table \ref{tab:instrument_info} in Gran
 
 \begin{figure}[htbp]
       \centering
-      \includegraphics[width=1.\textwidth]{figures/cloudnet_products.png}
+      \includegraphics[width=1.\textwidth]{../phd_clouds/figures/cloudnet_products.png}
       \caption{Should change figure - Reflectivity, Att. backscatter coeff and LWP}
       \label{fig:product_vs_intrument}
 \end{figure}
@@ -188,28 +188,36 @@ Typical variables of each instruments in table \ref{tab:instrument_info} in Gran
 Target classification product assigns an integer ranging from 0 to 10 at each pixel in the Cloudnet processed grid. Each number are related to atmospheric elements in the following order: clear sky, droplets, drizzle or rain, drizzle \& droplets, ice, ice \& droplets, melting ice, melting \& droplets, aerosol, insects, aerosol \& insect. These targets were determined through radar and lidar variables in combination with thermodynamic profiles from the ECMWF model. In particular, wet bulb temperature (T$_w$) profiles is used to establish warm and cold regions to classify liquid and ice hydrometeors. For instance, ice and melting particles can only exist in cold regions, in other words, when T$_w$ < 0. Further, liquid droplets boundaries were resolved with lidar attenuated backscatter coefficient ($\beta$), and radar reflectivity. The first is sensible to small liquid droplets present in cloud base, being used to identify lower limits of droplet layers and also upper limits when there is no radar reflectivity above the heigh lidar signal was totally attenuated. In addition, liquid layers respect a threshold of T$_w$ < -40 $^{\circ}$C, since it is not possible to keep water in liquid phase bellow that temperature. Hence, liquid droplets assigned as falling were classified as drizzle or rain droplets, where falling is attributed through radar echos analysis once particles boundary were already determined. Therefore, falling cold particle were just classified as ice, without distinguishing ice from precipitating ice. Next, melting layers were identified at the height of maximum wet bulb temperature divergence. Pixels with divergence surpassing 0.0075 s$^{-1}$ within 150 m of height deviation were also classified as "melting". Furthermore, more than one class of particle can be settled in the same pixel, allowing the identification of mixed phase hydrometeors, like ice coexisting with supercooled liquid droplets and melting ice particles coexisting with cloud liquid droplets. A more detailed description of particle apportionment of Cloudnet algorithm can be found on \cite{XXX}. 
 
 
-\subsection{Assortment algorithm}
+\subsection{Assortment algorithm}\label{sec:classification_algorithm}
 
-The assortment algoritm classifies groups of hydrometeors and cloud layers. In terms of hydrometeors, this algorithm generate masks of 3 groups: liquid, ice and "total", where liquid class encompass all possible liquid pixels, which are "droplets", "drizzle or rain" and "drizzle \& droplets". Ice encompass only "ice" pixels, and total is all possible hydrometeors, whic are "droplets", "drizzle or rain", "drizzle \& droplets", "ice", "ice \& droplets", "melting ice" and "melting \& droplets".
+The assortment algoritm classifies groups of hydrometeors and cloud layers. In terms of hydrometeors, this algorithm generate masks of hydrometeor occurence for 3 groups: liquid, ice and "total", where liquid class encompass all possible liquid pixels, which are "droplets", "drizzle or rain" and "drizzle \& droplets". Ice encompass only "ice" pixels, and total is all possible hydrometeors, whic are "droplets", "drizzle or rain", "drizzle \& droplets", "ice", "ice \& droplets", "melting ice" and "melting \& droplets".
 
 Subsequently, cloud layers in atmospheric column were classified trought pixel sequence inquiry. These pixels sequences were devided in the following 5 groups according to \cite{PirloagaXXX}: liquid, ice, mixed phase, liquid with precipitation and mixed phase with precipitation. Specifically, liquid clouds were assigned as any combination of "droplets" and "drizzle \& droplets" pixels. Ice clouds were assigned when only "ice" pixel sequence was encountered. As well as, mixed phase clouds were assigned with any combination of "droplets", "ice", "ice \& droplets", "melting ice", "melting \& droplets", "drizzle and droplets" pixels. Precipitation cases were classified wheter at least one pixel of "drizzle or rain" is found below liquid and mixed phase clouds. Diferent from previous studies, a threshold of 20 bins (256-1022 m) bellow cloud was set to reject precipitation events, assuming that rain droplets are not falling from the actual cloud layer. In all cases, for being considered a cloud layer, a minimun sequence of 3 cloud pixels (38-153 m) (as \citep{NomokovaXXX}) must be satisfied, in addition to a minimun sequence of 5 pixels (64-255 m) of "Clear sky", "Aerosol", "Insect" and "Arosol \& insect" to separate multilayers. Therefore, free hydrometeor layers in the neghborhood of the cloud allowed the identification of cloud base and top. Nevertheless, thresholds here were based on \cite{Pirloaga and NokomovaXXX}, but theses values are not currently well defined, their determination has been guided by empirical experience.
 
 \section{Thermodinamic conditions}
 
-%
-%\begin{figure}[htbp]
-%      \centering
-%      \includegraphics[width=1.\textwidth]{figures/mwr_time_series_RH.png}
-%      \caption{Should change figure - Reflectivity, Att. backscatter coeff and LWP}
-%      \label{fig:product_vs_intrument}
-%\end{figure}
+
+\begin{figure}[htbp]
+      \centering
+      \includegraphics[width=1.\textwidth]{../phd_clouds/figures/mwr_time_series_RH.png}
+      \caption{Should change figure - Reflectivity, Att. backscatter coeff and LWP}
+      \label{fig:temo}
+\end{figure}
 
 \section{Hydrometeor characteristics}
 
+A first conception about clouds spacial-temporal distribution can be acessed with the hydrometeor frequency of occurence. Hence, figure \ref{fig:hydro_occurence} shows the frequency of occurence for liquid, ice and all hydrometeors. In terms of liquid hydrometeors, a notably concentration below 2\,km can be observed in both panels of figure~\ref{fig:hydro_occurence}.a, where left panel shows the time evolution of montly vertical frequency of occurence, while the right panel shows the mean profile through the entire dataset. On the contrary, ice particles (figure figure~\ref{fig:hydro_occurence}.b) shows a completely different behavior, with a spreader distribution along the vertical, with slight maxima in 2\,km and 8\,km viwed in the mean profile, and a clear seasonality, with low frequencies in summer/fall and higher frequency in winter/spring. 
+
+\begin{figure}[htbp]
+      \centering
+      \includegraphics[width=1.\textwidth]{../phd_clouds/figures/Liquid_2d_histogram_hydrometeors}
+      \caption{Should change figure - Reflectivity, Att. backscatter coeff and LWP}
+      \label{fig:hydro_occurence}
+\end{figure}
 
 
 
-
+\section{Cloud properties evaluation}
 
 
 

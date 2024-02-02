@@ -31,6 +31,7 @@ from matplotlib.patches import Patch
 #-------------------------------------------------------------------------------------------------------
 from cloudnetpy.products import generate_lwc
 from cloudnetpy.products import generate_iwc
+from cloudnetpy.products import generate_ier
 from cloudnetpy.products import generate_der
 from cloudnetpy.products.der import Parameters
 from cloudnetpy.categorize import generate_categorize
@@ -47,9 +48,10 @@ PATH_CLASS        = '/media/matheustolen/Seagate Basic/cloudnet/classification/'
 PATH_CATE         = '/media/matheustolen/Seagate Basic/cloudnet/categorize/'
 PATH_RADAR        = '/media/matheustolen/Seagate Basic/cloudnet/radar/'
 PATH_FIG          = '../figures/'
-PATH_CLOUDNET_LWC = '../../../output_retrievals/lwc/'
+PATH_CLOUDNET_LWC = '../../../output_retrievals/'
 PATH_CLOUDNET_IWC = '../../../output_retrievals/'
-PATH_CLOUDNET_DER = '../../../tests/output_retrievals/der/'
+PATH_CLOUDNET_DER = '../../../output_retrievals/'
+PATH_CLOUDNET_IER = '../../../output_retrievals/'
 #-------------------------------------------------------------------------------------------------------
 # constants
 #-------------------------------------------------------------------------------------------------------
@@ -560,7 +562,7 @@ def plot_cloud_mask(df_complete, df_mask, name_title, z_min, z_max):
     plt.suptitle(name_title)
     plt.show()
 
-def plot_integrated_variables(df_integrated_variables):
+def plot_integrated_variables(ds_cloud_prop: xr.Dataset):
     # Create a figure and axis
     fig, ax1 = plt.subplots(figsize=(10, 6))
 
@@ -568,7 +570,7 @@ def plot_integrated_variables(df_integrated_variables):
     color = 'tab:blue'
     ax1.set_xlabel('Time [UTC]')
     ax1.set_ylabel('LWP [g m$^{-2}$]', color=color)
-    ax1.plot(df_integrated_variables.index, df_integrated_variables['LWP'], color=color)
+    ax1.plot(ds_cloud_prop.time.values, ds_cloud_prop['LWP'], color=color)
     ax1.tick_params(axis='y', labelcolor=color)
 
     # Create a second y-axis
@@ -577,14 +579,14 @@ def plot_integrated_variables(df_integrated_variables):
     # Plot the 'IWP' data on the second y-axis
     color = 'tab:red'
     ax2.set_ylabel('IWP [g m$^{-2}]$', color=color)
-    ax2.plot(df_integrated_variables.index, df_integrated_variables['IWP']*1e3, color=color)
+    ax2.plot(ds_cloud_prop.time.values, ds_cloud_prop['IWP']*1e3, color=color)
     ax2.tick_params(axis='y', labelcolor=color)
 
     # Format x-axis labels to display hour and minute
     ax1.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
 
     # Set the super title with the date
-    plt.suptitle(df_integrated_variables.index[0].strftime("%Y-%m-%d"))
+    # plt.suptitle(ds_cloud_prop.time.values[0].strftime("%Y-%m-%d"))
 
     # Show the plot
     plt.title('LWP and IWP over Time')
@@ -594,7 +596,7 @@ def plot_integrated_variables(df_integrated_variables):
 # cloudnet algorithm to generate netcdf files with liquid water content (lwc) and droplet 
 # effective radius (der)
 #------------------------------------------------------------------------------------------------
-def generate_cloudnet_products(date, path_cate, path_cloudnet_lwc = None, path_cloudnet_iwc = None, path_cloudnet_der = None):
+def generate_cloudnet_products(date, path_cate, path_cloudnet_lwc = None, path_cloudnet_iwc = None, path_cloudnet_der = None, path_cloudnet_ier = None):
  
     # Generate LWC
     if path_cloudnet_lwc is not None:
@@ -613,7 +615,14 @@ def generate_cloudnet_products(date, path_cate, path_cloudnet_lwc = None, path_c
         der_input_path = os.path.join(path_cate, date.strftime('%Y%m%d') + "_granada_categorize.nc")
         der_output_path = os.path.join(path_cloudnet_der, date.strftime('%Y%m%d') + "_granada_" + 'der.nc')
         params = Parameters(2.0, 100.0e6, 200.0e6, 0.25, 0.1, 5.0e-3)
-        generate_der(der_input_path, der_output_path, parameters=params)
+        generate_der(der_input_path, der_output_path)
+        # generate_der(der_input_path, der_output_path, parameters=params)
+
+    # Generate IER
+    if path_cloudnet_ier is not None:
+        ier_input_path = os.path.join(path_cate, date.strftime('%Y%m%d') + "_granada_categorize.nc")
+        ier_output_path = os.path.join(path_cloudnet_ier, date.strftime('%Y%m%d') + "_granada_" + 'ier.nc')
+        generate_ier(ier_input_path, ier_output_path)
 
 def check_time_resolution(classification, categorize, date):
     try:
@@ -645,8 +654,11 @@ def process_cloud_data_parallel(args):
     # generate some cloudnet products
     #------------------------------------------------------------------------------------------------
     generate_cloudnet_products(date, 
-                                PATH_CATE, 
-                                path_cloudnet_iwc=PATH_CLOUDNET_IWC)
+                                PATH_CATE,
+                                path_cloudnet_lwc=PATH_CLOUDNET_LWC, 
+                                path_cloudnet_iwc=PATH_CLOUDNET_IWC,
+                                path_cloudnet_der=PATH_CLOUDNET_DER, 
+                                path_cloudnet_ier=PATH_CLOUDNET_IER)
     #------------------------------------------------------------------------------------------------
     # reading categorize, classification and radar files
     #------------------------------------------------------------------------------------------------
@@ -673,9 +685,13 @@ def process_cloud_data_parallel(args):
     # ------------------------------------------------------------------------------------------------
     # reading some cloudnet products
     # ------------------------------------------------------------------------------------------------
-    # cloudnet_lwc = nc.Dataset(PATH_CLOUDNET_LWC+date.strftime('%Y%m%d')+"_granada_"+'lwc.nc')
+    cloudnet_lwc = xr.open_dataset(PATH_CLOUDNET_LWC+date.strftime('%Y%m%d')+"_granada_"+'lwc.nc')
     cloudnet_iwc = xr.open_dataset(PATH_CLOUDNET_IWC+date.strftime('%Y%m%d')+"_granada_"+'iwc.nc')
-    # cloudnet_der = nc.Dataset(PATH_CLOUDNET_DER+date.strftime('%Y%m%d')+"_granada_"+'der.nc')
+    cloudnet_der = xr.open_dataset(PATH_CLOUDNET_DER+date.strftime('%Y%m%d')+"_granada_"+'der.nc')
+    cloudnet_ier = xr.open_dataset(PATH_CLOUDNET_IER+date.strftime('%Y%m%d')+"_granada_"+'ier.nc')
+
+    cloud_products = xr.merge([cloudnet_lwc, cloudnet_iwc, cloudnet_der, cloudnet_ier], compat='no_conflicts', join='exact')
+    cloud_products = cloud_products.reindex(time=time, method='nearest') # reindexing to merge with LWP and IWP
     # ------------------------------------------------------------------------------------------------
     # dataframes_list_ze.append(radar.Zh)
     # dataframes_list_vd.append(radar.v)
@@ -702,13 +718,18 @@ def process_cloud_data_parallel(args):
     if np.any(mask_outliers_lwp):
         categorize['lwp'][mask_outliers_lwp] = np.nan
     # ------------------------------------------------------------------------------------------------
-    df_integrated_variables = pd.DataFrame({'LWP': categorize['lwp'][:], 
-                                            'IWP': np.trapz(cloudnet_iwc.iwc, height, axis=1)
-                                            }, index=time)
+    ds_integrated_variables = xr.Dataset(
+                    {'LWP': (['time'], categorize['lwp'][:]),
+                     'IWP': (['time'], np.trapz(cloudnet_iwc.iwc, height, axis=1))},
+                     coords={'time': time})
+
+    cloud_physical_properties = xr.merge([cloud_products, ds_integrated_variables], join='exact')   
+    # ------------------------------------------------------------------------------------------------
+    
     xr_radar_variables = xr.merge([xr.DataArray(categorize['Z'][:], coords={'time': time, 'range': height}, name='Z'),
                            xr.DataArray(categorize['v'][:], coords={'time': time, 'range': height}, name='v')], compat='no_conflicts', join='exact')
     
-    plot_integrated_variables(df_integrated_variables)
+    # plot_integrated_variables(cloud_physical_properties)
     # return None # remove this line to run the rest of the code
     # -----------------------------------------------------------------------------------------------
     # df_cloudnet_lwc   = pd.DataFrame(data   =1.0e3*cloudnet_lwc['lwc'][:],
@@ -722,14 +743,19 @@ def process_cloud_data_parallel(args):
     #                                     columns=height) # um
     # ------------------------------------------------------------------------------------------------
     try: 
-        process_cloud_data(date, xr_radar_variables, df_classification,
-                       df_reflectivity, df_integrated_variables,
-                       number_of_layers,
-                       height_cloud_base, 
-                       height_cloud_top, 
-                       height_cloud_mean, 
-                       geometric_cloud_thickness,
-                       ds_hydrometeor, time, height, nchirp)
+        process_cloud_data(date, xr_radar_variables, 
+                           df_classification,
+                           df_reflectivity, 
+                           cloud_physical_properties,
+                           number_of_layers,
+                           height_cloud_base, 
+                           height_cloud_top, 
+                           height_cloud_mean, 
+                           geometric_cloud_thickness,
+                           ds_hydrometeor, 
+                           time, 
+                           height, 
+                           nchirp)
     except Exception as e:
         print(f"An error occurred at date {date}", str(e))
         return None
@@ -739,7 +765,7 @@ def process_cloud_data(date: datetime.datetime,
                         xr_radar_variables: xr.Dataset,
                         df_classification: pd.DataFrame,
                         df_reflectivity: pd.DataFrame,
-                        df_integrated_variables: pd.DataFrame,
+                        cloud_physical_properties: xr.Dataset,
                         number_of_layers: pd.DataFrame,
                         height_cloud_base: pd.DataFrame,
                         height_cloud_top: pd.DataFrame,
@@ -774,16 +800,16 @@ def process_cloud_data(date: datetime.datetime,
                                                         cloud)
         
         number_of_layers.loc[classification_filter.time_cbt, cloud] = sublist_lengths(classification_filter.cloud_base)
-        with sns.axes_style("whitegrid"):
-            plot_cloud_type(df_classification,
-                            df_reflectivity, 
-                            classification_filter, 
-                            cloud, .1, 5., 
-                            CLASSIFICATION_TICK_LABELS, 
-                            plot_ze=False,
-                            cloud_type= CLOUD_TYPES[cloud],
-                            targ_between_cloud= TARG_BET_CLOUD[cloud],
-                            integrated_variables = df_integrated_variables)
+        # with sns.axes_style("whitegrid"):
+        #     plot_cloud_type(df_classification,
+        #                     df_reflectivity, 
+        #                     classification_filter, 
+        #                     cloud, .1, 5., 
+        #                     CLASSIFICATION_TICK_LABELS, 
+        #                     plot_ze=False,
+        #                     cloud_type= CLOUD_TYPES[cloud],
+        #                     targ_between_cloud= TARG_BET_CLOUD[cloud],
+        #                     integrated_variables = cloud_physical_properties)
     #------------------------------------------------------------------------------------------------
     # Analisis hydrometeors 
     #------------------------------------------------------------------------------------------------ 
@@ -801,51 +827,50 @@ def process_cloud_data(date: datetime.datetime,
         #                     classification_filter, 
         #                     cloud, .1, 12., CLASSIFICATION_TICK_LABELS)
     #------------------------------------------------------------------------------------------------
-    df_integrated_variables.index.name  = 'time'
-    df_integrated_variables             = xr.Dataset.from_dataframe(df_integrated_variables)
     number_of_layers.index.name = 'time'
     ds_layers          = xr.Dataset.from_dataframe(number_of_layers)
-    name_folders_nc    = ["radar_variables", "integrated_variables", "hydrometeor", "number_of_layers"]
+    name_folders_nc    = ["radar_variables", "cloud_physical_properties", "hydrometeor", "number_of_layers"]
     # ------------------------------------------------------------------------------------------------
     # Save the dataset as a NetCDF file inside the chirp folder
     # ------------------------------------------------------------------------------------------------
-    for ds, name in zip([xr_radar_variables, df_integrated_variables, ds_hydrometeor, ds_layers], name_folders_nc):
-        folder_name = f"../../../processed_data/chirp_{nchirp}/{name}/"
-        if not os.path.exists(folder_name):
-            os.makedirs(folder_name)
+    if save_cloudnet_products:
+        for ds, name in zip([xr_radar_variables, cloud_physical_properties, ds_hydrometeor, ds_layers], name_folders_nc):
+            folder_name = f"../../../processed_data/chirp_{nchirp}/{name}/"
+            if not os.path.exists(folder_name):
+                os.makedirs(folder_name)
+            
+            output_path = os.path.join(folder_name, f"{date.strftime('%Y%m%d')}_{name}.nc")
+            # Determine chunking size based on dimensions present in the dataset
+            # chunks = {}
+            # for dim in ds.dims:
+            #     chunks[dim] = ds[dim].size
+            # # Rechunk the dataset
+            # rechunked_ds = rechunk_dataset(ds, chunks)
+            # # Save the rechunked dataset
+            # rechunked_ds.to_netcdf(output_path)
+            ds.to_netcdf(output_path)
+        # ------------------------------------------------------------------------------------------------
+        # Save the dataset as a JSON file inside the chirp folder
+        # ------------------------------------------------------------------------------------------------
+        height_cloud_base.index.name = 'time'
+        height_cloud_top.index.name  = 'time'
+        height_cloud_mean.index.name = 'time'
+        geometric_cloud_thickness.index.name = 'time'
+        name_folders_json  = ["height_cloud_base", "height_cloud_top", "height_cloud_mean", "geometric_cloud_thickness"]
         
-        output_path = os.path.join(folder_name, f"{date.strftime('%Y%m%d')}_{name}.nc")
-        # Determine chunking size based on dimensions present in the dataset
-        # chunks = {}
-        # for dim in ds.dims:
-        #     chunks[dim] = ds[dim].size
-        # # Rechunk the dataset
-        # rechunked_ds = rechunk_dataset(ds, chunks)
-        # # Save the rechunked dataset
-        # rechunked_ds.to_netcdf(output_path)
-        ds.to_netcdf(output_path)
-    # ------------------------------------------------------------------------------------------------
-    # Save the dataset as a JSON file inside the chirp folder
-    # ------------------------------------------------------------------------------------------------
-    height_cloud_base.index.name = 'time'
-    height_cloud_top.index.name  = 'time'
-    height_cloud_mean.index.name = 'time'
-    geometric_cloud_thickness.index.name = 'time'
-    name_folders_json  = ["height_cloud_base", "height_cloud_top", "height_cloud_mean", "geometric_cloud_thickness"]
-    
-    for df, name in zip([height_cloud_base, height_cloud_top, height_cloud_mean, geometric_cloud_thickness],
-                       name_folders_json):
-        folder_name = f"../../../processed_data/chirp_{nchirp}/{name}/"
-        if not os.path.exists(folder_name):
-            os.makedirs(folder_name)
-        
-        try:
-            # Convert columns to serializable format
-            output_path = os.path.join(folder_name, f"{date.strftime('%Y%m%d')}_{name}.json")
-            df_serializable = df.applymap(handle_serialization)
-            df_serializable.to_json(output_path, orient='index')
-        except Exception as e:
-            print(f"Error while saving {name}: {e}")
+        for df, name in zip([height_cloud_base, height_cloud_top, height_cloud_mean, geometric_cloud_thickness],
+                        name_folders_json):
+            folder_name = f"../../../processed_data/chirp_{nchirp}/{name}/"
+            if not os.path.exists(folder_name):
+                os.makedirs(folder_name)
+            
+            try:
+                # Convert columns to serializable format
+                output_path = os.path.join(folder_name, f"{date.strftime('%Y%m%d')}_{name}.json")
+                df_serializable = df.applymap(handle_serialization)
+                df_serializable.to_json(output_path, orient='index')
+            except Exception as e:
+                print(f"Error while saving {name}: {e}")
     # ------------------------------------------------------------------------------------------------
 
 class HMmodel:
@@ -1465,16 +1490,16 @@ def plot_chirp_intervals(intervals_dic: Dict[Any, Any], height_dic: Dict[Any, An
     ax.spines['right'].set_visible(False)
     ax.spines['bottom'].set_visible(True)
     ax.spines['left'].set_visible(True)
-
-    fig.savefig(PATH_FIG + "chirp_intervals.png", bbox_inches='tight', dpi=300, bbox_inches='tight')
+    fig.savefig(PATH_FIG + "chirp_intervals.png", bbox_inches='tight', dpi=300)
     plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 # Define procedures to perform
 #--------------------------------------------------------------------------------------------------------
 check_files_without_ldr = False
-plot_chirp_time_series  = True
-process_database        = False
+plot_chirp_time_series  = False
+process_database        = True
+save_cloudnet_products  = True
 #-------------------------------------------------------------------------------------------------------
 # Check the size day folder withot LDR for nephele in NAS
 #-------------------------------------------------------------------------------------------------------
@@ -1504,6 +1529,7 @@ print("\nRemoving all cloudnet files of LWC and Reff from its directory...")
 os.system("rm "+PATH_CLOUDNET_LWC+"*lwc.nc") # remove all lwc files from lwc path 
 os.system("rm "+PATH_CLOUDNET_DER+"*der.nc") # remove all der files from der path
 os.system("rm "+PATH_CLOUDNET_IWC+"*iwc.nc") # remove all der files from der path
+os.system("rm "+PATH_CLOUDNET_IER+"*ier.nc") # remove all der files from der path
 
 print("All file removed")
 
@@ -1530,26 +1556,26 @@ if process_database:
             #                            PATH_CLOUDNET_IWC, 
             #                            PATH_CLOUDNET_DER)
             #------------------------------------------------------------------------------------------------
-            # processing_args.append((height, nchirp, date, key_res))
-            process_cloud_data_parallel((height, nchirp, date, key_res))
+            processing_args.append((height, nchirp, date, key_res))
+            # process_cloud_data_parallel((height, nchirp, date, key_res))
 
     # end_time = time_module.time()
-    # #------------------------------------------------------------------------------------------------
-    # # Parallel execution using multiprocessing.Pool
-    # # ------------------------------------------------------------------------------------------------
-    # num_processes = 4  # You can adjust this as needed
-    # # Start the timer for parallel execution
-    # print("Starting parallel execution...")
-    # start_time = time_module.time()
-    # # Parallel execution using multiprocessing.Pool
-    # with multiprocessing.Pool(processes=num_processes) as pool:
-    #     pool.map(process_cloud_data_parallel, processing_args)
-    # end_time = time_module.time()
-    # print("Parallel execution finished.")
-    # # ------------------------------------------------------------------------------------------------
-    # # Calculate and print the execution time
-    # execution_time = (end_time - start_time) / 60
-    # print(f"Execution time: {execution_time:.2f} minutes")
+    #------------------------------------------------------------------------------------------------
+    # Parallel execution using multiprocessing.Pool
+    # ------------------------------------------------------------------------------------------------
+    num_processes = 4  # You can adjust this as needed
+    # Start the timer for parallel execution
+    print("Starting parallel execution...")
+    start_time = time_module.time()
+    # Parallel execution using multiprocessing.Pool
+    with multiprocessing.Pool(processes=num_processes) as pool:
+        pool.map(process_cloud_data_parallel, processing_args)
+    end_time = time_module.time()
+    print("Parallel execution finished.")
+    # ------------------------------------------------------------------------------------------------
+    # Calculate and print the execution time
+    execution_time = (end_time - start_time) / 60
+    print(f"Execution time: {execution_time:.2f} minutes")
 
 # if __name__ == "__main__":
 #     main()
