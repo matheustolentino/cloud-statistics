@@ -582,7 +582,7 @@ resampled_merged_mwr = mwr_profiles.resample(time='1M').mean()
 # Reindexed dataset for montly frequency with nan in months with no data
 start_time     = resampled_merged_mwr['time'].min().values
 end_time       = resampled_merged_mwr['time'].max().values
-new_time_index = pd.date_range(start=start_time, end=end_time, freq='M',normalize=True)
+new_time_index = pd.date_range(start=start_time, end=end_time, freq='M', normalize=True)
 
 reindexed_mwr = resampled_merged_mwr.reindex(time=new_time_index)
 
