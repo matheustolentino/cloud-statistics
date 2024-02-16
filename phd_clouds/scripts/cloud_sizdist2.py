@@ -81,6 +81,28 @@ def mixture_gamma(x: np.ndarray, *params: float) -> np.ndarray:
         pdf += w * gamma.pdf(x, a, scale=b)
     return pdf
 
+def mixture_lognormal(x: np.ndarray, *params: float) -> np.ndarray:
+    """
+    Calculate the probability density function (PDF) of a mixture of lognormal distributions.
+
+    Parameters:
+        x (np.ndarray): Input values at which to evaluate the PDF.
+        params (float): Variable-length argument list containing the parameters.
+                        The parameters should be provided in the following order:
+                        [weights, means, sigmas]
+
+    Returns:
+        np.ndarray: The PDF values at the given input values x.
+    """
+    num_distributions = len(params) // 3
+    weights = params[:num_distributions]
+    means   = params[num_distributions:2*num_distributions]
+    sigmas  = params[2*num_distributions:]
+    pdf = np.zeros_like(x)
+    for w, mu, sigma in zip(weights, means, sigmas):
+        pdf += w * (1 / (x * sigma * np.sqrt(2 * np.pi))) * np.exp(-((np.log(x) - mu) ** 2) / (2 * sigma ** 2))
+    return pdf
+
 def find_modes_with_gmm(data, n_components=2, plot=True, nbin=60, title='Histogram'):
     # Fit a Gaussian Mixture Model to the data
     gmm = GaussianMixture(n_components=n_components)
@@ -132,6 +154,26 @@ def calculate_gamma_parameters(diameter, counts, peak_info=None, mode=0):
     scale = var1/first_mom
 
     return  n, nu, scale, x, y
+
+def calculate_lognormal_parameters(diameter, counts, peak_info=None, mode=0):
+    if peak_info is None:
+        x = diameter
+        y = counts
+    else:
+        ini = peak_info['left_bases'][mode]
+        end = peak_info['right_bases'][mode]
+        x = diameter[ini:end]
+        y = counts[ini:end]
+
+    n = integrate.simps(y, x)
+    first_mom = integrate.simps(x*y, x)/n
+    second_mom  = integrate.simps(x**2*y,x)/n
+    mu    = np.log(first_mom**2/np.sqrt(second_mom))
+    sigma = np.sqrt(second_mom/first_mom**2)
+
+    # Arithmetic moments section shows how to obtain logno,mal parameters mu y sigma^2: https://en.wikipedia.org/wiki/Log-normal_distribution
+
+    return  n, mu, sigma, x, y
 
 def plot_and_show_distributions(
     param: List[float],
@@ -209,6 +251,7 @@ def plot_and_show_distributions(
 
 #**************************************************************************************************
 # Teste mixture of gamma functions
+# **************************************************************************************************
 # x = np.linspace(0.5, 15, 25)
 # true_params = [.8, .3, 12, 20, .2, .3]
 # y = mixture_gamma(x, *true_params)

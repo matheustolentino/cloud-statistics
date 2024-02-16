@@ -2,13 +2,13 @@ import os
 import requests
 
 # Define the folder path where you want to save the downloaded files
-output_folder = '/media/matheustolen/Seagate Basic/cloudnet/radar'
+output_folder = '/home/matheustolen/Documentos/matheus_doctorado/output_retrievals'
 
 url = 'https://cloudnet.fmi.fi/api/files'
 payload = {
-    'product': 'radar',
+    'product': 'lwc',
     'site': 'granada',
-    'dateFrom': '2023-10-20',
+    'dateFrom': '2018-04-22',
     'dateTo': '2023-12-31'
 }
 metadata = requests.get(url, params=payload).json()

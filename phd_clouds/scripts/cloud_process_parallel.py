@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import netCDF4 as nc
 from datetime import timedelta
 import matplotlib.dates as mdates
+import matplotlib.gridspec as gridspec
 import datetime
 import pandas as pd
 from scipy import integrate, interpolate
@@ -34,12 +35,18 @@ from cloudnetpy.products import generate_iwc
 from cloudnetpy.products import generate_ier
 from cloudnetpy.products import generate_der
 from cloudnetpy.products.der import Parameters
-from cloudnetpy.categorize import generate_categorize
+from cloudnetpy.plotting import plotting
 import pandas as pd
 #-------------------------------------------------------------------------------------------------------
 plt.ion()
 plt.close('all')
-sns.set_context("paper", font_scale=2.5, rc={"lines.linewidth": 2.5})
+# Set the font to Times New Roman using LaTeX
+fontsize = 14
+plt.rcParams['font.family'] = 'serif'
+plt.rcParams['font.serif'] = ['Times New Roman'] + plt.rcParams['font.serif']
+
+# Set the fontsize for all elements in the plot
+plt.rcParams['font.size'] = fontsize
 #from cloud_classes import Intersection_products, HMmodel, CloudProcess
 #-------------------------------------------------------------------------------------------------------
 # paths
@@ -653,12 +660,12 @@ def process_cloud_data_parallel(args):
     # ------------------------------------------------------------------------------------------------
     # generate some cloudnet products
     #------------------------------------------------------------------------------------------------
-    generate_cloudnet_products(date, 
-                                PATH_CATE,
-                                path_cloudnet_lwc=PATH_CLOUDNET_LWC, 
-                                path_cloudnet_iwc=PATH_CLOUDNET_IWC,
-                                path_cloudnet_der=PATH_CLOUDNET_DER, 
-                                path_cloudnet_ier=PATH_CLOUDNET_IER)
+    # generate_cloudnet_products(date, 
+    #                             PATH_CATE,
+    #                             path_cloudnet_lwc=PATH_CLOUDNET_LWC, 
+    #                             path_cloudnet_iwc=PATH_CLOUDNET_IWC,
+    #                             path_cloudnet_der=PATH_CLOUDNET_DER, 
+    #                             path_cloudnet_ier=PATH_CLOUDNET_IER)
     #------------------------------------------------------------------------------------------------
     # reading categorize, classification and radar files
     #------------------------------------------------------------------------------------------------
@@ -685,8 +692,8 @@ def process_cloud_data_parallel(args):
     # ------------------------------------------------------------------------------------------------
     # reading some cloudnet products
     # ------------------------------------------------------------------------------------------------
-    cloudnet_lwc = xr.open_dataset(PATH_CLOUDNET_LWC+date.strftime('%Y%m%d')+"_granada_"+'lwc.nc')
-    cloudnet_iwc = xr.open_dataset(PATH_CLOUDNET_IWC+date.strftime('%Y%m%d')+"_granada_"+'iwc.nc')
+    cloudnet_lwc = xr.open_dataset(PATH_CLOUDNET_LWC+date.strftime('%Y%m%d')+"_granada_"+'lwc-scaled-adiabatic.nc')
+    cloudnet_iwc = xr.open_dataset(PATH_CLOUDNET_IWC+date.strftime('%Y%m%d')+"_granada_"+'iwc-Z-T-method.nc')
     cloudnet_der = xr.open_dataset(PATH_CLOUDNET_DER+date.strftime('%Y%m%d')+"_granada_"+'der.nc')
     cloudnet_ier = xr.open_dataset(PATH_CLOUDNET_IER+date.strftime('%Y%m%d')+"_granada_"+'ier.nc')
 
@@ -728,19 +735,75 @@ def process_cloud_data_parallel(args):
     
     xr_radar_variables = xr.merge([xr.DataArray(categorize['Z'][:], coords={'time': time, 'range': height}, name='Z'),
                            xr.DataArray(categorize['v'][:], coords={'time': time, 'range': height}, name='v')], compat='no_conflicts', join='exact')
-    
-    # plot_integrated_variables(cloud_physical_properties)
-    # return None # remove this line to run the rest of the code
-    # -----------------------------------------------------------------------------------------------
-    # df_cloudnet_lwc   = pd.DataFrame(data   =1.0e3*cloudnet_lwc['lwc'][:],
-    #                                     index  =time,
-    #                                     columns= height) # g m^-3
-    # df_cloudnet_iwc   = pd.DataFrame(data   =1.0e3*cloudnet_iwc['iwc'][:],
-    #                                     index  =time,
-    #                                     columns= height) # g m^-3
-    # df_cloudnet_der   = pd.DataFrame(data   =1.0e6*cloudnet_der['der'][:],
-    #                                     index  =time,
-    #                                     columns=height) # um
+    # # ------------------------------------------------------------------------------------------------
+    # # Effective radius
+    # # ------------------------------------------------------------------------------------------------
+    # fig, ax = plt.subplots(figsize=(13, 6))
+    # mesh = ax.pcolormesh(cloud_physical_properties.time.values, (cloud_physical_properties.height.values - cloud_physical_properties.altitude.values)/1000, cloud_physical_properties['der'].T, cmap='rainbow')
+    # cbar = plt.colorbar(mesh, ax=ax, orientation='vertical', pad=0.04, shrink=1.0, aspect=30, label=f"{cloud_physical_properties['der'].units}")
+    # ax.set_title(cloud_physical_properties['der'].long_name)
+    # ax.set_xlabel('Time (UTC)')
+    # ax.set_ylabel('Height (km)')
+    # ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+    # plt. show()
+    # # ------------------------------------------------------------------------------------------------
+    # fig, ax = plt.subplots(figsize=(13, 6))
+    # mesh = ax.pcolormesh(cloud_physical_properties.time.values, (cloud_physical_properties.height.values - cloud_physical_properties.altitude.values)/1000, cloud_physical_properties['ier'].T, cmap='rainbow')
+    # cbar = plt.colorbar(mesh, ax=ax, orientation='vertical', pad=0.04, shrink=1.0, aspect=30, label=f"{cloud_physical_properties['ier'].units}")
+    # ax.set_title(cloud_physical_properties['ier'].long_name)
+    # ax.set_xlabel('Time (UTC)')
+    # ax.set_ylabel('Height (km)')
+    # ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+    # plt.show()
+    # # ------------------------------------------------------------------------------------------------
+    # # LWC
+    # # ------------------------------------------------------------------------------------------------
+    # fig = plt.figure(figsize=(12, 7))
+    # gs = fig.add_gridspec(2, 2, width_ratios=[35, 1], height_ratios=[3, 1], hspace=0.01, wspace=0.05)
+
+    # ax1 = fig.add_subplot(gs[0, 0])
+    # mesh1 = ax1.pcolormesh(cloud_physical_properties.time.values, (cloud_physical_properties.height.values - cloud_physical_properties.altitude.values)/1000, cloud_physical_properties['lwc'].T, cmap='rainbow')
+    # ax1.set_title(cloud_physical_properties['lwc'].long_name)
+    # ax1.set_ylabel('Height (km)')
+    # ax1.xaxis.set_visible(False)  # Hide the x-axis
+    # # ax1.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+
+    # cax = fig.add_subplot(gs[0, 1])
+    # cbar1 = plt.colorbar(mesh1, cax=cax, orientation='vertical', label=f"{cloud_physical_properties['lwc'].units}")
+
+    # ax2 = fig.add_subplot(gs[1, 0])
+    # mesh2 = ax2.plot(cloud_physical_properties.time.values, cloud_physical_properties['LWP'], label='LWP', color='blue')
+    # ax2.set_xlabel('Time (UTC)')
+    # ax2.set_ylabel(r'LWP (kg m$^{-2}$)', color='blue')
+    # ax2.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+    # plt.show()
+    # # ------------------------------------------------------------------------------------------------
+    # # IWP
+    # # ------------------------------------------------------------------------------------------------
+    # fig = plt.figure(figsize=(12, 7))
+    # gs = fig.add_gridspec(2, 2, width_ratios=[35, 1], height_ratios=[3, 1], hspace=0.01, wspace=0.05)
+
+    # ax1 = fig.add_subplot(gs[0, 0])
+    # mesh1 = ax1.pcolormesh(cloud_physical_properties.time.values, (cloud_physical_properties.height.values - cloud_physical_properties.altitude.values)/1000, cloud_physical_properties['iwc'].T, cmap='rainbow')
+    # ax1.set_title(cloud_physical_properties['iwc'].long_name)
+    # ax1.set_ylabel('Height (km)')
+    # ax1.xaxis.set_visible(False)  # Hide the x-axis
+    # # ax1.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+    # cax = fig.add_subplot(gs[0, 1])
+    # cbar1 = plt.colorbar(mesh1, cax=cax, orientation='vertical', label=f"{cloud_physical_properties['iwc'].units}", 
+    #                      ticks=np.arange(np.nanmin(cloud_physical_properties['iwc'].values), np.nanmax(cloud_physical_properties['iwc'].values), 0.0005))
+
+    # ax2 = fig.add_subplot(gs[1, 0])
+    # mesh2 = ax2.plot(cloud_physical_properties.time.values, cloud_physical_properties['IWP'], label='IWP', color='red')
+    # ax2.set_xlabel('Time (UTC)')
+    # ax2.set_ylabel(r'IWP (kg m$^{-2}$)', color='red')
+    # ax2.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+    # plt.show()
+    # # ------------------------------------------------------------------------------------------------
+    # # Classification
+    # # ------------------------------------------------------------------------------------------------
+    # plotting.generate_figure(PATH_CLASS+date.strftime('%Y%m%d')+"_granada_classification.nc", field_names=['target_classification'], show=True)
+    # # ------------------------------------------------------------------------------------------------
     # ------------------------------------------------------------------------------------------------
     try: 
         process_cloud_data(date, xr_radar_variables, 
@@ -1508,15 +1571,14 @@ if check_files_without_ldr:
 #--------------------------------------------------------------------------------------------------------
 # Startind data processing
 #--------------------------------------------------------------------------------------------------------
-
 paths     = [PATH_RADAR, PATH_CATE, PATH_CLASS]
 extension = '.nc'
 database_intersection  = common_prefix_of_filenames(paths, extension)
 start_date = min(database_intersection) # first date of database
 end_date   = max(database_intersection) # last date of database
 
-# start_date = datetime.datetime(2021, 4, 21)
-# end_date   = datetime.datetime(2021, 4, 21, 23, 59, 59)
+start_date = datetime.datetime(2023, 4, 22)
+end_date   = datetime.datetime(2023, 4, 22, 23, 59, 59)
 
 # start_date = datetime.datetime(2018, 6, 1)
 # end_date   = datetime.datetime(2018, 11, 1)
@@ -1524,14 +1586,14 @@ end_date   = max(database_intersection) # last date of database
 #TODO: should create a loop to iterate over all chirp configurations
 intervals_dic, height_dic = compare_radar_chirp_configurations(start_date, end_date, database_intersection, PATH_RADAR)
 
-print("\nRemoving all cloudnet files of LWC and Reff from its directory...")
+# print("\nRemoving all cloudnet files of LWC and Reff from its directory...")
 
-os.system("rm "+PATH_CLOUDNET_LWC+"*lwc.nc") # remove all lwc files from lwc path 
-os.system("rm "+PATH_CLOUDNET_DER+"*der.nc") # remove all der files from der path
-os.system("rm "+PATH_CLOUDNET_IWC+"*iwc.nc") # remove all der files from der path
-os.system("rm "+PATH_CLOUDNET_IER+"*ier.nc") # remove all der files from der path
+# os.system("rm "+PATH_CLOUDNET_LWC+"*lwc.nc") # remove all lwc files from lwc path 
+# os.system("rm "+PATH_CLOUDNET_DER+"*der.nc") # remove all der files from der path
+# os.system("rm "+PATH_CLOUDNET_IWC+"*iwc.nc") # remove all der files from der path
+# os.system("rm "+PATH_CLOUDNET_IER+"*ier.nc") # remove all der files from der path
 
-print("All file removed")
+# print("All file removed")
 
 if plot_chirp_time_series:
     plot_chirp_intervals(intervals_dic, height_dic, PATH_FIG)

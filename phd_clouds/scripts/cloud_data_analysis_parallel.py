@@ -1696,139 +1696,382 @@ if cloud_properties_analysis:
 
     # Concatenate the modified chirp_cloud_prop datasets
     integrated_var = xr.concat(chirp_integrated_var_list, dim='time').sortby('time')
-
+    integrated_var = integrated_var.assign_coords(years=integrated_var['time'].dt.year, month=integrated_var['time'].dt.month)
+    integrated_var = assign_season(integrated_var, SEASONS)
     # -----------------------------------------------------------------------------------------------
     # Gridding vertical cloud properties for concatenating and reindexing
     # -----------------------------------------------------------------------------------------------
     min_chirp_range = min([var.height.values.min() for var in chirp_vertical_var_list])
     max_chirp_range = max([var.height.values.max() for var in chirp_vertical_var_list])
 
-    delta_range = 10
+    delta_range = 60
     bin_edges   = np.arange(0, max_chirp_range+delta_range, delta_range)
 
-    # test = chirp_vertical_var_list[0].compute()
-    # data_interp = test.der[3, :].dropna(dim='height').interp(height=bin_edges)
-
-    # fig, ax = plt.subplots()  # 2 rows, 1 column
-    # test.der.T.plot.pcolormesh()
-    # plt.show()
-    # fig, ax = plt.subplots()  # 2 rows, 1 column
-    # test2 = test.der.coarsen(height=delta_range, boundary='pad').mean()
-    # test2.T.plot.pcolormesh()
-    # plt.show()
-    # data = test.der[3, 200:300]
+    # Using a generator expression to populate list
+    result_generator  = (var.groupby_bins('height', bin_edges, labels=bin_edges[1:]).mean() for var in chirp_vertical_var_list)
     
-    
-    range_binned_data = [var.where(~var.isnull(), 0).interp(height=bin_edges) for var in chirp_vertical_var_list]
-    # range_binned_data = [var.groupby_bins('height', bin_edges, labels=bin_edges[1:]).mean() for var in chirp_vertical_var_list]
-    # range_binned_data = [var.coarsen(height=bin_edges).mean() for var in chirp_vertical_var_list]
-    # range_binned_data = [var.coarsen(height=delta_range, boundary='pad').mean() for var in chirp_vertical_var_list]
+    range_binned_data = []
+    for result in result_generator:
+        range_binned_data.append(result)
 
-    microphysics  = xr.concat(range_binned_data, dim='time').sortby('time')
-    time_for_nans = calculate_time_remove(cloud_layers, reindexed_clouds_layers, freq_rm="M", threshold=0.5)
+    microphysics      = xr.concat(range_binned_data, dim='time').sortby('time')
+    microphysics      = microphysics.assign_coords(years=microphysics['time'].dt.year, month=microphysics['time'].dt.month)
+    microphysics      = assign_season(microphysics, SEASONS)
+    
+    time_for_nans     = calculate_time_remove(cloud_layers, reindexed_clouds_layers, freq_rm="M", threshold=0.5)
     clouds_to_analyse = ['Liquid', 'Mixed_phase', 'Ice', 'Pre_liquid', 'Pre_mixed_phase']
-    # -----------------------------------------------------------------------------------------------
-    # LWC for single layer clouds analysis
-    # -----------------------------------------------------------------------------------------------
-    for var_name in clouds_to_analyse:
-        print(f"Variable: {var_name}")
-        cond                  = clouds_single_layer[var_name].compute() == 1
-        microphysics_var_name = microphysics['lwc'].where(cond, drop=True)
-        # print(microphysics_var_name.size)
-        microphysics_resampled = microphysics_var_name.resample(time="M").mean().compute()
-        
-        time_intersection      = np.intersect1d(microphysics_resampled.time.values, time_for_nans.values)
-        # filtering data by putting Nans in the intersection time
-        microphysics_resampled = microphysics_resampled.where(~microphysics_resampled.time.isin(time_intersection))
- 
-        # microphysics_var_name['month'] = microphysics_var_name['time'].dt.month
-        # monthly_data = microphysics_var_name.groupby('month').quantile(.5)
-        
-        fig, ax = plt.subplots(sharex=True, sharey=True, figsize=(12, 7))  
-        lwc_values = 1000 * microphysics_resampled.T
-        max_value = np.nanmax(lwc_values)
-        cbar_max =  1*max_value
-        mesh = ax.pcolormesh(microphysics_resampled.time, (microphysics_resampled.height - 680)/1000, lwc_values, cmap='turbo', norm=mpl.colors.LogNorm(vmin=0.001, vmax=cbar_max))
-        cbar = plt.colorbar(mesh, ax=ax, orientation='vertical', pad=0.02, shrink=1.0, aspect=30)
-        cbar.set_label('LWC [g m$^{-3}$]')
-        ax.set_ylabel("Height [km] a.g.l.")
-        ax.set_xlabel("Time")
-        ax.set_title(f"LWC for {var_name}")
-        ax.xaxis.set_major_locator(mdates.MonthLocator(interval=4))
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%y'))
-        ax.xaxis.set_tick_params(rotation=30)
-        ax.set_ylim([0, 10])
-        ax.grid(True)
-        plt.show()
-        fig.savefig(f"{PATH_FIG}monthy_evolution_for_lwc_{var_name}.png", dpi=300)
-    # -----------------------------------------------------------------------------------------------
     
-    # -----------------------------------------------------------------------------------------------
-    # DER for single layer clouds analysis
-    # -----------------------------------------------------------------------------------------------
+    # data = microphysics['lwc'].compute() * 1000
+    # data1= integrated_var['LWP'].compute()
+    # clouds_to_analyse = ['Liquid']
+    # for var_name in clouds_to_analyse:
+    #     print(f"Variable: {var_name}")
+    #     cond                  = clouds_single_layer[var_name].compute() == 1
+    #     microphysics_var_name = data.where(cond, drop=True)
+    #     integrated_var_name   = data1.where(cond, drop=True)
+    #     # Rechunk the 'microphysics_var_name' array along the 'time' dimension into a single chunk
+    #     # microphysics_var_name = microphysics_var_name.chunk({'time': -1})
+    #     # monthly_data = microphysics_var_name.groupby('month').quantile(.5)
+    #     monthly_data = microphysics_var_name.groupby('month').mean()
+
+    #     fig = plt.figure(figsize=(16, 10))
+    #     gs = fig.add_gridspec(2, 3, width_ratios=[1.8, 5, .15], height_ratios=[3, 1.2], hspace=0.05, wspace=0.3)
+    #     # -----------------------------------------------------------------------------------------------
+    #     # Mesh plot (upper subplot)
+    #     # -----------------------------------------------------------------------------------------------
+    #     ax1 = fig.add_subplot(gs[0, 1])
+
+    #     lwc_values = monthly_data
+    #     max_value = np.nanmax(lwc_values)
+    #     cbar_max =  max_value
+
+    #     mesh = ax1.pcolormesh(lwc_values.month.values, lwc_values.height_bins/1000,
+    #                   lwc_values, shading='nearest', cmap='turbo', norm=mpl.colors.LogNorm(vmin=0.00001, vmax=cbar_max))
+    #     ax1.set_ylabel("Height [km] a.m.s.l.")
+    #     ax1.set_xlabel("Time")
+    #     ax1.set_title(f"LWC for {var_name} Clouds")
+    #     ax1.set_ylim([np.min(mean_profile_by_season.height_bins/1000), np.max(mean_profile_by_season.height_bins/1000)])
+    #     ax1.grid(True)
+    #     ax1.xaxis.set_visible(False)
+    #     ax1.set_xticks(np.arange(1, 13))
+    #     # -----------------------------------------------------------------------------------------------
+    #     # Colorbar (right subplot)
+    #     # -----------------------------------------------------------------------------------------------
+    #     cax = fig.add_subplot(gs[0, 2])
+    #     cbar1 = plt.colorbar(mesh, cax=cax, orientation='vertical', label="g m$^{-3}$", aspect=10)
+    #     cbar1.ax.yaxis.set_label_position('left')
+    #     # -----------------------------------------------------------------------------------------------
+    #     # Mean profile by season (lower subplot)
+    #     # -----------------------------------------------------------------------------------------------
+    #     ax2 = fig.add_subplot(gs[:, 0])
+
+    #     mean_profile_by_season = microphysics_var_name.groupby('time.season').mean(dim='time')
+    #     std_profile_by_season = microphysics_var_name.groupby('time.season').std(dim='time')/10
+    #     max_value = np.nanmax(mean_profile_by_season)
+
+    #     for season in mean_profile_by_season.season.values:
+    #         mean_profile = mean_profile_by_season.sel(season=season)
+    #         std_profile = std_profile_by_season.sel(season=season)
+    #         ax2.plot(mean_profile, mean_profile.height_bins/1000, label=f"{season}")
+    #         ax2.fill_betweenx(mean_profile.height_bins/1000, mean_profile - std_profile, mean_profile + std_profile, alpha=0.3)
+    #     ax2.set_xlabel(r"LWP g m$^{-3}$ ($\sigma$/10)")
+    #     ax2.set_ylabel("Height (km) a.m.s.l.")
+    #     ax2.set_xlim([0, max_value])
+    #     ax2.set_ylim([.7, np.max(mean_profile_by_season.height_bins/1000)])
+    #     ax2.grid(True)
+    #     ax2.legend()
+    #     # -----------------------------------------------------------------------------------------------
+    #     # LWP and IWP evolution 
+    #     # -----------------------------------------------------------------------------------------------
+    #     ax3 = fig.add_subplot(gs[1,1], sharex=ax1)
+    #     ax3.spines['top'].set_visible(False)  # Remove the top spine
+
+    #     grouped_by_month = integrated_var_name.groupby('time.month').mean()
+    #     number_profiles = integrated_var_name.groupby('time.month').count()
+    #     std_by_month = integrated_var_name.groupby('time.month').std()
+    #     ax3.errorbar(grouped_by_month.month, grouped_by_month, yerr=std_by_month, fmt='--s', capsize=5, capthick=2, color='black')
+
+    #     ax3_right = ax3.twinx()
+    #     ax3_right.plot(number_profiles.month, number_profiles, 'r--o')
+    #     ax3_right.set_ylabel("N Profiles", color="red")
+    #     ax3_right.tick_params(axis='y', colors='red')
+    #     ax3_right.set_yticks(np.linspace(np.min(number_profiles), np.max(number_profiles), 5))
+        
+    #     ax3.set_ylabel(r"LWP g m$^{-3}$")
+    #     ax3.set_xlabel("Month")
+    #     ax3.set_xticks(np.arange(1, 13))
+    #     ax3.set_xticklabels(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
+    #     # ax3.set_yscale('log')
+    #     fig.savefig(f"{PATH_FIG}grouped_by_month_evolution_for_lwc_{var_name}.png", dpi=300)
+    #     plt.show() 
+
+    data = microphysics['der'].compute() * 1e6
+    clouds_to_analyse = ['Liquid', 'Mixed_phase', 'Pre_liquid', 'Pre_mixed_phase']
     for var_name in clouds_to_analyse:
         print(f"Variable: {var_name}")
         cond                  = clouds_single_layer[var_name].compute() == 1
-        microphysics_var_name = microphysics['der'].where(cond, drop=True)
-        # print(microphysics_var_name.size)
-        microphysics_resampled = microphysics_var_name.resample(time="M").mean().compute()
-        
-        time_intersection      = np.intersect1d(microphysics_resampled.time.values, time_for_nans.values)
-        # filtering data by putting Nans in the intersection time
-        microphysics_resampled = microphysics_resampled.where(~microphysics_resampled.time.isin(time_intersection))
-
-        # microphysics_var_name['month'] = microphysics_var_name['time'].dt.month
+        microphysics_var_name = data.where(cond, drop=True)
+        # Rechunk the 'microphysics_var_name' array along the 'time' dimension into a single chunk
+        # microphysics_var_name = microphysics_var_name.chunk({'time': -1})
         # monthly_data = microphysics_var_name.groupby('month').quantile(.5)
-        
-        fig, ax = plt.subplots(sharex=True, sharey=True, figsize=(12, 7))  
-        lwc_values = 1000 * microphysics_resampled.T
-        max_value = np.nanmax(lwc_values)
-        cbar_max = 0.7 * max_value
-        mesh = ax.pcolormesh(microphysics_resampled.time, (microphysics_resampled.height - 680)/1000, lwc_values, cmap='turbo', vmin=0,vmax=cbar_max)
-        cbar = plt.colorbar(mesh, ax=ax, orientation='vertical', pad=0.02, shrink=0.99, aspect=30)
-        cbar.set_label('D [m]')
-        ax.set_ylabel("Height [km] a.g.l.")
-        ax.set_xlabel("Time")
-        ax.set_title(f"Der for {var_name}")
-        ax.xaxis.set_major_locator(mdates.MonthLocator(interval=4))
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%y'))
-        ax.xaxis.set_tick_params(rotation=30)
-        ax.set_ylim([0, 10])
-        ax.grid(True)
-        plt.show()
-        fig.savefig(f"{PATH_FIG}monthy_evolution_for_der_{var_name}.png", dpi=300)
+        monthly_data = microphysics_var_name.groupby('month').mean()
 
+        fig = plt.figure(figsize=(16, 10))
+        gs = fig.add_gridspec(2, 3, width_ratios=[1.8, 5, .15], height_ratios=[3, 1.2], hspace=0.05, wspace=0.3)
+        # -----------------------------------------------------------------------------------------------
+        # Mesh plot (upper subplot)
+        # -----------------------------------------------------------------------------------------------
+        ax1 = fig.add_subplot(gs[0, 1])
+
+        max_value = np.nanmax(monthly_data)
+        cbar_max =  max_value
+
+        mesh = ax1.pcolormesh(monthly_data.month.values, monthly_data.height_bins/1000,
+                      monthly_data, shading='nearest', cmap='turbo')
+        ax1.set_ylabel("Height [km] a.m.s.l.")
+        ax1.set_xlabel("Time")
+        ax1.set_title(f"Effective Radius for {var_name} Clouds")
+        ax1.set_ylim([.7, 12])
+        ax1.grid(True)
+        ax1.xaxis.set_visible(False)
+        ax1.set_xticks(np.arange(1, 13))
+        # -----------------------------------------------------------------------------------------------
+        # Colorbar (right subplot)
+        # -----------------------------------------------------------------------------------------------
+        cax = fig.add_subplot(gs[0, 2])
+        cbar1 = plt.colorbar(mesh, cax=cax, orientation='vertical', label=r"$\mu$m", aspect=10)
+        cbar1.ax.yaxis.set_label_position('left')
+        # -----------------------------------------------------------------------------------------------
+        # Mean profile by season (lower subplot)
+        # -----------------------------------------------------------------------------------------------
+        ax2 = fig.add_subplot(gs[:, 0])
+
+        mean_profile_by_season = microphysics_var_name.groupby('time.season').mean(dim='time')
+        std_profile_by_season = microphysics_var_name.groupby('time.season').std(dim='time')
+        max_value = np.nanmax(mean_profile_by_season)
+
+        for season in mean_profile_by_season.season.values:
+            mean_profile = mean_profile_by_season.sel(season=season)
+            std_profile = std_profile_by_season.sel(season=season)
+            ax2.plot(mean_profile, mean_profile.height_bins/1000, '--',label=f"{season}")
+            ax2.fill_betweenx(mean_profile.height_bins/1000, mean_profile - std_profile, mean_profile + std_profile, alpha=0.3)
+        ax2.set_xlabel(r"Reff $\mu$m")
+        ax2.set_ylabel("Height (km) a.m.s.l.")
+        ax2.set_xlim([np.nanmin(mean_profile_by_season), np.nanmax(mean_profile_by_season)])
+        ax2.set_ylim([.7, 12])
+        ax2.grid(True)
+        ax2.legend()
+        # -----------------------------------------------------------------------------------------------
+        # LWP and IWP evolution 
+        # -----------------------------------------------------------------------------------------------
+        ax3 = fig.add_subplot(gs[1,1], sharex=ax1)  # Share the x-axis with ax1
+        ax3.spines['top'].set_visible(False)  # Remove the top spine
+
+        grouped_by_month = microphysics_var_name.groupby('month').mean()
+        for month in grouped_by_month.month.values:
+            mean_profile = grouped_by_month.sel(month=month).dropna(dim='height_bins')
+            ax3.violinplot(mean_profile, positions=[month], showmeans=False, showmedians=True, showextrema=False)
+
+        number_profiles = microphysics_var_name.month.groupby('time.month').count(dim='time')
+        ax3_right = ax3.twinx()
+        ax3_right.plot(number_profiles.month, number_profiles, 'k--o')  # Set zorder to 0
+        ax3_right.set_ylabel("N Profiles")
+        ax3_right.tick_params(axis='y')
+        ax3_right.set_yticks(np.linspace(np.min(number_profiles), np.max(number_profiles), 5))
+        
+        ax3.set_ylabel(r"R$_{eff,M}$ ($\mu$m)")
+        ax3.set_xlabel("Month")
+        ax3.set_xticks(np.arange(1, 13))
+        ax3.set_xticklabels(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
+        # ax3.set_yscale('log')
+        fig.savefig(f"{PATH_FIG}grouped_by_month_evolution_for_der_{var_name}.png", dpi=300)
+        plt.show()
+
+    data = microphysics['ier'].compute() * 1e6
+    clouds_to_analyse = ['Ice', 'Mixed_phase', 'Pre_mixed_phase']
     for var_name in clouds_to_analyse:
         print(f"Variable: {var_name}")
         cond                  = clouds_single_layer[var_name].compute() == 1
-        microphysics_var_name = microphysics['ier'].where(cond, drop=True)
-        # print(microphysics_var_name.size)
-        microphysics_resampled = microphysics_var_name.resample(time="M").mean().compute()
-        
-        time_intersection      = np.intersect1d(microphysics_resampled.time.values, time_for_nans.values)
-        # filtering data by putting Nans in the intersection time
-        microphysics_resampled = microphysics_resampled.where(~microphysics_resampled.time.isin(time_intersection))
-
-        # microphysics_var_name['month'] = microphysics_var_name['time'].dt.month
+        microphysics_var_name = data.where(cond, drop=True)
+        # Rechunk the 'microphysics_var_name' array along the 'time' dimension into a single chunk
+        # microphysics_var_name = microphysics_var_name.chunk({'time': -1})
         # monthly_data = microphysics_var_name.groupby('month').quantile(.5)
+        monthly_data = microphysics_var_name.groupby('month').mean()
+
+        fig = plt.figure(figsize=(16, 10))
+        gs = fig.add_gridspec(2, 3, width_ratios=[1.8, 5, .15], height_ratios=[3, 1.2], hspace=0.05, wspace=0.3)
+        # -----------------------------------------------------------------------------------------------
+        # Mesh plot (upper subplot)
+        # -----------------------------------------------------------------------------------------------
+        ax1 = fig.add_subplot(gs[0, 1])
+
+        max_value = np.nanmax(monthly_data)
+        cbar_max =  max_value
+
+        mesh = ax1.pcolormesh(monthly_data.month.values, monthly_data.height_bins/1000,
+                      monthly_data, shading='nearest', cmap='turbo')
+        ax1.set_ylabel("Height [km] a.m.s.l.")
+        ax1.set_xlabel("Time")
+        ax1.set_title(f"Effective Radius for {var_name} Clouds")
+        ax1.set_ylim([.7, 12])
+        ax1.grid(True)
+        ax1.xaxis.set_visible(False)
+        ax1.set_xticks(np.arange(1, 13))
+        # -----------------------------------------------------------------------------------------------
+        # Colorbar (right subplot)
+        # -----------------------------------------------------------------------------------------------
+        cax = fig.add_subplot(gs[0, 2])
+        cbar1 = plt.colorbar(mesh, cax=cax, orientation='vertical', label=r"$\mu$m", aspect=10)
+        cbar1.ax.yaxis.set_label_position('left')
+        # -----------------------------------------------------------------------------------------------
+        # Mean profile by season (lower subplot)
+        # -----------------------------------------------------------------------------------------------
+        ax2 = fig.add_subplot(gs[:, 0])
+
+        mean_profile_by_season = microphysics_var_name.groupby('time.season').mean(dim='time')
+        std_profile_by_season = microphysics_var_name.groupby('time.season').std(dim='time')
+        max_value = np.nanmax(mean_profile_by_season)
+
+        for season in mean_profile_by_season.season.values:
+            mean_profile = mean_profile_by_season.sel(season=season)
+            std_profile = std_profile_by_season.sel(season=season)
+            ax2.plot(mean_profile, mean_profile.height_bins/1000, '--',label=f"{season}")
+            ax2.fill_betweenx(mean_profile.height_bins/1000, mean_profile - std_profile, mean_profile + std_profile, alpha=0.3)
+        ax2.set_xlabel(r"Reff $\mu$m")
+        ax2.set_ylabel("Height (km) a.m.s.l.")
+        ax2.set_xlim([np.nanmin(mean_profile_by_season), np.nanmax(mean_profile_by_season)])
+        ax2.set_ylim([.7, 12])
+        ax2.grid(True)
+        ax2.legend()
+        # -----------------------------------------------------------------------------------------------
+        # LWP and IWP evolution 
+        # -----------------------------------------------------------------------------------------------
+        ax3 = fig.add_subplot(gs[1,1], sharex=ax1)  # Share the x-axis with ax1
+        ax3.spines['top'].set_visible(False)  # Remove the top spine
+
+        grouped_by_month = microphysics_var_name.groupby('month').mean()
+        for month in grouped_by_month.month.values:
+            mean_profile = grouped_by_month.sel(month=month).dropna(dim='height_bins')
+            ax3.violinplot(mean_profile, positions=[month], showmeans=False, showmedians=True, showextrema=False)
+
+        number_profiles = microphysics_var_name.month.groupby('time.month').count(dim='time')
+        ax3_right = ax3.twinx()
+        ax3_right.plot(number_profiles.month, number_profiles, 'k--o')  # Set zorder to 0
+        ax3_right.set_ylabel("N Profiles")
+        ax3_right.tick_params(axis='y')
+        ax3_right.set_yticks(np.linspace(np.min(number_profiles), np.max(number_profiles), 5))
         
-        fig, ax = plt.subplots(sharex=True, sharey=True, figsize=(12, 7))  
-        lwc_values = 1000 * microphysics_resampled.T
-        max_value = np.nanmax(lwc_values)
-        cbar_max = 0.7 * max_value
-        mesh = ax.pcolormesh(microphysics_resampled.time, (microphysics_resampled.height - 680)/1000, lwc_values, cmap='turbo', vmin=0,vmax=cbar_max)
-        cbar = plt.colorbar(mesh, ax=ax, orientation='vertical', pad=0.02, shrink=0.99, aspect=30)
-        cbar.set_label('D ice [m]')
-        ax.set_ylabel("Height [km] a.g.l.")
-        ax.set_xlabel("Time")
-        ax.set_title(f"Der ice for {var_name}")
-        ax.xaxis.set_major_locator(mdates.MonthLocator(interval=4))
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%y'))
-        ax.xaxis.set_tick_params(rotation=30)
-        ax.set_ylim([0, 10])
-        ax.grid(True)
-        plt.show()
-        fig.savefig(f"{PATH_FIG}monthy_evolution_for_ier_{var_name}.png", dpi=300)
+        ax3.set_ylabel(r"R$_{eff,M}$ ($\mu$m)")
+        ax3.set_xlabel("Month")
+        ax3.set_xticks(np.arange(1, 13))
+        ax3.set_xticklabels(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
+        # ax3.set_yscale('log')
+        fig.savefig(f"{PATH_FIG}grouped_by_month_evolution_for_ier_{var_name}.png", dpi=300)
+        plt.show() 
+
+    # # -----------------------------------------------------------------------------------------------
+    # # LWC for single layer clouds analysis
+    # # -----------------------------------------------------------------------------------------------
+    # for var_name in clouds_to_analyse:
+    #     print(f"Variable: {var_name}")
+    #     cond                  = clouds_single_layer[var_name].compute() == 1
+    #     microphysics_var_name = microphysics['lwc'].where(cond, drop=True)
+    #     # print(microphysics_var_name.size)
+    #     microphysics_resampled = microphysics_var_name.resample(time="M").mean().compute()
+        
+    #     time_intersection      = np.intersect1d(microphysics_resampled.time.values, time_for_nans.values)
+    #     # filtering data by putting Nans in the intersection time
+    #     microphysics_resampled = microphysics_resampled.where(~microphysics_resampled.time.isin(time_intersection))
+ 
+    #     # microphysics_var_name['month'] = microphysics_var_name['time'].dt.month
+    #     # monthly_data = microphysics_var_name.groupby('month').quantile(.5)
+        
+    #     fig, ax = plt.subplots(sharex=True, sharey=True, figsize=(12, 7))  
+    #     lwc_values = 1000 * microphysics_resampled
+    #     max_value = np.nanmax(lwc_values)
+    #     cbar_max =  1*max_value
+    #     mesh = ax.pcolormesh(lwc_values.time, lwc_values.height_bins/1000,
+    #                           lwc_values, shading='nearest', cmap='turbo', norm=mpl.colors.LogNorm(vmin=0.001, vmax=cbar_max))
+    #     cbar = plt.colorbar(mesh, ax=ax, orientation='vertical', pad=0.02, shrink=1.0, aspect=30)
+    #     cbar.set_label('LWC [g m$^{-3}$]')
+    #     ax.set_ylabel("Height [km] a.g.l.")
+    #     ax.set_xlabel("Time")
+    #     ax.set_title(f"LWC for {var_name}")
+    #     ax.xaxis.set_major_locator(mdates.MonthLocator(interval=4))
+    #     ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%y'))
+    #     ax.xaxis.set_tick_params(rotation=30)
+    #     ax.set_ylim([0, 10])
+    #     ax.grid(True)
+    #     plt.show()
+    #     fig.savefig(f"{PATH_FIG}monthy_evolution_for_lwc_{var_name}.png", dpi=300)
+    # -----------------------------------------------------------------------------------------------
+
+    # # -----------------------------------------------------------------------------------------------
+    # # DER for single layer clouds analysis
+    # # -----------------------------------------------------------------------------------------------
+    # for var_name in clouds_to_analyse:
+    #     print(f"Variable: {var_name}")
+    #     cond                  = clouds_single_layer[var_name].compute() == 1
+    #     microphysics_var_name = microphysics['der'].where(cond, drop=True)
+    #     # print(microphysics_var_name.size)
+    #     microphysics_resampled = microphysics_var_name.resample(time="M").mean().compute()
+        
+    #     time_intersection      = np.intersect1d(microphysics_resampled.time.values, time_for_nans.values)
+    #     # filtering data by putting Nans in the intersection time
+    #     microphysics_resampled = microphysics_resampled.where(~microphysics_resampled.time.isin(time_intersection))
+
+    #     # microphysics_var_name['month'] = microphysics_var_name['time'].dt.month
+    #     # monthly_data = microphysics_var_name.groupby('month').quantile(.5)
+        
+    #     fig, ax = plt.subplots(sharex=True, sharey=True, figsize=(12, 7))  
+    #     lwc_values = 1000 * microphysics_resampled.T
+    #     max_value = np.nanmax(lwc_values)
+    #     cbar_max = 0.7 * max_value
+    #     mesh = ax.pcolormesh(microphysics_resampled.time, (microphysics_resampled.height - 680)/1000, lwc_values, cmap='turbo', vmin=0,vmax=cbar_max)
+    #     cbar = plt.colorbar(mesh, ax=ax, orientation='vertical', pad=0.02, shrink=0.99, aspect=30)
+    #     cbar.set_label('D [m]')
+    #     ax.set_ylabel("Height [km] a.g.l.")
+    #     ax.set_xlabel("Time")
+    #     ax.set_title(f"Der for {var_name}")
+    #     ax.xaxis.set_major_locator(mdates.MonthLocator(interval=4))
+    #     ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%y'))
+    #     ax.xaxis.set_tick_params(rotation=30)
+    #     ax.set_ylim([0, 10])
+    #     ax.grid(True)
+    #     plt.show()
+    #     fig.savefig(f"{PATH_FIG}monthy_evolution_for_der_{var_name}.png", dpi=300)
+
+    # for var_name in clouds_to_analyse:
+    #     print(f"Variable: {var_name}")
+    #     cond                  = clouds_single_layer[var_name].compute() == 1
+    #     microphysics_var_name = microphysics['ier'].where(cond, drop=True)
+    #     # print(microphysics_var_name.size)
+    #     microphysics_resampled = microphysics_var_name.resample(time="M").mean().compute()
+        
+    #     time_intersection      = np.intersect1d(microphysics_resampled.time.values, time_for_nans.values)
+    #     # filtering data by putting Nans in the intersection time
+    #     microphysics_resampled = microphysics_resampled.where(~microphysics_resampled.time.isin(time_intersection))
+
+    #     # microphysics_var_name['month'] = microphysics_var_name['time'].dt.month
+    #     # monthly_data = microphysics_var_name.groupby('month').quantile(.5)
+        
+    #     fig, ax = plt.subplots(sharex=True, sharey=True, figsize=(12, 7))  
+    #     lwc_values = 1000 * microphysics_resampled.T
+    #     max_value = np.nanmax(lwc_values)
+    #     cbar_max = 0.7 * max_value
+    #     mesh = ax.pcolormesh(microphysics_resampled.time, (microphysics_resampled.height - 680)/1000, lwc_values, cmap='turbo', vmin=0,vmax=cbar_max)
+    #     cbar = plt.colorbar(mesh, ax=ax, orientation='vertical', pad=0.02, shrink=0.99, aspect=30)
+    #     cbar.set_label('D ice [m]')
+    #     ax.set_ylabel("Height [km] a.g.l.")
+    #     ax.set_xlabel("Time")
+    #     ax.set_title(f"Der ice for {var_name}")
+    #     ax.xaxis.set_major_locator(mdates.MonthLocator(interval=4))
+    #     ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%y'))
+    #     ax.xaxis.set_tick_params(rotation=30)
+    #     ax.set_ylim([0, 10])
+    #     ax.grid(True)
+    #     plt.show()
+    #     fig.savefig(f"{PATH_FIG}monthy_evolution_for_ier_{var_name}.png", dpi=300)
     
     set_trace()
     # -----------------------------------------------------------------------------------------------
