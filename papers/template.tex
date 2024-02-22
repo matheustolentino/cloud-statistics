@@ -194,15 +194,21 @@ The assortment algoritm classifies groups of hydrometeors and cloud layers. In t
 
 Subsequently, cloud layers in atmospheric column were classified trought pixel sequence inquiry. These pixels sequences were devided in the following 5 groups according to \cite{PirloagaXXX}: liquid, ice, mixed phase, liquid with precipitation and mixed phase with precipitation. Specifically, liquid clouds were assigned as any combination of "droplets" and "drizzle \& droplets" pixels. Ice clouds were assigned when only "ice" pixel sequence was encountered. As well as, mixed phase clouds were assigned with any combination of "droplets", "ice", "ice \& droplets", "melting ice", "melting \& droplets", "drizzle and droplets" pixels. Precipitation cases were classified wheter at least one pixel of "drizzle or rain" is found below liquid and mixed phase clouds. Diferent from previous studies, a threshold of 20 bins (256-1022 m) bellow cloud was set to reject precipitation events, assuming that rain droplets are not falling from the actual cloud layer. In all cases, for being considered a cloud layer, a minimun sequence of 3 cloud pixels (38-153 m) (as \citep{NomokovaXXX}) must be satisfied, in addition to a minimun sequence of 5 pixels (64-255 m) of "Clear sky", "Aerosol", "Insect" and "Arosol \& insect" to separate multilayers. Therefore, free hydrometeor layers in the neghborhood of the cloud allowed the identification of cloud base and top. Nevertheless, thresholds here were based on \cite{Pirloaga and NokomovaXXX}, but theses values are not currently well defined, their determination has been guided by empirical experience.
 
-\section{Thermodinamic conditions}
+\section{Cloud effect on thermodinamic conditions}
 
+It is widely recognized that cloud radiative effect can change thermodinamic conditions of the atmosphere (\citep{XXX} cite somenthing). From this perspective, this section makes a comparison between clear sky and cloudly thermodinamic profiles for diferent cloud types.
+
+Temperature and humidity profiles used as baselines were those collected during clear sky condition, and are shown in Figure \ref{fig:temp_no_cloud}. This figure can easily identify cold and warm regimes, where cold regimes spans between winter and spring, while warm regimes spans between summer and autumn. This annual variablility was also observed by \cite{Nokomova and PirloagaXXX}, howevever, higher temperature values experienced by our station is only closely resembling those reported by \cite{PirloagaXXX}, as both stations are geographic located in warm regions. In our case, mean surface temperature faces a value of XXX $\pm$ XXX in summer, by contrast with XXX $\pm$ XXX in winter. For monthly averange humidity profiles, the values here appear slightly higher than those documented by \cite{NokomovaXXX}, with surface averange of XXX $\pm$ XXX in summer and XXX $\pm$ XXX in winter
 
 \begin{figure}[htbp]
       \centering
-      \includegraphics[width=1.\textwidth]{../phd_clouds/figures/mwr_time_series_RH.png}
-      \caption{Should change figure - Reflectivity, Att. backscatter coeff and LWP}
-      \label{fig:temo}
+      \includegraphics[width=.9\textwidth]{../phd_clouds/figures/mwr_profiles_temperature_no_clouds}
+      \caption{...}
+      \label{fig:temp_no_cloud}
 \end{figure}
+
+Next, temperature and humidity anomalies on surface for cloudy scenarios are shown in table XXX. Were significant....
+
 
 \section{Hydrometeor characteristics}
 
@@ -216,10 +222,9 @@ A first conception about clouds spacial-temporal distribution can be acessed wit
 \end{figure}
 
 
-
 \section{Cloud properties evaluation}
 
-
+%Im graduated in physics by the university of sao paulo, in brazil when i analysed radiosanda datasets in the amazon rainforest to study seasonal vaiations of thermodinamic indexes, after that i started to pursued a master degree at the same institution, but now evaluating with numerical simulations if a lidar system like the one we had in our laboratory was able to detect ultrafine particles in the upper troposphere. And now, im in spain, pursuing a phd on atmospheric physics at the university of granada, working at the AGORA station. My thesis goes on cloud properties and its radiative effect estimation by remote sesnsing thecniques. Therefore we intend to implement a 3D radiatiave transfer model for cloud radiative effec estimation  
 
 
 

@@ -1577,8 +1577,8 @@ database_intersection  = common_prefix_of_filenames(paths, extension)
 start_date = min(database_intersection) # first date of database
 end_date   = max(database_intersection) # last date of database
 
-start_date = datetime.datetime(2023, 4, 22)
-end_date   = datetime.datetime(2023, 4, 22, 23, 59, 59)
+# start_date = datetime.datetime(2023, 4, 22)
+# end_date   = datetime.datetime(2023, 4, 22, 23, 59, 59)
 
 # start_date = datetime.datetime(2018, 6, 1)
 # end_date   = datetime.datetime(2018, 11, 1)
