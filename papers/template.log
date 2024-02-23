@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2022/dev/Debian) (preloaded format=pdflatex 2023.5.31)  22 FEB 2024 19:47
+This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2022/dev/Debian) (preloaded format=pdflatex 2023.5.31)  23 FEB 2024 20:48
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -2984,7 +2984,11 @@ File: t1ptm.fd 2001/06/04 font definitions for T1/ptm.
 LaTeX Warning: Unused global option(s):
     [journalabbreviation].
 
-(./template.aux)
+(./template.aux
+
+LaTeX Warning: Label `' multiply defined.
+
+)
 \openout1 = `template.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 81.
@@ -3005,8 +3009,7 @@ LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 81.
 LaTeX Font Info:    ... okay on input line 81.
 LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 81.
 LaTeX Font Info:    ... okay on input line 81.
-
-(/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
+ (/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
 \scratchcounter=\count331
 \scratchdimen=\dimen266
@@ -3164,26 +3167,45 @@ Package pdftex.def Info: ../phd_clouds/figures/mwr_profiles_temperature_no_clou
 ds.png  used on input line 205.
 (pdftex.def)             Requested size: 453.24931pt x 317.2766pt.
 [6 <../phd_clouds/figures/mwr_profiles_temperature_no_clouds.png>]
-<../phd_clouds/figures/Liquid_2d_histogram_hydrometeors.png, id=71, 1084.05pt x
+
+LaTeX Warning: Reference `fig:hydro_occurence' on page 7 undefined on input lin
+e 217.
+
+<../phd_clouds/figures/Liquid_2d_histogram_hydrometeors.png, id=68, 1084.05pt x
  578.16pt>
 File: ../phd_clouds/figures/Liquid_2d_histogram_hydrometeors.png Graphic file (
 type png)
 <use ../phd_clouds/figures/Liquid_2d_histogram_hydrometeors.png>
 Package pdftex.def Info: ../phd_clouds/figures/Liquid_2d_histogram_hydrometeors
-.png  used on input line 219.
+.png  used on input line 221.
 (pdftex.def)             Requested size: 503.61377pt x 268.5946pt.
- [7 <../phd_clouds/figures/Liquid_2d_histogram_hydrometeors.png>] [8pdfTeX warn
-ing (ext4): destination with the same identifier (name{appendix.A}) has been al
-ready used, duplicate ignored
+<../phd_clouds/figures/Ice_2d_histogram_hydrometeors.png, id=69, 1084.05pt x 57
+8.16pt>
+File: ../phd_clouds/figures/Ice_2d_histogram_hydrometeors.png Graphic file (typ
+e png)
+<use ../phd_clouds/figures/Ice_2d_histogram_hydrometeors.png>
+Package pdftex.def Info: ../phd_clouds/figures/Ice_2d_histogram_hydrometeors.pn
+g  used on input line 228.
+(pdftex.def)             Requested size: 503.61377pt x 268.5946pt.
+[7 <../phd_clouds/figures/Liquid_2d_histogram_hydrometeors.png>]
+<../phd_clouds/figures/ice_histograms.png, id=78, 722.7pt x 433.62pt>
+File: ../phd_clouds/figures/ice_histograms.png Graphic file (type png)
+<use ../phd_clouds/figures/ice_histograms.png>
+Package pdftex.def Info: ../phd_clouds/figures/ice_histograms.png  used on inpu
+t line 238.
+(pdftex.def)             Requested size: 503.61377pt x 302.16893pt.
+ [8 <../phd_clouds/figures/Ice_2d_histogram_hydrometeors.png>] [9 <../phd_cloud
+s/figures/ice_histograms.png>] [10pdfTeX warning (ext4): destination with the s
+ame identifier (name{appendix.A}) has been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.334 \end{acknowledgements}
-                            pdfTeX warning (ext4): destination with the same id
-entifier (name{appendix.A}) has been already used, duplicate ignored
+l.364 \begin{thebibliography}{}
+                               pdfTeX warning (ext4): destination with the same
+ identifier (name{appendix.A}) has been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.334 \end{acknowledgements}
-                            ] [9] [10]
+l.364 \begin{thebibliography}{}
+                               ] [11]
 
 Package natbib Warning: There were undefined citations.
 
@@ -3191,15 +3213,18 @@ Package natbib Warning: There were undefined citations.
 
 LaTeX Warning: There were undefined references.
 
+
+LaTeX Warning: There were multiply-defined labels.
+
  ) 
 Here is how much of TeX's memory you used:
- 18591 strings out of 478287
- 272986 string characters out of 5849289
- 613142 words of memory out of 5000000
- 36470 multiletter control sequences out of 15000+600000
+ 18618 strings out of 478287
+ 274140 string characters out of 5849289
+ 613253 words of memory out of 5000000
+ 36492 multiletter control sequences out of 15000+600000
  499576 words of font info for 69 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 75i,16n,77p,2151b,465s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 75i,16n,77p,2151b,459s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/share/texlive/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr/share/texliv
 e/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/texlive/texm
 f-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/share/texlive/texmf-dist/
@@ -3211,10 +3236,10 @@ m/cmsy7.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb>
 </usr/share/texlive/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/share/tex
 live/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/share/texlive/texmf-dist
 /fonts/type1/urw/times/utmri8a.pfb>
-Output written on template.pdf (10 pages, 3101436 bytes).
+Output written on template.pdf (11 pages, 3572655 bytes).
 PDF statistics:
- 172 PDF objects out of 1000 (max. 8388607)
- 126 compressed objects within 2 object streams
- 45 named destinations out of 1000 (max. 500000)
- 26 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 179 PDF objects out of 1000 (max. 8388607)
+ 128 compressed objects within 2 object streams
+ 48 named destinations out of 1000 (max. 500000)
+ 36 words of extra memory for PDF output out of 10000 (max. 10000000)
 
