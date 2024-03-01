@@ -214,7 +214,7 @@ Next, temperature and humidity anomalies on surface for cloudy scenarios are sho
 
 An investigation into cloud composition based on hydrometeor fractions was undertaken. For this aim, hydrometeor frequence of occurence and liquid and ice water path (LWP and IWP, respectively) during liquid, ice and mixed phase single layer clouds were analyzed. 
 
-Figure \ref{fig:hydro_occurence} shows the monthly frequency of occurence for liquid, ice and total hydrometeors since 2018, where months with less than 30\% of data were removed. In addition, right panel shows the frequency profiles through the entire dataset for each season. In terms of liquid particles, the relevant frequencies are concentrated below 2\,km, and experience a seasonal trend with high frequency in autumn and winter. This was in agreement with the favorauble thermodinamics conditions for cloud development showed in Figure XXX. On the contrary, Figure XXX shows that ice particles have a spreader distribution along the vertical, overcomming 10\,km with slight maximas in 2\,km and 8\,km. Same sasonality behavior as the liquid particles was observed, however, they reach high levels in the atmosphere, specially during summer and spring.
+Figure \ref{fig:hydro_occurence} shows the monthly frequency of occurence for liquid, ice and total hydrometeors since 2018, where months with less than 30\% of data were removed. In addition, right panel shows the frequency profiles through the entire dataset for each season. In terms of liquid particles, the relevant frequencies are concentrated below 2\,km, and experience a seasonal trend with high frequency in autumn and winter. This was in agreement with the favorauble thermodinamics conditions for cloud development showed in Figure XXX. On the contrary, Figure XXX shows that ice particles have a spreader distribution along the vertical, overcomming 10\,km with slight maximas in 2\,km and 8\,km. Same sasonality pattern as liquid particles was observed, however, they reach high levels in the atmosphere, specially during summer and spring.
 
 \begin{figure}[htbp]
       \centering
@@ -230,8 +230,7 @@ Figure \ref{fig:hydro_occurence} shows the monthly frequency of occurence for li
       \label{}
 \end{figure}
 
-
-Next, a fraction of the observed liquid hydrometeors can be redistributed between liquid and mixed phase clouds. For these two cloud types, discarding rain events, and regarding only single layer clouds, their LWP frequency histogram is shown in Figure XXX. Overall, both liquid and mixed-phase clouds appear to contain similar amounts of water. This agreement between both clouds types could be assigned to the incapability of the assortment algorithm to separated clouds by a time interval defined by where does the cloud begin and where does it end. Hence, we can be considering liquid and mixed phase profiles inside the same cloud as as a whole. It is worthy to note clouds identifyed were done profiles to profile, at every 30\,s, which is the Cloudnet time grid.  
+Next, the frequency of LWP for liquid and mixed phase clouds is discussed. Allocation of LWP frequencies can manage to discern liquid hydrometeors partitioning between clouds. These frequencies are shown within histograms in Figure XXX, discarding rain events and multi-layer clouds. Overall, both liquid and mixed-phase clouds appear to contain similar amounts of water. This agreement between both cloud types can be assigned to the assortment algorithm design. As explained in section XXX, this algorithm identify clouds for indiviadual profiles of 30\,s without considering a continuos sequence of same cloud profiles. Then it is possible to assign profiles of liquid clouds among mixed phase cloud profiles, while they still being part of the same cloud as a whole. 
 
 \begin{figure}[htbp]
       \centering
@@ -240,10 +239,13 @@ Next, a fraction of the observed liquid hydrometeors can be redistributed betwee
       \label{fig:lwp_iwp_hist}
 \end{figure}
 
-Same analises was done for ice hydrometeors, which can be redistributed between ice and mixed phase clouds. These clouds also have the same feature, whose explanation is the same as the liquid case. However, mostly of IWP is assigned to mixed phase clouds as its clearly that its frequency is sistematicaly higher than those for ice clouds. Further, these observations will be even more clear in the following sections, being supported for a more detailed analisys. 
-
+Same analises was done for ice hydrometeors, which can be redistributed between ice and mixed phase clouds. These clouds also have the same feature, whose explanation is the same as the liquid case. However, mostly of IWP is assigned to mixed phase clouds as its clearly that its frequency is sistematicaly higher than those for ice clouds. Further, these observations will be even more clear, being supported for a more detailed analisys.
 
 \section{Cloud properties evaluation}
+
+Cloud 
+
+
 
 %Im graduated in physics by the university of sao paulo, in brazil when i analysed radiosanda datasets in the amazon rainforest to study seasonal vaiations of thermodinamic indexes, after that i started to pursued a master degree at the same institution, but now evaluating with numerical simulations if a lidar system like the one we had in our laboratory was able to detect ultrafine particles in the upper troposphere. And now, im in spain, pursuing a phd on atmospheric physics at the university of granada, working at the AGORA station. My thesis goes on cloud properties and its radiative effect estimation by remote sesnsing thecniques. Therefore we intend to implement a 3D radiatiave transfer model for cloud radiative effec estimation  
 
