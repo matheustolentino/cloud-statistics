@@ -30,6 +30,48 @@ plt.rcParams['font.size'] = fontsize
 plt.ion()
 plt.close('all')
 
+SEASONS = {
+        'summer': (6, 8),   # from 1st June to 31st August
+        'fall': (9, 11),    # from 1st September to 30th November
+        'winter': (12,2),   # from 1st December to 28th February
+        'spring': (3, 5)    # from 1st March to 31st May
+    }
+
+def assign_season(ds, seasons):
+    """
+    Assign season labels to a given xarray dataset based on specified season ranges.
+
+    Parameters:
+    ds (xarray.Dataset): The input xarray dataset with a 'time' dimension.
+    seasons (dict): A dictionary that defines the season ranges in terms of months.
+
+    Returns:
+    xarray.Dataset: A new dataset with an additional 'season' coordinate.
+    """
+
+    # Create a mask for each season
+    conditions = []
+    for name, (start, end) in seasons.items():
+        if name == 'winter':
+            # Handle the wrap-around between December and January
+            cond = (ds['time.month'] >= start) | (ds['time.month'] <= end)
+        else:
+            cond = (ds['time.month'] >= start) & (ds['time.month'] <= end)
+        conditions.append(cond)
+
+    # List of corresponding season names
+    season_names = list(seasons.keys())
+
+    # Use np.select to assign season names based on conditions
+    season_data = xr.DataArray(
+        np.select(conditions, season_names, default='unknown'),
+        dims=('time',)
+    )
+
+    ds = ds.assign_coords(season=season_data)
+
+    return ds
+
 class Mwr:
     def __init__(self):
         pass
@@ -450,6 +492,7 @@ input_directory = '/home/matheustolen/shared/NAS_raw_data/UGR/mwr/'
 # -----------------------------------------------------------------------------------------------
 quicklook_temperature = True
 quicklook_humidity = True
+save_data = False
 # -----------------------------------------------------------------------------------------------
 # initialize the Mwr class
 # -----------------------------------------------------------------------------------------------
@@ -569,60 +612,116 @@ mwr_temp = mwr_temp.drop_duplicates('time', keep='first')
 # temp_potential = mwr_temp['temperature'] * (1000/ p_std_at) ** (287.058 / 1004.5)
 
 mwr_profiles = mwr_data.merge_mwr_ds([mwr_rh, mwr_h, mwr_temp], dim='time')
+mwr_profiles = assign_season(mwr_profiles, SEASONS)
+# calculating temperature surface for stations
+mwr_profiles['temperature_surface'] = mwr_profiles['temperature'][:, 0]
+mwr_profiles['relative_humidity_surface'] = mwr_profiles['relative_humidity'][:, 0]
+mean_temp_surface = mwr_profiles['temperature_surface'].groupby('season').mean('time') -273.15
+std_temp_surface = mwr_profiles['temperature_surface'].groupby('season').std('time')
+mean_rh_surface = mwr_profiles['relative_humidity_surface'].groupby('season').mean('time')
+std_rh_surface = mwr_profiles['relative_humidity_surface'].groupby('season').std('time')
 
-folder_to_save_mwr_ds = f"../../../processed_data/mwr_profiles/"
-if not os.path.exists(folder_to_save_mwr_ds):
-    os.makedirs(folder_to_save_mwr_ds)
-    # Save mwr_profiles as NetCDF file
-    mwr_profiles.to_netcdf(folder_to_save_mwr_ds + 'mwr_profiles.nc')
+for season in SEASONS.keys():
+    print(f"Mean temperature at surface for {season} is: {mean_temp_surface.sel(season=season).values:.2f} +- {std_temp_surface.sel(season=season).values:.2f} C")
+    print(f"Mean relative humidity at surface for {season} is: {mean_rh_surface.sel(season=season).values:.2f} +- {std_rh_surface.sel(season=season).values:.2f} %")
+
+
+
+# Save the dataset as a NetCDF file
+if save_data:
+    folder_to_save_mwr_ds = f"../../../processed_data/mwr_profiles/"
+    if not os.path.exists(folder_to_save_mwr_ds):
+        os.makedirs(folder_to_save_mwr_ds)
+        # Save mwr_profiles as NetCDF file
+        mwr_profiles.to_netcdf(folder_to_save_mwr_ds + 'mwr_profiles.nc')
 
 # Resampling the dataset to monthly frequency
-resampled_merged_mwr = mwr_profiles.resample(time='1M').mean()
+# resampled_merged_mwr = mwr_profiles.resample(time='1M').mean()
 
 # Reindexed dataset for montly frequency with nan in months with no data
-start_time     = resampled_merged_mwr['time'].min().values
-end_time       = resampled_merged_mwr['time'].max().values
-new_time_index = pd.date_range(start=start_time, end=end_time, freq='M', normalize=True)
+# start_time     = resampled_merged_mwr['time'].min().values
+# end_time       = resampled_merged_mwr['time'].max().values
+# new_time_index = pd.date_range(start=start_time, end=end_time, freq='M', normalize=True)
+# reindexed_mwr  = resampled_merged_mwr.reindex(time=new_time_index)
 
-reindexed_mwr = resampled_merged_mwr.reindex(time=new_time_index)
+# fig = plt.figure(figsize=(12, 8))
+# gs = fig.add_gridspec(2, 1, hspace=0.08)
 
-fig, ax = plt.subplots(figsize=(10, 5))
-im = ax.pcolormesh(reindexed_mwr.time.values, reindexed_mwr.altitude.values/1e3, reindexed_mwr.temperature.values.T-273.15, shading='auto', cmap='rainbow')
-fig.colorbar(im, ax=ax, label='Temperature (C)')
-ax.set_xlabel('Month/Year')  # Increase font size of x-axis label
-ax.set_ylabel('Altitude (km)')  # Increase font size of y-axis label
-# ax.set_title('Temperature Variation')  # Increase font size of title
-ax.grid(True)  # Add grid lines
+# # Plotting the Temperature variable using seaborn
+# ax1 = fig.add_subplot(gs[0, 0])
+# im1 = ax1.pcolormesh(reindexed_mwr.time.values, reindexed_mwr.altitude.values/1e3, reindexed_mwr.temperature.values.T-273.15, shading='auto', cmap='rainbow')
+# fig.colorbar(im1, ax=ax1, label=r'Temperature ${\circ}$(C)', aspect=10, ticks=np.arange(-60, 31,10))
+# ax1.set_ylabel('Height a.g.l (km)')  # Increase font size of y-axis label
+# # ax1.set_title('Temperature Variation')  # Increase font size of title
+# ax1.grid(True)  # Add grid lines
 
-# Customize x-axis tick labels
-ax.xaxis.set_major_locator(mdates.MonthLocator(interval=4))
-ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%y'))
-ax.xaxis.set_tick_params(rotation=30)
-# ax.set_xlim([reindexed_mwr['time'].min().values, datetime.datetime(2024, 2, 1)])
-fig.savefig(PATH_FIG + 'mwr_time_series_T.png', dpi=300, bbox_inches='tight')
-plt.show()
+# # Customize x-axis tick labels
+# ax1.xaxis.set_major_locator(mdates.MonthLocator(interval=4))
+# ax1.xaxis.set_major_formatter(mdates.DateFormatter('%m/%y'))
+# ax1.xaxis.set_tick_params(labelbottom=False)
+# # ax1.set_xlim([reindexed_mwr['time'].min().values, datetime.datetime(2024, 2, 1)])
+
+# # Plotting the Relative Humidity variable using seaborn
+# ax2 = fig.add_subplot(gs[1, 0], sharex=ax1, sharey=ax1)
+# im2 = ax2.pcolormesh(reindexed_mwr.time.values, reindexed_mwr.altitude.values/1e3, reindexed_mwr.relative_humidity.values.T, shading='auto',
+#                     cmap='rainbow',
+#                     vmin=0,
+#                     vmax=70)
+# fig.colorbar(im2, ax=ax2, label='Relative Humidity (%)', aspect=10)
+# ax2.set_xlabel('Month/Year')  # Increase font size of x-axis label
+# ax2.set_ylabel('Height a.g.l (km)')  # Increase font size of y-axis label
+# # ax2.set_title('Temperature Variation')  # Increase font size of title
+# ax2.grid(True)  # Add grid lines
+
+# # Customize x-axis tick labels
+# ax2.xaxis.set_major_locator(mdates.MonthLocator(interval=4))
+# ax2.xaxis.set_major_formatter(mdates.DateFormatter('%m/%y'))
+# ax2.xaxis.set_tick_params(rotation=30)
+# ax2.set_xlim([reindexed_mwr['time'].min().values, datetime.datetime(2024, 1, 1)])
+
+# fig.savefig(PATH_FIG + 'mwr_time_series_TRH.png', dpi=300, bbox_inches='tight')
+# plt.show()
+
+monthly_mwr = mwr_profiles.groupby('time.month').mean('time')
+
+fig = plt.figure(figsize=(12, 8))
+gs = fig.add_gridspec(2, 1, hspace=0.08)
 
 # Plotting the Temperature variable using seaborn
-fig, ax = plt.subplots(figsize=(10, 5))
-im = ax.pcolormesh(reindexed_mwr.time.values, reindexed_mwr.altitude.values/1e3, reindexed_mwr.relative_humidity.values.T, shading='auto',
-                    cmap='rainbow',
-                    vmin=0,
-                    vmax=70)
-fig.colorbar(im, ax=ax, label='Relative Humidity (%)')
-ax.set_xlabel('Month/Year')  # Increase font size of x-axis label
-ax.set_ylabel('Altitude (km)')  # Increase font size of y-axis label
-# ax.set_title('Temperature Variation')  # Increase font size of title
-ax.grid(True)  # Add grid lines
+ax1 = fig.add_subplot(gs[0, 0])
+im1 = ax1.pcolormesh(monthly_mwr.month, monthly_mwr.altitude.values/1e3, monthly_mwr.temperature.values.T-273.15, shading='auto', cmap='rainbow')
+fig.colorbar(im1, ax=ax1, label=r'Temperature ${\circ}$(C)', aspect=10, ticks=np.arange(-60, 31,10))
+ax1.set_ylabel('Height a.g.l (km)')  # Increase font size of y-axis label
+# ax1.set_title('Temperature Variation')  # Increase font size of title
+ax1.grid(True)  # Add grid lines
 
 # Customize x-axis tick labels
-ax.xaxis.set_major_locator(mdates.MonthLocator(interval=4))
-ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%y'))
-ax.xaxis.set_tick_params(rotation=30)
+ax1.xaxis.set_tick_params(labelbottom=False)
+# ax1.set_xlim([monthly_mwr
+#['time'].min().values, datetime.datetime(2024, 2, 1)])
 
-# ax.set_xlim([reindexed_mwr['time'].min().values, datetime.datetime(2024, 2, 1)])
-fig.savefig(PATH_FIG + 'mwr_time_series_RH.png', dpi=300, bbox_inches='tight')
+# Plotting the Relative Humidity variable using seaborn
+ax2 = fig.add_subplot(gs[1, 0], sharex=ax1, sharey=ax1)
+im2 = ax2.pcolormesh(monthly_mwr.month, monthly_mwr.altitude.values/1e3, monthly_mwr.relative_humidity.values.T, shading='auto',
+                    cmap='rainbow',
+                    vmin=0,
+                    vmax=60)
+fig.colorbar(im2, ax=ax2, label='Relative Humidity (%)', aspect=10)
+ax2.set_xlabel('Month/Year')  # Increase font size of x-axis label
+ax2.set_ylabel('Height a.g.l (km)')  # Increase font size of y-axis label
+# ax2.set_title('Temperature Variation')  # Increase font size of title
+ax2.grid(True)  # Add grid lines
+
+# Customize x-axis tick labels
+ax2.set_xticks(np.arange(1, 13))
+ax2.set_xticklabels(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
+ax2.xaxis.set_tick_params(rotation=30)
+# ax2.set_xlim([monthly_mwr['month'].min().values, datetime.datetime(2024, 1, 1)])
+
+fig.savefig(PATH_FIG + 'mwr_time_series_TRH.png', dpi=300, bbox_inches='tight')
 plt.show()
 
+set_trace() 
 
 # Plotting the Temperature variable using seaborn
 fig, ax = plt.subplots(figsize=(10, 5))

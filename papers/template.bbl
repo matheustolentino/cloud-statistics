@@ -1,0 +1,42 @@
+\begin{thebibliography}{4}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\providecommand{\urlprefix}{}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{https://doi.org/\discretionary{}{}{}#1}\else
+  \providecommand{\doi}{https://doi.org/\discretionary{}{}{}\begingroup
+  \urlstyle{rm}\Url}\fi
+
+\bibitem[{Hogan and O'connor(2004)}]{Hogan2004}
+Hogan, R.~J. and O'connor, E.~J.: Facilitating cloud radar and lidar
+  algorithms: the Cloudnet Instrument Synergy/Target Categorization product,
+  \urlprefix\url{http://www.mathworks.com}, 2004.
+
+\bibitem[{Illingworth et~al.(2007)Illingworth, Hogan, O'Connor, Bouniol,
+  Brooks, Delanoë, Donovan, Eastment, Gaussiat, Goddard, Haeffelin, Baltinik,
+  Krasnov, Pelon, Piriou, Protat, Russchenberg, Seifert, Tompkins, van
+  Zadelhoff, Vinit, Willen, Wilson, and Wrench}]{Illingworth2007}
+Illingworth, A.~J., Hogan, R.~J., O'Connor, E.~J., Bouniol, D., Brooks, M.~E.,
+  Delanoë, J., Donovan, D.~P., Eastment, J.~D., Gaussiat, N., Goddard, J.~W.,
+  Haeffelin, M., Baltinik, H.~K., Krasnov, O.~A., Pelon, J., Piriou, J.~M.,
+  Protat, A., Russchenberg, H.~W., Seifert, A., Tompkins, A.~M., van Zadelhoff,
+  G.~J., Vinit, F., Willen, U., Wilson, D.~R., and Wrench, C.~L.: Cloudnet:
+  Continuous evaluation of cloud profiles in seven operational models using
+  ground-based observations, Bulletin of the American Meteorological Society,
+  88, 883--898, \doi{10.1175/BAMS-88-6-883}, 2007.
+
+\bibitem[{Nomokonova et~al.(2019)Nomokonova, Ebell, Löhnert, Maturilli,
+  Ritter, and O'Connor}]{Nomokonova2019}
+Nomokonova, T., Ebell, K., Löhnert, U., Maturilli, M., Ritter, C., and
+  O'Connor, E.: Statistics on clouds and their relation to thermodynamic
+  conditions at Ny-Ålesund using ground-based sensor synergy, Atmospheric
+  Chemistry and Physics, 19, 4105--4126, \doi{10.5194/acp-19-4105-2019}, 2019.
+
+\bibitem[{Pîrloagă et~al.(2022)Pîrloagă, Ene, Boldeanu, Antonescu,
+  O’Connor, and Ştefan}]{Pirloaga2022}
+Pîrloagă, R., Ene, D., Boldeanu, M., Antonescu, B., O’Connor, E.~J., and
+  Ştefan, S.: Ground-Based Measurements of Cloud Properties at the
+  Bucharest–Măgurele Cloudnet Station: First Results, Atmosphere, 13,
+  \doi{10.3390/atmos13091445}, 2022.
+
+\end{thebibliography}
