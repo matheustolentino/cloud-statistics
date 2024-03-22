@@ -625,8 +625,6 @@ for season in SEASONS.keys():
     print(f"Mean temperature at surface for {season} is: {mean_temp_surface.sel(season=season).values:.2f} +- {std_temp_surface.sel(season=season).values:.2f} C")
     print(f"Mean relative humidity at surface for {season} is: {mean_rh_surface.sel(season=season).values:.2f} +- {std_rh_surface.sel(season=season).values:.2f} %")
 
-
-
 # Save the dataset as a NetCDF file
 if save_data:
     folder_to_save_mwr_ds = f"../../../processed_data/mwr_profiles/"

@@ -303,6 +303,32 @@ def plot_and_show_distributions(
 # ax.legend()
 # plt.show()
 #**************************************************************************************************
+    
+#**************************************************************************************************
+# Teste mixture of lognormal functions
+# **************************************************************************************************
+x = np.linspace(0.5, 100, 100)
+true_params = [50, 10, np.log(20), np.log(50), .3, .2]
+y = mixture_lognormal(x, *true_params)
+
+fig = plt.figure(figsize=(10, 6))
+ax = fig.add_subplot(111)
+ax.plot(x, y, 'o')
+ax.set_yscale('log')
+ax.set_ylim([.01, 50])
+
+peaks, peak_info = find_peaks(y, height=0.2, prominence=0.01)
+if peaks.any():
+    for i, peak in enumerate(peaks):
+        n, mu, sigma, xnew, ynew = calculate_lognormal_parameters(x, y, peak_info, i)
+        print(f"n = {n}, mu = {mu}, sigma = {sigma}, mode = {x[peak]}")
+        new_par, new_cov = curve_fit(mixture_lognormal, xnew, ynew, p0=[n, mu, sigma])
+        ax.plot(x, mixture_lognormal(x, *new_par), '--', label=f"Mode {x[peak]:.1f}")
+ax.set_xlabel('Diameter [um]')
+ax.set_ylabel('Count [#]')
+ax.legend()
+plt.show()
+#**************************************************************************************************
 SHAPE_THRESHOLD = 50
 DISTANCE_MODE_THRESHOLD = 3
 
@@ -357,7 +383,6 @@ for file in filenames:
             #                                                                          peaks, 
             #                                                                          diameter_interp[peak_info['left_bases']], 
             #                                                                          diameter_interp[peak_info['right_bases']]))
-
             try:
                 if not peaks.any():
                     n, nu, scale, _, _ = calculate_gamma_parameters(diameter_interp, dist_interp)
@@ -421,8 +446,6 @@ for file in filenames:
 
                     param, pcov = curve_fit(mixture_gamma, diameter_interp, dist_interp, 
                                             p0=initial_params, maxfev=2000, bounds=bounds)
-                    
-                
 
                 num_distributions = len(param) // 3
                 weights = param[:num_distributions]

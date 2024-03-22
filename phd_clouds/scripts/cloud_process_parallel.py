@@ -59,6 +59,7 @@ PATH_CLOUDNET_LWC = '../../../output_retrievals/'
 PATH_CLOUDNET_IWC = '../../../output_retrievals/'
 PATH_CLOUDNET_DER = '../../../output_retrievals/'
 PATH_CLOUDNET_IER = '../../../output_retrievals/'
+PATH_GEN_CLOUDNET = "/home/matheustolen/Documentos/matheus_doctorado/output_retrievals/generated_cloudnet_product/"
 #-------------------------------------------------------------------------------------------------------
 # constants
 #-------------------------------------------------------------------------------------------------------
@@ -356,8 +357,14 @@ def handle_serialization(column):
     return column
 
 def plot_cloud_type(df_class, df_ze, cloud_filter, name_title, z_min, z_max, color_names, plot_ze=True, 
-                    cloud_type= List[int], targ_between_cloud= List[int], integrated_variables=pd.DataFrame()):
+                    cloud_type= List[int], targ_between_cloud= List[int], integrated_variables=pd.DataFrame(), 
+                    cloud_prop=xr.Dataset(), cloud_prop_corrected=xr.Dataset(), plot_cloud_prop=False):
     
+        # List of manually specified colors (replace these with your desired colors)
+    manual_colors = ["#57A1F7","#007CFF", "#0A2658", "#FFFF00", "#4EF6C1",\
+                      "#D05BAC", "#BFBD8D", "#118527","#8794B3", "#DA6F49", "#88183E", "#DDDEDA"]
+    ncolors = len(color_names)
+
     time_series    = df_class.index
     new_start_time = time_series.min().replace(hour=0, minute=0, second=15, microsecond=0)
     new_end_time   = time_series.max().replace(hour=23, minute=59, second=59, microsecond=0)
@@ -370,10 +377,7 @@ def plot_cloud_type(df_class, df_ze, cloud_filter, name_title, z_min, z_max, col
     df_ze_complete_time = df_ze.reindex(index=new_time_index, fill_value=np.nan)
     df_class_filtered_complete_time = df_class_filtered.reindex(index=new_time_index, fill_value=11)
 
-    # List of manually specified colors (replace these with your desired colors)
-    manual_colors = ["#57A1F7","#007CFF", "#0A2658", "#FFFF00", "#4EF6C1",\
-                      "#D05BAC", "#BFBD8D", "#118527","#8794B3", "#DA6F49", "#88183E", "#DDDEDA"]
-    ncolors = len(color_names)
+
     # Create a figure and an array of subplots
 
     if plot_ze:
@@ -526,6 +530,172 @@ def plot_cloud_type(df_class, df_ze, cloud_filter, name_title, z_min, z_max, col
         # fig.savefig(PATH_FIG + name_title + '_example.png', dpi=300)
         plt.show()
 
+def plot_cloud_comparison(df_class, df_ze, cloud_filter, name_title, z_min, z_max, color_names, plot_ze=True, 
+                         cloud_type= List[int], targ_between_cloud= List[int], integrated_variables=pd.DataFrame(), 
+                         cloud_prop=xr.Dataset(), plot_cloud_prop=False):
+    
+    time_series    = df_class.index
+    new_start_time = time_series.min().replace(hour=0, minute=0, second=15, microsecond=0)
+    new_end_time   = time_series.max().replace(hour=23, minute=59, second=59, microsecond=0)
+    new_time_index = pd.date_range(start=new_start_time, end=new_end_time, freq="30S")
+    date_string    = new_start_time.strftime("%Y%m%d")
+    
+    # List of manually specified colors (replace these with your desired colors)
+    manual_colors = ["#57A1F7","#007CFF", "#0A2658", "#FFFF00", "#4EF6C1",\
+                      "#D05BAC", "#BFBD8D", "#118527","#8794B3", "#DA6F49", "#88183E", "#DDDEDA"]
+    ncolors = len(color_names)
+
+    manual_cmap = plt.cm.colors.ListedColormap(manual_colors)
+
+    df_ze = df_ze[cloud_filter.cloud_mask()]
+    df_class_filtered = df_class[cloud_filter.cloud_mask()]
+    ds_mask = xr.Dataset({'cloud_mask': (['time', 'height'], cloud_filter.cloud_mask())}, coords={'time': df_class.index, 'height': df_class.columns})
+    
+    # Nw, apply the mask. Where mask is False, put NaNs
+    cloud_prop = cloud_prop.where(ds_mask.cloud_mask)
+    
+    df_ze_complete_time             = df_ze.reindex(index=new_time_index, fill_value=np.nan)
+    df_class_filtered_complete_time = df_class_filtered.reindex(index=new_time_index, fill_value=np.nan)
+    der_corrected_complete_time     = cloud_prop['der_corrected'].reindex(time=new_time_index, fill_value=np.nan)
+    der_complete_time               = cloud_prop['der'].reindex(time=new_time_index, fill_value=np.nan)
+    der_scaled_corrected_complete_time = cloud_prop['der_scaled_corrected'].reindex(time=new_time_index, fill_value=np.nan)
+    der_scaled_complete_time        = cloud_prop['der_scaled'].reindex(time=new_time_index, fill_value=np.nan) 
+    der_knist_complete_time         = cloud_prop['reff_kist_mh'].reindex(time=new_time_index, fill_value=np.nan)
+    # set_trace()
+    if plot_cloud_prop:
+        fig, axs = plt.subplots(5, sharex=True, sharey=True, figsize=(20, 18))
+
+        # Plot the mixed phase Ze heatmap
+        f0 = axs[0].pcolormesh(df_ze_complete_time.index, 
+                            df_ze_complete_time.columns/1000, 
+                            np.transpose(df_ze_complete_time),
+                            cmap='viridis',
+                            vmin=-40,
+                            vmax=10)
+
+        axs[0].set_ylabel(r'Height [km]')
+        colorbar2 = fig.colorbar(f0, ax=axs[0])
+        colorbar2.set_label('Ze [dBz]')  # Add a label to the colorbar
+        
+        # Customize x-axis limits based on hour_s and hour_e
+        # axs[2].set_xlim([cloud_filter.classification.index.date[0] + pd.DateOffset(hour=11), 
+        #              cloud_filter.classification.index.date[0] + pd.DateOffset(hour=17)])
+        
+        # Set y-axis limits
+        # axs[0].set_ylim([z_min, z_max])
+        # axs[0].set_xlim([time_series.min(), time_series.max()])
+        axs[0].grid()
+        plt.suptitle(name_title)
+
+        # Plot der complete time:
+        f1 = axs[1].pcolormesh(der_complete_time.time, 
+                            der_complete_time.height/1000, 
+                            der_complete_time.values.T,
+                            cmap='jet',
+                            vmin=0,
+                            vmax=15/1e6)
+        
+        axs[1].set_ylabel(r'Height [km]')
+        axs[1].set_title(f'{der_complete_time.long_name}')
+        colorbar2 = fig.colorbar(f1, ax=axs[1])
+        colorbar2.set_label(f'{der_complete_time.units}')  # Add a label to the colorbar
+
+        # Plot der corrected complete time:
+        f2 = axs[2].pcolormesh(der_corrected_complete_time.time, 
+                            der_corrected_complete_time.height/1000, 
+                            der_corrected_complete_time.values.T,
+                            cmap='jet',
+                            vmin=0,
+                            vmax=15/1e6)
+        
+        axs[2].set_ylabel(r'Height [km]')
+        axs[2].set_title(f'{der_complete_time.long_name} - Corrected')
+        colorbar2 = fig.colorbar(f2, ax=axs[2])
+        colorbar2.set_label(f'{der_complete_time.units}')  # Add a label to the colorbar
+        axs[2].grid()
+
+        # Plot der knist complete time:
+        f3 = axs[3].pcolormesh(der_knist_complete_time.time, 
+                            der_knist_complete_time.height/1000, 
+                            der_knist_complete_time.values.T/1e6,
+                            cmap='jet',
+                            vmin=0,
+                            vmax=15/1e6)
+        
+        axs[3].set_ylabel(r'Height [km]')
+        axs[3].set_title(f'{der_complete_time.long_name} - Knist Corrected')
+        colorbar2 = fig.colorbar(f3, ax=axs[3])
+        colorbar2.set_label(f'm')  # Add a label to the colorbar
+        axs[3].xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+        axs[3].grid()
+
+        # Plot the the classificatio 
+                # Plot the mixed phase categories heatmap
+        f4 = axs[4].pcolormesh(df_class_filtered_complete_time.index, 
+                            df_class_filtered_complete_time.columns/1000, 
+                            np.transpose(df_class_filtered_complete_time),
+                            cmap=manual_cmap,
+                            vmin=0,
+                            vmax=ncolors)
+        
+        i = 0
+        for sublist in cloud_filter.cloud_base:
+            axs[4].plot(np.tile(cloud_filter.time_cbt[i], len(sublist)), df_class.columns[sublist]/1000, "*", color='black', markersize=3)
+            i += 1
+        i = 0
+        for sublist in cloud_filter.cloud_top:
+            axs[4].plot(np.tile(cloud_filter.time_cbt[i], len(sublist)), df_class.columns[sublist]/1000, "*", color='red', markersize=3)
+            i += 1
+
+        axs[4].set_ylabel(r'Height [km]')
+        
+        # Create a colorbar with custom color patches and labels (vertical)
+        colorbar1 = fig.colorbar(f4, ax=axs[4], ticks=[], orientation='vertical')
+
+        # Adjust the position of colorbar and add color patches with names
+        for idx, (color, name) in enumerate(zip(manual_cmap.colors, color_names)):
+            rect = plt.Rectangle((0, idx), 1, 1, color=color)
+            colorbar1.ax.add_patch(rect)
+            colorbar1.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=20)
+        
+        axs[4].xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+        
+        # # Customize x-axis limits based on hour_s and hour_e
+        # axs[4].set_xlim([cloud_filter.classification.index.date[0] + pd.DateOffset(hour=14), 
+        #              cloud_filter.classification.index.date[0] + pd.DateOffset(hour=15)])
+        
+        axs[4].set_xlabel(r'Time [UTC]')
+        # Set y-axis limits
+        # axs[4].set_ylim([0, 3.2])
+        # axs[4].set_xlim([time_series.min(), time_series.max()])
+        axs[4].grid()
+        fig.savefig(f"{PATH_FIG}{date_string}_{name_title}_comparison_pcolor.png", dpi=300)
+        plt.show()
+
+        #Now, get all values of liquid radios and plot a PDF
+        effective_radii_cloudnet_corr = der_corrected_complete_time.values.flatten()*1e6
+        effective_radii_cloudnet = der_complete_time.values.flatten()*1e6
+        effective_radii_cloudnet_scaled = der_scaled_complete_time.values.flatten()*1e6
+        effective_radii_cloudnet_scaled_corrected = der_scaled_corrected_complete_time.values.flatten()*1e6
+        effective_radii_knist = der_knist_complete_time.values.flatten()
+        
+        
+        use_kde = True
+        density_hist = 'count'
+        alpha_hist = .4
+        element_type = 'step'
+        fig, axs = plt.subplots(figsize=(13, 7))
+        sns.histplot(effective_radii_cloudnet_corr, bins=100, kde=use_kde, label=f'Cloudnet Corrected (Median: {np.nanmedian(effective_radii_cloudnet_corr):.1f} um)', element=element_type, color='blue', edgecolor='blue', stat=density_hist, alpha=alpha_hist)
+        sns.histplot(effective_radii_cloudnet, bins=100, kde=use_kde, label=f'Cloudnet (Median: {np.nanmedian(effective_radii_cloudnet):.1f} um)', element=element_type, color='red', edgecolor='red', stat=density_hist, alpha=alpha_hist)
+        sns.histplot(effective_radii_knist, bins=100, kde=use_kde, label=f'Knist (Median: {np.nanmedian(effective_radii_knist):.1f} um)', element=element_type, color='green', edgecolor='green', stat=density_hist, alpha=alpha_hist)
+        sns.histplot(effective_radii_cloudnet_scaled, bins=100, kde=use_kde, label=f'Cloudnet Scaled (Median: {np.nanmedian(effective_radii_cloudnet_scaled):.1f} um)', element=element_type, color='purple', edgecolor='purple', stat=density_hist, alpha=alpha_hist)
+        sns.histplot(effective_radii_cloudnet_scaled_corrected, bins=100, kde=use_kde, label=f'Cloudnet Scaled Corrected (Median: {np.nanmedian(effective_radii_cloudnet_scaled_corrected):.1f} um)', element=element_type, color='orange', edgecolor='orange', stat=density_hist, alpha=alpha_hist)
+        axs.set_xlabel('Effective Radius [um]')
+        axs.set_ylabel('Counts')
+        axs.set_title(name_title +' Effective Radius Distribution')
+        axs.legend()
+        fig.savefig(f"{PATH_FIG}{date_string}_{name_title}_der_comparison_hist.png", dpi=300, bbox_inches='tight')
+        plt.show()
 # Example usage:
 # plot_classification_and_phases(df_classification, mixed_phase_cat, mixed_phase_ze, classification_filter, cloud_base, name_title, hour_s, hour_e, z_min, z_max)
 def plot_cloud_mask(df_complete, df_mask, name_title, z_min, z_max):
@@ -603,7 +773,7 @@ def plot_integrated_variables(ds_cloud_prop: xr.Dataset):
 # cloudnet algorithm to generate netcdf files with liquid water content (lwc) and droplet 
 # effective radius (der)
 #------------------------------------------------------------------------------------------------
-def generate_cloudnet_products(date, path_cate, path_cloudnet_lwc = None, path_cloudnet_iwc = None, path_cloudnet_der = None, path_cloudnet_ier = None):
+def generate_cloudnet_products(date, path_cate, path_cloudnet_lwc = None, path_cloudnet_iwc = None, path_cloudnet_der = None, path_cloudnet_ier = None, params_der=None):
  
     # Generate LWC
     if path_cloudnet_lwc is not None:
@@ -621,8 +791,11 @@ def generate_cloudnet_products(date, path_cate, path_cloudnet_lwc = None, path_c
     if path_cloudnet_der is not None:
         der_input_path = os.path.join(path_cate, date.strftime('%Y%m%d') + "_granada_categorize.nc")
         der_output_path = os.path.join(path_cloudnet_der, date.strftime('%Y%m%d') + "_granada_" + 'der.nc')
-        params = Parameters(2.0, 100.0e6, 200.0e6, 0.25, 0.1, 5.0e-3)
-        generate_der(der_input_path, der_output_path)
+        if params_der is not None:
+            # params = Parameters(2.0, 100.0e6, 200.0e6, 0.25, 0.1, 5.0e-3)
+            generate_der(der_input_path, der_output_path, parameters=params_der)
+        else:
+            generate_der(der_input_path, der_output_path)
         # generate_der(der_input_path, der_output_path, parameters=params)
 
     # Generate IER
@@ -658,7 +831,7 @@ def process_cloud_data_parallel(args):
     # Unpack the arguments
     (height, nchirp, date, chirp_res)  = args
     # ------------------------------------------------------------------------------------------------
-    # generate some cloudnet products
+    # generate cloudnet products (Comment this line if you already have the files)
     #------------------------------------------------------------------------------------------------
     # generate_cloudnet_products(date, 
     #                             PATH_CATE,
@@ -699,6 +872,7 @@ def process_cloud_data_parallel(args):
 
     cloud_products = xr.merge([cloudnet_lwc, cloudnet_iwc, cloudnet_der, cloudnet_ier], compat='no_conflicts', join='exact')
     cloud_products = cloud_products.reindex(time=time, method='nearest') # reindexing to merge with LWP and IWP
+    cloud_products.coords['height'] = height
     # ------------------------------------------------------------------------------------------------
     # dataframes_list_ze.append(radar.Zh)
     # dataframes_list_vd.append(radar.v)
@@ -732,9 +906,31 @@ def process_cloud_data_parallel(args):
 
     cloud_physical_properties = xr.merge([cloud_products, ds_integrated_variables], join='exact')   
     # ------------------------------------------------------------------------------------------------
-    
     xr_radar_variables = xr.merge([xr.DataArray(categorize['Z'][:], coords={'time': time, 'range': height}, name='Z'),
                            xr.DataArray(categorize['v'][:], coords={'time': time, 'range': height}, name='v')], compat='no_conflicts', join='exact')
+    # ------------------------------------------------------------------------------------------------
+    if process_for_specific_analysis:
+        # ------------------------------------------------------------------------------------------------
+        # generate corrected cloudnet products (comment if you dont want to compare products)
+        #------------------------------------------------------------------------------------------------
+        os.system("rm "+PATH_GEN_CLOUDNET+"*lwc.nc") # remove all lwc files from lwc path 
+        os.system("rm "+PATH_GEN_CLOUDNET+"*der.nc") # remove all der files from der path
+        os.system("rm "+PATH_GEN_CLOUDNET+"*iwc.nc") # remove all der files from der path
+        os.system("rm "+PATH_GEN_CLOUDNET+"*ier.nc") # remove all der files from der path
+        generate_cloudnet_products(date, 
+                                    PATH_CATE,
+                                    path_cloudnet_lwc=PATH_GEN_CLOUDNET, 
+                                    path_cloudnet_iwc=PATH_GEN_CLOUDNET,
+                                    path_cloudnet_der=PATH_GEN_CLOUDNET, 
+                                    path_cloudnet_ier=PATH_GEN_CLOUDNET,
+                                    params_der=Parameters(2.0, 150.0e6, 150.0e6, 0.28, 0.1, 5.0e-3))
+        # ------------------------------------------------------------------------------------------------
+        # reading corrected cloudnet products (comment if you dont want to compare products)
+        # ------------------------------------------------------------------------------------------------
+        cloudnet_der_corrected = xr.open_dataset(PATH_GEN_CLOUDNET+date.strftime('%Y%m%d')+"_granada_"+'der.nc')
+        cloudnet_der_corrected = cloudnet_der_corrected.reindex(time=time, method='nearest') # reindexing to merge with LWP and IWP
+        cloud_physical_properties['der_corrected'] = xr.DataArray(cloudnet_der_corrected['der'].values, coords=cloud_physical_properties.coords, dims=cloud_physical_properties.dims)
+        cloud_physical_properties['der_scaled_corrected'] = xr.DataArray(cloudnet_der_corrected['der_scaled'].values, coords=cloud_physical_properties.coords, dims=cloud_physical_properties.dims)
     # # ------------------------------------------------------------------------------------------------
     # # Effective radius
     # # ------------------------------------------------------------------------------------------------
@@ -863,6 +1059,9 @@ def process_cloud_data(date: datetime.datetime,
                                                         cloud)
         
         number_of_layers.loc[classification_filter.time_cbt, cloud] = sublist_lengths(classification_filter.cloud_base)
+        # ------------------------------------------------------------------------------------------------
+        # All plots should be done here
+        # ------------------------------------------------------------------------------------------------
         # with sns.axes_style("whitegrid"):
         #     plot_cloud_type(df_classification,
         #                     df_reflectivity, 
@@ -873,6 +1072,49 @@ def process_cloud_data(date: datetime.datetime,
         #                     cloud_type= CLOUD_TYPES[cloud],
         #                     targ_between_cloud= TARG_BET_CLOUD[cloud],
         #                     integrated_variables = cloud_physical_properties)
+        if process_for_specific_analysis:
+            num_mh = pd.DataFrame(index=time,
+                                data=np.zeros(time.size)) # mh: homogeneos mixing 
+            ref_mh = pd.DataFrame(data=np.zeros( (time.size, height.size)), 
+                                    index=time, 
+                                    columns=height)  # mh: homogeneos mixing
+            # set_trace()
+            #OBS: The cloud mask is already applied in the cloud_physical_properties
+            ze_cloud = df_reflectivity[classification_filter.cloud_mask()]
+            # ------------------------------------------------------------------------------------------------
+            for ind in time:
+                z_profile                 = ze_cloud.loc[ind]
+                ze                        = 10**(z_profile[z_profile.notnull()]/10) # Remove NaNs 
+                                                                                    # and convert Z from 
+                                                                                    # dBz to mm^6 m^-3
+                                                                                    # bellow, converting from kg m^-2 --> g m^-2
+                cloud_model               = HMmodel(cloud_physical_properties['LWP'].sel(time=ind).values*1e3,
+                                                    ze.index.array,
+                                                    ze,
+                                                    v=13.51)
+                num_mh.loc[ind]           = cloud_model.get_num()
+                ref_mh.loc[ind, ze.index] = cloud_model.get_re()
+
+            num_mh.replace([np.inf, -np.inf], np.nan, inplace=True)
+            ref_mh.replace(0, np.nan, inplace=True)
+
+            cloud_physical_properties['num_knist_mh']  = xr.DataArray(num_mh.values[:,0], coords={'time': cloud_physical_properties['time'].values}, dims=['time'])
+            cloud_physical_properties['reff_kist_mh']  = xr.DataArray(ref_mh.values, coords=cloud_physical_properties.coords, dims=cloud_physical_properties.dims)
+            # getting data for same pixels as cloudnet products
+            mask_for_data = ~np.isnan(cloud_physical_properties['der'])
+            cloud_physical_properties['reff_kist_mh'] = cloud_physical_properties['reff_kist_mh'].where(mask_for_data)
+
+            plot_cloud_comparison(df_classification,
+                                    df_reflectivity, 
+                                    classification_filter, 
+                                    cloud, .1, 5., 
+                                    CLASSIFICATION_TICK_LABELS, 
+                                    cloud_type= CLOUD_TYPES[cloud],
+                                    targ_between_cloud= TARG_BET_CLOUD[cloud],
+                                    integrated_variables= cloud_physical_properties, 
+                                    cloud_prop=cloud_physical_properties,
+                                    plot_cloud_prop=True)
+        # set_trace()
     #------------------------------------------------------------------------------------------------
     # Analisis hydrometeors 
     #------------------------------------------------------------------------------------------------ 
@@ -1562,7 +1804,9 @@ def plot_chirp_intervals(intervals_dic: Dict[Any, Any], height_dic: Dict[Any, An
 check_files_without_ldr = False
 plot_chirp_time_series  = False
 process_database        = True
-save_cloudnet_products  = True
+save_cloudnet_products  = False
+
+process_for_specific_analysis = True
 #-------------------------------------------------------------------------------------------------------
 # Check the size day folder withot LDR for nephele in NAS
 #-------------------------------------------------------------------------------------------------------
@@ -1571,14 +1815,24 @@ if check_files_without_ldr:
 #--------------------------------------------------------------------------------------------------------
 # Startind data processing
 #--------------------------------------------------------------------------------------------------------
-paths     = [PATH_RADAR, PATH_CATE, PATH_CLASS]
+#--------------------------------------------------------------------------------------------------------
+# Define paths for microphysics comparison
+#--------------------------------------------------------------------------------------------------------
+if process_for_specific_analysis:
+    PATH_RADAR_COMP = "/home/matheustolen/shared/NAS_raw_data/UGR/nephele"
+    PATH_CATE_COMP  = "/home/matheustolen/shared/NAS_raw_data/CATE"
+    PATH_CLASS_COMP = "/home/matheustolen/shared/NAS_raw_data/CLASS"
+    paths           = [PATH_RADAR, PATH_CATE, PATH_CLASS]
+else: #--------------------------------------------------------------------------------------------------------
+    paths     = [PATH_RADAR, PATH_CATE, PATH_CLASS]
+
 extension = '.nc'
 database_intersection  = common_prefix_of_filenames(paths, extension)
 start_date = min(database_intersection) # first date of database
 end_date   = max(database_intersection) # last date of database
 
-# start_date = datetime.datetime(2023, 4, 22)
-# end_date   = datetime.datetime(2023, 4, 22, 23, 59, 59)
+start_date = datetime.datetime(2023, 4, 22)
+end_date   = datetime.datetime(2023, 4, 22, 23, 59, 59)
 
 # start_date = datetime.datetime(2018, 6, 1)
 # end_date   = datetime.datetime(2018, 11, 1)
@@ -1619,25 +1873,25 @@ if process_database:
             #                            PATH_CLOUDNET_DER)
             #------------------------------------------------------------------------------------------------
             processing_args.append((height, nchirp, date, key_res))
-            # process_cloud_data_parallel((height, nchirp, date, key_res))
+            process_cloud_data_parallel((height, nchirp, date, key_res))
 
     # end_time = time_module.time()
-    #------------------------------------------------------------------------------------------------
-    # Parallel execution using multiprocessing.Pool
-    # ------------------------------------------------------------------------------------------------
-    num_processes = 4  # You can adjust this as needed
-    # Start the timer for parallel execution
-    print("Starting parallel execution...")
-    start_time = time_module.time()
-    # Parallel execution using multiprocessing.Pool
-    with multiprocessing.Pool(processes=num_processes) as pool:
-        pool.map(process_cloud_data_parallel, processing_args)
-    end_time = time_module.time()
-    print("Parallel execution finished.")
-    # ------------------------------------------------------------------------------------------------
-    # Calculate and print the execution time
-    execution_time = (end_time - start_time) / 60
-    print(f"Execution time: {execution_time:.2f} minutes")
+    # #------------------------------------------------------------------------------------------------
+    # # Parallel execution using multiprocessing.Pool
+    # # ------------------------------------------------------------------------------------------------
+    # num_processes = 4  # You can adjust this as needed
+    # # Start the timer for parallel execution
+    # print("Starting parallel execution...")
+    # start_time = time_module.time()
+    # # Parallel execution using multiprocessing.Pool
+    # with multiprocessing.Pool(processes=num_processes) as pool:
+    #     pool.map(process_cloud_data_parallel, processing_args)
+    # end_time = time_module.time()
+    # print("Parallel execution finished.")
+    # # ------------------------------------------------------------------------------------------------
+    # # Calculate and print the execution time
+    # execution_time = (end_time - start_time) / 60
+    # print(f"Execution time: {execution_time:.2f} minutes")
 
 # if __name__ == "__main__":
 #     main()
