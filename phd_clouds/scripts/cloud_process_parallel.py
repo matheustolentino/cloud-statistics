@@ -561,7 +561,10 @@ def plot_cloud_comparison(df_class, df_ze, cloud_filter, name_title, z_min, z_ma
     der_scaled_corrected_complete_time = cloud_prop['der_scaled_corrected'].reindex(time=new_time_index, fill_value=np.nan)
     der_scaled_complete_time        = cloud_prop['der_scaled'].reindex(time=new_time_index, fill_value=np.nan) 
     der_knist_complete_time         = cloud_prop['reff_kist_mh'].reindex(time=new_time_index, fill_value=np.nan)
+    print("Der scaled corrected data points: ", der_scaled_corrected_complete_time.count().values)
+    print("Der knist data points: ", der_knist_complete_time.count().values)
     # set_trace()
+
     if plot_cloud_prop:
         fig, axs = plt.subplots(5, sharex=True, sharey=True, figsize=(20, 18))
 
@@ -1074,13 +1077,16 @@ def process_cloud_data(date: datetime.datetime,
         #                     integrated_variables = cloud_physical_properties)
         if process_for_specific_analysis:
             num_mh = pd.DataFrame(index=time,
-                                data=np.zeros(time.size)) # mh: homogeneos mixing 
-            ref_mh = pd.DataFrame(data=np.zeros( (time.size, height.size)), 
+                                data=np.full(time.size, np.nan)) # mh: homogeneos mixing 
+            ref_mh = pd.DataFrame(data=np.full((time.size, height.size), np.nan), 
                                     index=time, 
                                     columns=height)  # mh: homogeneos mixing
-            # set_trace()
+            
             #OBS: The cloud mask is already applied in the cloud_physical_properties
-            ze_cloud = df_reflectivity[classification_filter.cloud_mask()]
+            mask_reff_cloudnet = cloud_physical_properties['der'].isnull().to_numpy()
+            ze_cloud           = df_reflectivity.where(~mask_reff_cloudnet, np.nan)
+            # num_data = ze_cloud.count().sum()
+            # ze_cloud      = df_reflectivity[classification_filter.cloud_mask()]
             # ------------------------------------------------------------------------------------------------
             for ind in time:
                 z_profile                 = ze_cloud.loc[ind]
@@ -1094,16 +1100,16 @@ def process_cloud_data(date: datetime.datetime,
                                                     v=13.51)
                 num_mh.loc[ind]           = cloud_model.get_num()
                 ref_mh.loc[ind, ze.index] = cloud_model.get_re()
-
+            
             num_mh.replace([np.inf, -np.inf], np.nan, inplace=True)
-            ref_mh.replace(0, np.nan, inplace=True)
+            # ref_mh.replace(0, np.nan, inplace=True)
 
             cloud_physical_properties['num_knist_mh']  = xr.DataArray(num_mh.values[:,0], coords={'time': cloud_physical_properties['time'].values}, dims=['time'])
             cloud_physical_properties['reff_kist_mh']  = xr.DataArray(ref_mh.values, coords=cloud_physical_properties.coords, dims=cloud_physical_properties.dims)
             # getting data for same pixels as cloudnet products
-            mask_for_data = ~np.isnan(cloud_physical_properties['der'])
-            cloud_physical_properties['reff_kist_mh'] = cloud_physical_properties['reff_kist_mh'].where(mask_for_data)
-
+            # mask_for_data = cloud_physical_properties['der'].isnull()
+            # cloud_physical_properties['reff_kist_mh'] = cloud_physical_properties['reff_kist_mh'].where(mask_for_data)
+            # set_trace()
             plot_cloud_comparison(df_classification,
                                     df_reflectivity, 
                                     classification_filter, 
@@ -1831,8 +1837,8 @@ database_intersection  = common_prefix_of_filenames(paths, extension)
 start_date = min(database_intersection) # first date of database
 end_date   = max(database_intersection) # last date of database
 
-start_date = datetime.datetime(2023, 4, 22)
-end_date   = datetime.datetime(2023, 4, 22, 23, 59, 59)
+start_date = datetime.datetime(2022, 4, 22)
+end_date   = datetime.datetime(2022, 4, 22, 23, 59, 59)
 
 # start_date = datetime.datetime(2018, 6, 1)
 # end_date   = datetime.datetime(2018, 11, 1)
