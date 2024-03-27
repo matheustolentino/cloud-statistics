@@ -111,14 +111,23 @@ HYDRO_TYPES = { "Liquid"          : [CLOUD_LIQUID,DRIZZLE_OR_RAIN,DRIZZLE_OR_RAI
 TARG_BET_HYDRO = [CLEAR_SKY, AERO_NO_CLOUD, INSECT_NO_CLOUD,\
                                                 AERO_WITH_INSECT_NO_CLOUD]
 
-CLOUD_TYPES = { "Liquid"          : [CLOUD_LIQUID,DRIZZLE_OR_RAIN_LIQUID_DROPLETS],
+CLOUD_TYPES = { "Liquid"          : [CLOUD_LIQUID, DRIZZLE_OR_RAIN_LIQUID_DROPLETS],
                     "Ice"             : [ICE_PARTICLES],
                     "Mixed_phase"     : [CLOUD_LIQUID,ICE_PARTICLES,ICE_WITH_SUP_WATER,\
                                         MELTING_ICE, MELTING_ICE_LIQUID_DROPLETS],
                     "Pre_liquid"      : [CLOUD_LIQUID,DRIZZLE_OR_RAIN_LIQUID_DROPLETS],
                     "Pre_mixed_phase" : [CLOUD_LIQUID, ICE_PARTICLES,ICE_WITH_SUP_WATER,MELTING_ICE,\
                                         MELTING_ICE_LIQUID_DROPLETS]
-                }  
+                }
+
+# CLOUD_TYPES_FOR_REFF_COMP = { "Liquid"          : [CLOUD_LIQUID,DRIZZLE_OR_RAIN_LIQUID_DROPLETS],
+#                                 "Ice"             : [ICE_PARTICLES],
+#                                 "Mixed_phase"     : [CLOUD_LIQUID,ICE_PARTICLES,ICE_WITH_SUP_WATER,\
+#                                                     MELTING_ICE, MELTING_ICE_LIQUID_DROPLETS],
+#                                 "Pre_liquid"      : [CLOUD_LIQUID,DRIZZLE_OR_RAIN_LIQUID_DROPLETS],
+#                                 "Pre_mixed_phase" : [CLOUD_LIQUID, ICE_PARTICLES,ICE_WITH_SUP_WATER,MELTING_ICE,\
+#                                                     MELTING_ICE_LIQUID_DROPLETS]
+#                 }  
 
 TARG_BET_CLOUD = {  "Liquid"          : [CLEAR_SKY, AERO_NO_CLOUD, INSECT_NO_CLOUD,\
                                                 AERO_WITH_INSECT_NO_CLOUD],
@@ -532,7 +541,7 @@ def plot_cloud_type(df_class, df_ze, cloud_filter, name_title, z_min, z_max, col
 
 def plot_cloud_comparison(df_class, df_ze, cloud_filter, name_title, z_min, z_max, color_names, plot_ze=True, 
                          cloud_type= List[int], targ_between_cloud= List[int], integrated_variables=pd.DataFrame(), 
-                         cloud_prop=xr.Dataset(), plot_cloud_prop=False):
+                         cloud_prop=xr.Dataset(), plot_cloud_prop=False, show_only_clouds_for_classification=False):
     
     time_series    = df_class.index
     new_start_time = time_series.min().replace(hour=0, minute=0, second=15, microsecond=0)
@@ -541,164 +550,235 @@ def plot_cloud_comparison(df_class, df_ze, cloud_filter, name_title, z_min, z_ma
     date_string    = new_start_time.strftime("%Y%m%d")
     
     # List of manually specified colors (replace these with your desired colors)
-    manual_colors = ["#57A1F7","#007CFF", "#0A2658", "#FFFF00", "#4EF6C1",\
+    manual_colors = ["#FFFFFF","#007CFF", "#0A2658", "#FFFF00", "#4EF6C1",\
                       "#D05BAC", "#BFBD8D", "#118527","#8794B3", "#DA6F49", "#88183E", "#DDDEDA"]
-    ncolors = len(color_names)
-
-    manual_cmap = plt.cm.colors.ListedColormap(manual_colors)
-
-    df_ze = df_ze[cloud_filter.cloud_mask()]
-    df_class_filtered = df_class[cloud_filter.cloud_mask()]
-    ds_mask = xr.Dataset({'cloud_mask': (['time', 'height'], cloud_filter.cloud_mask())}, coords={'time': df_class.index, 'height': df_class.columns})
+    ncolors       = len(color_names)
+    manual_cmap   = plt.cm.colors.ListedColormap(manual_colors)
     
-    # Nw, apply the mask. Where mask is False, put NaNs
-    cloud_prop = cloud_prop.where(ds_mask.cloud_mask)
+    df_ze           = df_ze[cloud_filter.cloud_mask()]
+    if show_only_clouds_for_classification:
+        df_class_filtered = df_class[cloud_filter.cloud_mask()]
+    else:
+        df_class_filtered = df_class.copy()
+    ds_mask = xr.Dataset({'cloud_mask': (['time', 'height'], cloud_filter.cloud_mask())}, coords={'time': df_class.index, 'height': df_class.columns})
+    ds_mask_reindexed = ds_mask.reindex(time=new_time_index, fill_value=False)
+    cloud_time_mask   = ds_mask_reindexed.cloud_mask.any(dim='height')
+    
+    # Reindex the dataframes to fill missing data with NANs
+    cloud_prop_reindexed = cloud_prop.reindex(time=new_time_index, fill_value=np.nan)
+
     
     df_ze_complete_time             = df_ze.reindex(index=new_time_index, fill_value=np.nan)
     df_class_filtered_complete_time = df_class_filtered.reindex(index=new_time_index, fill_value=np.nan)
-    der_corrected_complete_time     = cloud_prop['der_corrected'].reindex(time=new_time_index, fill_value=np.nan)
-    der_complete_time               = cloud_prop['der'].reindex(time=new_time_index, fill_value=np.nan)
-    der_scaled_corrected_complete_time = cloud_prop['der_scaled_corrected'].reindex(time=new_time_index, fill_value=np.nan)
-    der_scaled_complete_time        = cloud_prop['der_scaled'].reindex(time=new_time_index, fill_value=np.nan) 
-    der_knist_complete_time         = cloud_prop['reff_kist_mh'].reindex(time=new_time_index, fill_value=np.nan)
-    print("Der scaled corrected data points: ", der_scaled_corrected_complete_time.count().values)
+    der_corrected_complete_time     = cloud_prop_reindexed['der_corrected'].where(ds_mask_reindexed.cloud_mask)
+    der_complete_time               = cloud_prop_reindexed['der'].where(ds_mask_reindexed.cloud_mask)
+    der_scaled_corrected_complete_time = cloud_prop_reindexed['der_scaled_corrected'].where(ds_mask_reindexed.cloud_mask)
+    der_scaled_complete_time        = cloud_prop_reindexed['der_scaled'].where(ds_mask_reindexed.cloud_mask) 
+    der_knist_complete_time         = cloud_prop_reindexed['reff_kist_mh'].where(ds_mask_reindexed.cloud_mask)
+    liquid_water_path_complete_time = cloud_prop_reindexed['LWP'].sel(time=cloud_time_mask.values)
+    tmin_cloud = cloud_prop_reindexed.time.values[cloud_time_mask.values][0]
+    tmax_cloud = cloud_prop_reindexed.time.values[cloud_time_mask.values][-1]
+    zind_min = min(min(sublist) for sublist in cloud_filter.cloud_top if len(sublist) > 0) # there is some empty sublist, thats why this is needed
+    zind_max = max(max(sublist) for sublist in cloud_filter.cloud_base if len(sublist) > 0) 
+    print("\nDer scaled corrected data points: ", der_scaled_corrected_complete_time.count().values)
+    print("Der data points: ", der_complete_time.count().values)
     print("Der knist data points: ", der_knist_complete_time.count().values)
+    if der_scaled_corrected_complete_time.count().values != der_complete_time.count().values:
+        print("*** RPG HATPRO has less data than RPG-FMCW-94 ***\nThus, N_der(Z) > N_der_scaled(Z,LWP_hatpro)\n")
     # set_trace()
+    # if plot_cloud_prop:
+    #     fig = plt.figure(figsize=(23, 20))
+    #     gs = fig.add_gridspec(4, 2, width_ratios=[3, .04], height_ratios=[3, 3, 3, 1.5], hspace=0.12, wspace=0.05)
+
+    #     # Plot der corrected complete time:
+    #     ax1 = fig.add_subplot(gs[0,0])
+    #     f2 = ax1.pcolormesh(der_corrected_complete_time.time, 
+    #                         der_corrected_complete_time.height/1000, 
+    #                         der_corrected_complete_time.values.T*1e6,
+    #                         cmap='jet',
+    #                         vmin=0,
+    #                         vmax=200)
+
+    #     ax1.set_ylabel(r'Height [km]')
+    #     ax1.set_title(f'{der_complete_time.long_name} - CLOUDNET Corrected')
+    #     ax1.xaxis.set_tick_params(labelbottom=False)
+    #     ax1.set_xlim(tmin_cloud, tmax_cloud)
+    #     ax1.set_ylim(der_corrected_complete_time.height.values[zind_min]/1000, der_corrected_complete_time.height.values[zind_max]/1000)
+    #     ax1.grid()
+    #     cax1  = fig.add_subplot(gs[0, 1])
+    #     cbar1 = plt.colorbar(f2, cax=cax1, orientation='vertical', label=f'u{der_complete_time.units}', aspect=10)
+        
+
+    #     # Plot der knist complete time:
+    #     ax2 = fig.add_subplot(gs[1,0], sharey=ax1, sharex=ax1)
+    #     f3 = ax2.pcolormesh(der_scaled_corrected_complete_time.time, 
+    #                         der_scaled_corrected_complete_time.height/1000, 
+    #                         der_scaled_corrected_complete_time.values.T*1e6,
+    #                         cmap='jet',
+    #                         vmin=0,
+    #                         vmax=200)
+
+    #     ax2.set_ylabel(r'Height [km]')
+    #     ax2.set_title(f'{der_complete_time.long_name} - CLOUDNET  scaled Corrected')
+    #     ax2.xaxis.set_tick_params(labelbottom=False)
+    #     cax2 = fig.add_subplot(gs[1, 1])
+    #     cbar2 = plt.colorbar(f3, cax=cax2, orientation='vertical', label=f'u{der_complete_time.units}', aspect=10)
+    #     ax2.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+    #     ax2.grid()
+
+    #     # Plot the the classificatio 
+    #     ax3 = fig.add_subplot(gs[2,0], sharey=ax1, sharex=ax1)
+    #     # Plot the mixed phase categories heatmap
+    #     f4 = ax3.pcolormesh(df_class_filtered_complete_time.index, 
+    #                         df_class_filtered_complete_time.columns/1000, 
+    #                         np.transpose(df_class_filtered_complete_time),
+    #                         cmap=manual_cmap,
+    #                         vmin=0,
+    #                         vmax=ncolors)
+
+    #     i = 0
+    #     for sublist in cloud_filter.cloud_base:
+    #         ax3.plot(np.tile(cloud_filter.time_cbt[i], len(sublist)), df_class.columns[sublist]/1000, "*", color='black', markersize=3)
+    #         i += 1
+    #     i = 0
+    #     for sublist in cloud_filter.cloud_top:
+    #         ax3.plot(np.tile(cloud_filter.time_cbt[i], len(sublist)), df_class.columns[sublist]/1000, "*", color='red', markersize=3)
+    #         i += 1
+
+    #     ax3.set_ylabel(r'Height [km]')
+    #     ax3.xaxis.set_tick_params(labelbottom=False)
+    #     ax3.grid()
+
+    #     # Create a colorbar with custom color patches and labels (vertical)
+    #     cax3 = fig.add_subplot(gs[2, 1])
+    #     cbar3 = plt.colorbar(f4, cax=cax3, ticks=[], orientation='vertical')
+
+    #     # Adjust the position of colorbar and add color patches with names
+    #     for idx, (color, name) in enumerate(zip(manual_cmap.colors, color_names)):
+    #         rect = plt.Rectangle((0, idx), 1, 1, color=color)
+    #         cbar3.ax.add_patch(rect)
+    #         cbar3.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=20)
+        
+    #     ax4 = fig.add_subplot(gs[3,0], sharex=ax1)
+    #     ax4.plot(liquid_water_path_complete_time.time, liquid_water_path_complete_time.values*1e3, marker='o', color='blue', label='LWP')
+    #     ax4.set_ylabel(r'LWP [g m$^{-2}$]')
+    #     ax4.set_xlabel(r'Time [UTC]')
+
+    #     ax4.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+    #     ax4.grid()
+    #     plt.suptitle(f"{cloud_prop.source}")
+    #     fig.savefig(f"{PATH_FIG}{date_string}_{name_title}_comparison_pcolor.png", dpi=400, bbox_inches='tight')
+    #     plt.show()
 
     if plot_cloud_prop:
-        fig, axs = plt.subplots(5, sharex=True, sharey=True, figsize=(20, 18))
-
-        # Plot the mixed phase Ze heatmap
-        f0 = axs[0].pcolormesh(df_ze_complete_time.index, 
-                            df_ze_complete_time.columns/1000, 
-                            np.transpose(df_ze_complete_time),
-                            cmap='viridis',
-                            vmin=-40,
-                            vmax=10)
-
-        axs[0].set_ylabel(r'Height [km]')
-        colorbar2 = fig.colorbar(f0, ax=axs[0])
-        colorbar2.set_label('Ze [dBz]')  # Add a label to the colorbar
+        fig = plt.figure(figsize=(15, 13))
+        gs = fig.add_gridspec(3, 2, width_ratios=[3, .05], height_ratios=[3, 3, 1.5], hspace=0.12, wspace=0.05)
+        diff_reff =( der_scaled_corrected_complete_time -  der_corrected_complete_time )*1e6
+        # diff_relative = 1 - (der_scaled_corrected_complete_time / der_corrected_complete_time)
+        # here, get time when difference is higher than 1
+        time_high_diff = diff_reff.time.values[ (np.abs(diff_reff) > 10).any(dim='height') ] # get the time when the difference is higher than 10
         
-        # Customize x-axis limits based on hour_s and hour_e
-        # axs[2].set_xlim([cloud_filter.classification.index.date[0] + pd.DateOffset(hour=11), 
-        #              cloud_filter.classification.index.date[0] + pd.DateOffset(hour=17)])
-        
-        # Set y-axis limits
-        # axs[0].set_ylim([z_min, z_max])
-        # axs[0].set_xlim([time_series.min(), time_series.max()])
-        axs[0].grid()
-        plt.suptitle(name_title)
-
-        # Plot der complete time:
-        f1 = axs[1].pcolormesh(der_complete_time.time, 
-                            der_complete_time.height/1000, 
-                            der_complete_time.values.T,
-                            cmap='jet',
-                            vmin=0,
-                            vmax=15/1e6)
-        
-        axs[1].set_ylabel(r'Height [km]')
-        axs[1].set_title(f'{der_complete_time.long_name}')
-        colorbar2 = fig.colorbar(f1, ax=axs[1])
-        colorbar2.set_label(f'{der_complete_time.units}')  # Add a label to the colorbar
-
         # Plot der corrected complete time:
-        f2 = axs[2].pcolormesh(der_corrected_complete_time.time, 
+        ax1 = fig.add_subplot(gs[0,0])
+        f2 = ax1.pcolormesh(der_corrected_complete_time.time, 
                             der_corrected_complete_time.height/1000, 
-                            der_corrected_complete_time.values.T,
-                            cmap='jet',
-                            vmin=0,
-                            vmax=15/1e6)
-        
-        axs[2].set_ylabel(r'Height [km]')
-        axs[2].set_title(f'{der_complete_time.long_name} - Corrected')
-        colorbar2 = fig.colorbar(f2, ax=axs[2])
-        colorbar2.set_label(f'{der_complete_time.units}')  # Add a label to the colorbar
-        axs[2].grid()
+                            diff_reff.values.T,
+                            cmap='jet')
 
-        # Plot der knist complete time:
-        f3 = axs[3].pcolormesh(der_knist_complete_time.time, 
-                            der_knist_complete_time.height/1000, 
-                            der_knist_complete_time.values.T/1e6,
-                            cmap='jet',
-                            vmin=0,
-                            vmax=15/1e6)
-        
-        axs[3].set_ylabel(r'Height [km]')
-        axs[3].set_title(f'{der_complete_time.long_name} - Knist Corrected')
-        colorbar2 = fig.colorbar(f3, ax=axs[3])
-        colorbar2.set_label(f'm')  # Add a label to the colorbar
-        axs[3].xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
-        axs[3].grid()
+        ax1.set_ylabel(r'Height [km]')
+        ax1.set_title(f'{der_complete_time.long_name} - CLOUDNET CORRECTED (Reff scaled - Reff)')
+        ax1.xaxis.set_tick_params(labelbottom=False)
+        if len(time_high_diff) > 2:
+            ax1.set_xlim(time_high_diff[0], time_high_diff[-1])
+        # ax1.set_ylim(der_corrected_complete_time.height.values[zind_min]/1000, der_corrected_complete_time.height.values[zind_max]/1000)
+        ax1.grid()
+        cax1  = fig.add_subplot(gs[0, 1])
+        cbar1 = plt.colorbar(f2, cax=cax1, orientation='vertical', label=f'u{der_complete_time.units}', aspect=10)
 
         # Plot the the classificatio 
-                # Plot the mixed phase categories heatmap
-        f4 = axs[4].pcolormesh(df_class_filtered_complete_time.index, 
+        ax3 = fig.add_subplot(gs[1,0], sharey=ax1, sharex=ax1)
+        # Plot the mixed phase categories heatmap
+        f4 = ax3.pcolormesh(df_class_filtered_complete_time.index, 
                             df_class_filtered_complete_time.columns/1000, 
                             np.transpose(df_class_filtered_complete_time),
                             cmap=manual_cmap,
                             vmin=0,
                             vmax=ncolors)
-        
+
         i = 0
         for sublist in cloud_filter.cloud_base:
-            axs[4].plot(np.tile(cloud_filter.time_cbt[i], len(sublist)), df_class.columns[sublist]/1000, "*", color='black', markersize=3)
+            ax3.plot(np.tile(cloud_filter.time_cbt[i], len(sublist)), df_class.columns[sublist]/1000, "*", color='black', markersize=3)
             i += 1
         i = 0
         for sublist in cloud_filter.cloud_top:
-            axs[4].plot(np.tile(cloud_filter.time_cbt[i], len(sublist)), df_class.columns[sublist]/1000, "*", color='red', markersize=3)
+            ax3.plot(np.tile(cloud_filter.time_cbt[i], len(sublist)), df_class.columns[sublist]/1000, "*", color='red', markersize=3)
             i += 1
 
-        axs[4].set_ylabel(r'Height [km]')
-        
+        ax3.set_ylabel(r'Height [km]')
+        ax3.xaxis.set_tick_params(labelbottom=False)
+        ax3.grid()
+
         # Create a colorbar with custom color patches and labels (vertical)
-        colorbar1 = fig.colorbar(f4, ax=axs[4], ticks=[], orientation='vertical')
+        cax3 = fig.add_subplot(gs[1, 1])
+        cbar3 = plt.colorbar(f4, cax=cax3, ticks=[], orientation='vertical')
 
         # Adjust the position of colorbar and add color patches with names
         for idx, (color, name) in enumerate(zip(manual_cmap.colors, color_names)):
             rect = plt.Rectangle((0, idx), 1, 1, color=color)
-            colorbar1.ax.add_patch(rect)
-            colorbar1.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=20)
+            cbar3.ax.add_patch(rect)
+            cbar3.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=20)
         
-        axs[4].xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
-        
-        # # Customize x-axis limits based on hour_s and hour_e
-        # axs[4].set_xlim([cloud_filter.classification.index.date[0] + pd.DateOffset(hour=14), 
-        #              cloud_filter.classification.index.date[0] + pd.DateOffset(hour=15)])
-        
-        axs[4].set_xlabel(r'Time [UTC]')
-        # Set y-axis limits
-        # axs[4].set_ylim([0, 3.2])
-        # axs[4].set_xlim([time_series.min(), time_series.max()])
-        axs[4].grid()
-        fig.savefig(f"{PATH_FIG}{date_string}_{name_title}_comparison_pcolor.png", dpi=300)
+        ax4 = fig.add_subplot(gs[2,0], sharex=ax1)
+        ax4.plot(liquid_water_path_complete_time.time, liquid_water_path_complete_time.values*1e3, marker='o', color='blue', label='LWP')
+        ax4.set_ylabel(r'LWP [g m$^{-2}$]')
+        ax4.set_xlabel(r'Time [UTC]')
+
+        ax4.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+        ax4.grid()
+        plt.suptitle(f"{cloud_prop.source}")
+        fig.savefig(f"{PATH_FIG}{date_string}_{name_title}_diff_der_pcolor.png", dpi=300, bbox_inches='tight')
         plt.show()
 
         #Now, get all values of liquid radios and plot a PDF
-        effective_radii_cloudnet_corr = der_corrected_complete_time.values.flatten()*1e6
-        effective_radii_cloudnet = der_complete_time.values.flatten()*1e6
-        effective_radii_cloudnet_scaled = der_scaled_complete_time.values.flatten()*1e6
-        effective_radii_cloudnet_scaled_corrected = der_scaled_corrected_complete_time.values.flatten()*1e6
-        effective_radii_knist = der_knist_complete_time.values.flatten()
+        effective_radii_cloudnet_corr = der_corrected_complete_time.values.ravel()*1e6
+        effective_radii_cloudnet_corr = effective_radii_cloudnet_corr[~np.isnan(effective_radii_cloudnet_corr)]
         
+        effective_radii_cloudnet = der_complete_time.values.ravel()*1e6
+        effective_radii_cloudnet = effective_radii_cloudnet[~np.isnan(effective_radii_cloudnet)]
         
+        effective_radii_cloudnet_scaled = der_scaled_complete_time.values.ravel()*1e6
+        effective_radii_cloudnet_scaled = effective_radii_cloudnet_scaled[~np.isnan(effective_radii_cloudnet_scaled)]
+        
+        effective_radii_cloudnet_scaled_corrected = der_scaled_corrected_complete_time.values.ravel()*1e6
+        effective_radii_cloudnet_scaled_corrected = effective_radii_cloudnet_scaled_corrected[~np.isnan(effective_radii_cloudnet_scaled_corrected)]
+        
+        effective_radii_knist = der_knist_complete_time.values.ravel()
+        effective_radii_knist = effective_radii_knist[~np.isnan(effective_radii_knist)]
+        
+        # print(np.sum(~np.isnan(effective_radii_cloudnet_corr)))
+        # print(np.sum(~np.isnan(effective_radii_cloudnet)))
+        # print(np.sum(~np.isnan(effective_radii_cloudnet_scaled)))
+        # print(np.sum(~np.isnan(effective_radii_cloudnet_scaled_corrected)))
+        # print(np.sum(~np.isnan(effective_radii_knist)))
+
         use_kde = True
         density_hist = 'count'
         alpha_hist = .4
         element_type = 'step'
         fig, axs = plt.subplots(figsize=(13, 7))
-        sns.histplot(effective_radii_cloudnet_corr, bins=100, kde=use_kde, label=f'Cloudnet Corrected (Median: {np.nanmedian(effective_radii_cloudnet_corr):.1f} um)', element=element_type, color='blue', edgecolor='blue', stat=density_hist, alpha=alpha_hist)
-        sns.histplot(effective_radii_cloudnet, bins=100, kde=use_kde, label=f'Cloudnet (Median: {np.nanmedian(effective_radii_cloudnet):.1f} um)', element=element_type, color='red', edgecolor='red', stat=density_hist, alpha=alpha_hist)
-        sns.histplot(effective_radii_knist, bins=100, kde=use_kde, label=f'Knist (Median: {np.nanmedian(effective_radii_knist):.1f} um)', element=element_type, color='green', edgecolor='green', stat=density_hist, alpha=alpha_hist)
-        sns.histplot(effective_radii_cloudnet_scaled, bins=100, kde=use_kde, label=f'Cloudnet Scaled (Median: {np.nanmedian(effective_radii_cloudnet_scaled):.1f} um)', element=element_type, color='purple', edgecolor='purple', stat=density_hist, alpha=alpha_hist)
-        sns.histplot(effective_radii_cloudnet_scaled_corrected, bins=100, kde=use_kde, label=f'Cloudnet Scaled Corrected (Median: {np.nanmedian(effective_radii_cloudnet_scaled_corrected):.1f} um)', element=element_type, color='orange', edgecolor='orange', stat=density_hist, alpha=alpha_hist)
+        sns.histplot(effective_radii_cloudnet_corr, binwidth=.5, kde=use_kde, label=f'Cloudnet Corrected (Median: {np.nanmedian(effective_radii_cloudnet_corr):.1f} um)', element=element_type, color='blue', edgecolor='blue', stat=density_hist, alpha=alpha_hist)
+        sns.histplot(effective_radii_cloudnet, binwidth=.5, kde=use_kde, label=f'Cloudnet (Median: {np.nanmedian(effective_radii_cloudnet):.1f} um)', element=element_type, color='red', edgecolor='red', stat=density_hist, alpha=alpha_hist)
+        sns.histplot(effective_radii_knist, binwidth=.5, kde=use_kde, label=f'Knist (Median: {np.nanmedian(effective_radii_knist):.1f} um)', element=element_type, color='green', edgecolor='green', stat=density_hist, alpha=alpha_hist)
+        sns.histplot(effective_radii_cloudnet_scaled, binwidth=.5, kde=use_kde, label=f'Cloudnet Scaled (Median: {np.nanmedian(effective_radii_cloudnet_scaled):.1f} um)', element=element_type, color='purple', edgecolor='purple', stat=density_hist, alpha=alpha_hist)
+        sns.histplot(effective_radii_cloudnet_scaled_corrected, binwidth=.5, kde=use_kde, label=f'Cloudnet Scaled Corrected (Median: {np.nanmedian(effective_radii_cloudnet_scaled_corrected):.1f} um)', element=element_type, color='orange', edgecolor='orange', stat=density_hist, alpha=alpha_hist)
         axs.set_xlabel('Effective Radius [um]')
         axs.set_ylabel('Counts')
         axs.set_title(name_title +' Effective Radius Distribution')
         axs.legend()
         fig.savefig(f"{PATH_FIG}{date_string}_{name_title}_der_comparison_hist.png", dpi=300, bbox_inches='tight')
         plt.show()
+        plt.close('all')
+        # set_trace()
 # Example usage:
 # plot_classification_and_phases(df_classification, mixed_phase_cat, mixed_phase_ze, classification_filter, cloud_base, name_title, hour_s, hour_e, z_min, z_max)
 def plot_cloud_mask(df_complete, df_mask, name_title, z_min, z_max):
@@ -874,7 +954,7 @@ def process_cloud_data_parallel(args):
     cloudnet_ier = xr.open_dataset(PATH_CLOUDNET_IER+date.strftime('%Y%m%d')+"_granada_"+'ier.nc')
 
     cloud_products = xr.merge([cloudnet_lwc, cloudnet_iwc, cloudnet_der, cloudnet_ier], compat='no_conflicts', join='exact')
-    cloud_products = cloud_products.reindex(time=time, method='nearest') # reindexing to merge with LWP and IWP
+    cloud_products = cloud_products.reindex(time=time, method='nearest', tolerance='5s')
     cloud_products.coords['height'] = height
     # ------------------------------------------------------------------------------------------------
     # dataframes_list_ze.append(radar.Zh)
@@ -906,8 +986,9 @@ def process_cloud_data_parallel(args):
                     {'LWP': (['time'], categorize['lwp'][:]),
                      'IWP': (['time'], np.trapz(cloudnet_iwc.iwc, height, axis=1))},
                      coords={'time': time})
-
-    cloud_physical_properties = xr.merge([cloud_products, ds_integrated_variables], join='exact')   
+    
+    cloud_physical_properties = xr.merge([cloud_products, ds_integrated_variables], join='exact')
+    print(f"LWP source: {categorize['lwp'].source}\n")
     # ------------------------------------------------------------------------------------------------
     xr_radar_variables = xr.merge([xr.DataArray(categorize['Z'][:], coords={'time': time, 'range': height}, name='Z'),
                            xr.DataArray(categorize['v'][:], coords={'time': time, 'range': height}, name='v')], compat='no_conflicts', join='exact')
@@ -1103,7 +1184,6 @@ def process_cloud_data(date: datetime.datetime,
             
             num_mh.replace([np.inf, -np.inf], np.nan, inplace=True)
             # ref_mh.replace(0, np.nan, inplace=True)
-
             cloud_physical_properties['num_knist_mh']  = xr.DataArray(num_mh.values[:,0], coords={'time': cloud_physical_properties['time'].values}, dims=['time'])
             cloud_physical_properties['reff_kist_mh']  = xr.DataArray(ref_mh.values, coords=cloud_physical_properties.coords, dims=cloud_physical_properties.dims)
             # getting data for same pixels as cloudnet products
