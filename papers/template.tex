@@ -180,7 +180,7 @@ The Cloudnet processed data was determined by a synergy between a RPG-HATPRO rad
 %MATHEUS: decided to remove this part to include rain mixed phase clouds in the analysis:
 %Consequently, rain events were excluded from cloud analysis in the section \ref{sec:clod_prop_eval}, reducing misclassification occurence.
 
-CLOUDNET processed data were sampled in a common grid with time resoltion of 30\,s, and height bins according to cloud radar range resolution, which differ according to radar chirp table configuration. 
+CLOUDNET processed data were sampled in a common grid with time resolution of 30\,s, and height bins according to cloud radar range resolution, which differ according to radar chirp table configuration. 
 %MATHEUS ADDED:
 This resolution vary with altitude and underwent some changes throughout the measurement period. Consequently, to ensure consistency in vertical resolution of the data, a regridding process was implemented to facilitate monthly statistical analysis when needed. The regriding consisted to change altitude resolution to 60\,m. 
 %MATHEUS END
@@ -231,29 +231,29 @@ In addition, liquid layers respect a threshold of T$_w$ < -40 $^{\circ}$C, since
 
 \subsection{Assortment algorithm}\label{sec:classification_algorithm}
 
-The assortment algoritm classifies groups of hydrometeors and cloud layers. In terms of hydrometeors, this algorithm generate masks of hydrometeor occurence for 3 groups: liquid, ice and "total", where liquid class encompass all possible liquid pixels, which are "droplets", "drizzle or rain" and "drizzle \& droplets". Ice encompass only "ice" pixels, and total is all possible hydrometeors, whic are "droplets", "drizzle or rain", "drizzle \& droplets", "ice", "ice \& droplets", "melting ice" and "melting \& droplets".
+The assortment algoritm classifies groups of hydrometeors and cloud layers. In terms of hydrometeors, this algorithm generate masks of hydrometeor occurrence for 3 groups: liquid, ice and "total", where liquid class encompass all possible liquid pixels, which are "droplets", "drizzle or rain" and "drizzle \& droplets". Ice encompass only "ice" pixels, and total is all possible hydrometeors, which are "droplets", "drizzle or rain", "drizzle \& droplets", "ice", "ice \& droplets", "melting ice" and "melting \& droplets".
 
-Subsequently, cloud layers in atmospheric column were classified trought pixel sequence inquiry. These pixels sequences were devided in the following 5 groups according to \citet{Pirloaga2022}: liquid, ice, mixed phase, liquid with precipitation and mixed phase with precipitation. Specifically, liquid clouds were assigned as any combination of "droplets" and "drizzle \& droplets" pixels. Ice clouds were assigned when only "ice" pixel sequence was encountered. As well as, mixed phase clouds were assigned with any combination of "droplets", "ice", "ice \& droplets", "melting ice", "melting \& droplets", "drizzle and droplets" pixels. Precipitation cases were classified wheter at least one pixel of "drizzle or rain" is found below liquid and mixed phase clouds. Diferent from previous studies, a threshold of 20 bins (256-1022 m) bellow cloud was set to reject precipitation events, assuming that rain droplets are not falling from the actual cloud layer. In all cases, for being considered a cloud layer, a minimun sequence of 3 cloud pixels (38-153 m) \citep{Nomokonova2019} must be satisfied, in addition to a minimun sequence of 5 pixels (64-255 m) of "Clear sky", "Aerosol", "Insect" and "Arosol \& insect" to separate multilayers. Therefore, free hydrometeor layers in the neghborhood of the cloud allowed the identification of cloud base and top. Nevertheless, thresholds here were based on \citet{Pirloaga2022,Nomokonova2019}, but theses values are not currently well defined, their determination has been guided by empirical experience.
+Subsequently, cloud layers in atmospheric column were classified trough pixel sequence inquiry. These pixels sequences were divided in the following 5 groups according to \citet{Pirloaga2022}: liquid, ice, mixed phase, liquid with precipitation and mixed phase with precipitation. Specifically, liquid clouds were assigned as any combination of "droplets" and "drizzle \& droplets" pixels. Ice clouds were assigned when only "ice" pixel sequence was encountered. As well as, mixed phase clouds were assigned with any combination of "droplets", "ice", "ice \& droplets", "melting ice", "melting \& droplets", "drizzle and droplets" pixels. Precipitation cases were classified whether at least one pixel of "drizzle or rain" is found below liquid and mixed phase clouds. Different from previous studies, a threshold of 20 bins (256-1022 m) bellow cloud was set to reject precipitation events, assuming that rain droplets are not falling from the actual cloud layer. In all cases, for being considered a cloud layer, a minimum sequence of 3 cloud pixels (38-153 m) \citep{Nomokonova2019} must be satisfied, in addition to a minimum sequence of 5 pixels (64-255 m) of "Clear sky", "Aerosol", "Insect" and "Aerosol \& insect" to separate multi-layers. Therefore, free hydrometeor layers in the neighbourhood of the cloud allowed the identification of cloud base and top. Nevertheless, thresholds here were based on \citet{Pirloaga2022,Nomokonova2019}, but theses values are not currently well defined, their determination has been guided by empirical experience.
 
 \section{Results and discussion}
 
 \subsection{Thermodynamic influences on cloud frequency}
 
-It is widely recognized that thermodinamic conditions can affect cloud formation \citep{XXX}. In order to relate both, this section makes a comparison between monthly thermodinamic profiles and different hydrometeors and cloud type occurence.
+It is widely recognized that thermodynamic conditions can affect cloud formation \citep{XXX}. In order to relate both, this section makes a comparison between monthly thermodynamic profiles and different hydrometeors and cloud type occurrence.
 
-Temperature and humidity profiles used as baselines were those collected during clear sky condition, and are shown in Figure~\ref{fig:monthly_temp_rh}. This figure can easily identify cold and warm regimes, where cold regimes spans between winter and spring, while warm regimes spans between summer and autumn. This annual variablility was also observed by \citet{Pirloaga2022,Nomokonova2019}, howevever, higher temperature values experienced by our station is only closely resembling those reported by \citet{Pirloaga2022}, as both stations are geographic located in warm regions. In our case, averange surface temperature is 25.2 $\pm$ 5.5 $^{\circ}$C in summer, by contrast with 17.4 $\pm$ 6.5 $^{\circ}$C in winter. For monthly averange surface relative humidity, values appear slightly higher than those documented by \citet{Nomokonova2019}, with 50 $\pm$ 21\% in summer and 64 $\pm$ 17\%  in winter.
+Temperature and humidity profiles used as baselines were those collected during clear sky condition, and are shown in Figure~\ref{fig:monthly_temp_rh}. This figure can easily identify cold and warm regimes, where cold regimes spans between winter and spring, while warm regimes spans between summer and autumn. This annual variability was also observed by \citet{Pirloaga2022,Nomokonova2019}, however, higher temperature values experienced by our station is only closely resembling those reported by \citet{Pirloaga2022}, as both stations are geographic located in warm regions. In our case, average surface temperature is 25.2 $\pm$ 5.5 $^{\circ}$C in summer, by contrast with 17.4 $\pm$ 6.5 $^{\circ}$C in winter. For monthly averange surface relative humidity, values appear slightly higher than those documented by \citet{Nomokonova2019}, with 50 $\pm$ 21\% in summer and 64 $\pm$ 17\%  in winter.
 
 \begin{figure}[htbp]
       \centering
-      \includegraphics[width=.9\textwidth]{../phd_clouds/figures/mwr_time_series_TRH}
-      \caption{Montlhy evolution of averange temperature and humidity profiles obtained with the microwave radiometer.}
+      \includegraphics[width=.7\textwidth]{../phd_clouds/figures/mwr_time_series_TRH}
+      \caption{Montlhy evolution of average temperature and humidity profiles obtained with the microwave radiometer.}
       \label{fig:monthly_temp_rh}
 \end{figure}
 
-Following this, hydrometeor formation and consequently, cloud formation will be directly affected by thermodinamic conditions in these regimes. For tracking this changes on clouds, a first approach on monthly hydrometeors occurrence is depicted in Figure \ref{fig:monthly_ice_liq_hydromet}. Regarding the 6-year CLOUDNET post-processed database, this figure shows the monthly frequency profiles of liquid (top panel) and ice (middle panel) hydrometeors. 
+Following this, hydrometeor formation and consequently, cloud formation will be directly affected by thermodynamic conditions in these regimes. For tracking this changes on clouds, a first approach on monthly hydrometeors occurrence is depicted in Figure \ref{fig:monthly_ice_liq_hydromet}. Regarding the 6-year CLOUDNET post-processed database, this figure shows the monthly frequency profiles of liquid (top panel) and ice (middle panel) hydrometeors. 
 The lowest panel also displays their corresponding monthly frequency of occurrence, assigning one occurrence per profile if at least one hydrometeor was detected in that profile. In addition, right panels shows the frequency profiles through the entire dataset for each season. 
 
-Notably, monthly evolution of ice and liquid hydrometeors keeps aligned with temperature and relative humidity profiles. For both cases, higher frequencies were encontered in the end of cold regimes (November) and during warm regimes (Dec-May). Where we can easily find frequencys ranging 20\% for liquid and 15\% for ice. Also, a proeminent minimun occured exactly in summer, which can be better visualized in the right panels of Figure \ref{fig:monthly_ice_liq_hydromet}. These seasonal profiles showed an increase for the liquid case from summer to winter, and for the ice case, an increase from summer to fall, keeps almost the same in winter, and reach a maximun in spring. This feature is strong for the liquid case, where theres no diference between winter and spring. Also relevant frequencies for this case is below 2\,km. On the contrary, middle panel of Figure \ref{fig:monthly_ice_liq_hydromet} shows that ice particles have a spread distribution on the vertical, overcomming 10\,km with slight maximas in 2\,km and 8\,km.
+Notably, monthly evolution of ice and liquid hydrometeors keeps aligned with temperature and relative humidity profiles. For both cases, higher frequencies were encountered in the end of cold regimes (November) and during warm regimes (Dec-May). Where we can easily find frequencies ranging 20\% for liquid and 15\% for ice. Also, a prominent minimum occurred exactly in summer, which can be better visualized in the right panels of Figure \ref{fig:monthly_ice_liq_hydromet}. These seasonal profiles showed an increase for the liquid case from summer to winter, and for the ice case, an increase from summer to fall, keeps almost the same in winter, and reach a maximum in spring. This feature is strong for the liquid case, where there is no difference between winter and spring. Also relevant frequencies for this case is below 2\,km. On the contrary, middle panel of Figure \ref{fig:monthly_ice_liq_hydromet} shows that ice particles have a spread distribution on the vertical, overcoming 10\,km with slight maxima in 2\,km and 8\,km.
 
 \begin{figure}[htbp]
       \centering
@@ -262,7 +262,7 @@ Notably, monthly evolution of ice and liquid hydrometeors keeps aligned with tem
       \label{fig:monthly_ice_liq_hydromet}
 \end{figure}
 
-Therefore, by converting hydrometeors into cloud types using the cloud classification algorithm (refer to section \ref{sec:classification_algorithm}), monthly frequency of single-layer clouds occurence was obtained as depicted in Figure \ref{fig:cloud_available}). Indeed, all subsequent analyses focus on single-layer clouds, as the CLOUDNET target classification product can be highly inaccurate in multilayer cases due to errors in LWP partitioning \citep{Nomokonova2019}. In this scenario, Figure \ref{fig:cloud_available}) shows a predominant presence of precipitating mixed-phase clouds (Indicated as Pre-Mixed-Phase). Alternativelly, almost no precipitating due to liquid clouds was observed, just a slight maximun of 5\% in the transition period between fall and winter. Next, ice clouds are the second most present cloud type, followed by mixed-phase clouds and liquid clouds. However, the presence o precipitating mixed-phase clouds are signifcantly higher than other cloud types, with a substantially stronger seasonal pattern. Its maximun frequency coincides with the cold regimes, in winter and spring, where their frequency reachs 25\% and 30\%, respectively. Evidently, its minimun occurs in summer (June - August), when temperature is high and relative humidity is much lower. Also, ice clouds prevailed during this season and no significant liquid precipitation was registered. 
+Therefore, by converting hydrometeors into cloud types using the cloud classification algorithm (refer to section \ref{sec:classification_algorithm}), monthly frequency of single-layer clouds occurrence was obtained as depicted in Figure \ref{fig:cloud_available}). Indeed, all subsequent analyses focus on single-layer clouds, as the CLOUDNET target classification product can be highly inaccurate in multilayer cases due to errors in LWP partitioning \citep{Nomokonova2019}. In this scenario, Figure \ref{fig:cloud_available}) shows a predominant presence of precipitating mixed-phase clouds (Indicated as Pre-Mixed-Phase). Alternatively, almost no precipitating due to liquid clouds was observed, just a slight maximum of 5\% in the transition period between fall and winter. Next, ice clouds are the second most present cloud type, followed by mixed-phase clouds and liquid clouds. However, the presence o precipitating mixed-phase clouds are significantly higher than other cloud types, with a substantially stronger seasonal pattern. Its maximum frequency coincides with the cold regimes, in winter and spring, where their frequency reaches 25\% and 30\%, respectively. Evidently, its minimum occurs in summer (June - August), when temperature is high and relative humidity is much lower. Also, ice clouds prevailed during this season and no significant liquid precipitation was registered. 
 
 
 \begin{figure}[htbp]
@@ -276,15 +276,15 @@ Therefore, by converting hydrometeors into cloud types using the cloud classific
 %Additionally, it can completely attenuate the ceilometer backscattering signal. Given that the CLOUDNET target classification relies on these variables, this product can be significantly affected. Since the impact of this effect on hydrometeor classification is still not well understood, we opted not to analyze this case within the context of the study.
 
 % ADAPT
-Next, cloud microphysical properties by season are displayed in Figure \ref{fig:cloud_macrophys}, such as cloud thickness ($\Delta$Z), base and top. In relation to cloud thickness, mixed-phase and precipitable mixed phase clouds exhibit the largest and most variable values, followed by ice clouds, precipitating liquid clouds and liquid clouds. A notably broader distribution for precipitating mixed phase-clouds were observed in summer, with a median of 3 [0.6 to 5.1]\,km. Where values in brackets represents the 25$^{th}$ and 75$^{th}$ percentiles. However, at this season, these clouds have less than 4\% of occurrence (refers to figure \ref{fig:cloud_available}), and is accompanied by a greater uncertainty. Otherwise, median cloud thickness for precipitable mixed-phase  clouds are raging from 1 to 1.4\,km. Alternatively, for the entire period, non-precipitable mixed-phase clouds range from 1.4 to 1.7\,km, Ice clouds from 0.7 to 0.9\,km, precipitable liquid clouds from 0.27 to 0.8\,km, and liquid clouds, from 0.18 to 0.2\,km. In general, cloud-thickness distribution is skewed toward lower values throughout all season, and the mode is consistently smaller than the median. Additionally, there is no evident seasonal pattern for this parameter due to its considerable variability.
-Subsequently, middle panel of figure \ref{fig:cloud_macrophys} shows that ice clouds have the highest cloud base, followed by mixed-phase, precipitable mixed phase, and both liquid clouds, precipitable and non-precipitable. In summer, cloud base distribution experiences the most pronounced alterations in all types of cloud. For instance, liquid clouds presented a broader and higher distribution, with a median of 3 [1.8 to 4.9]\,km. In comparison, its median are ranging between 1.4-1.8\,km for the rest of the period. In relation to mixed-phase cloud base, its distribution becomes sharper in summer, with a median of 5.2\,[4.6 to 6.0]\,km, practically the same of fall, with 5.4 [4.0 to 7]\,km. For the rest of the seasons, the median is 1\,km lower, between 3.7 and 4.0\,km. Moreover, precipitable mixed-phase clouds are significantly higher in summer, with a median of 3\,[1.8 to 4.9]\,km, opposed to 1.2 - 1.9\,km in relation to other seasons. Precipitable liquid clouds also presented a higher and broader cloud base in summer, with median of 1.7\,[1.8 to 4.9]\,km. For the other seasons, median cloud base range between 0.7 to 1.2\,km. For ice clouds, despite they exhibiting higher median cloud bases in fall rather than summer, a mode is observed at 5\,km, suggesting the occurrence of these clouds at an uncommon altitude during other seasons - indeed, this altitude is also uncommon for liquid clouds, which also showed a mode at this height. During fall, ice cloud base exhibits a median value of 8\,km, opposite to 7\,km for the other seasons.
+Next, seasonal evolution of cloud thickness ($\Delta$Z), base and top heights are displayed in Figure \ref{fig:cloud_macrophys}. In relation to cloud thickness, mixed-phase and precipitable mixed phase clouds exhibit the largest and most variable values, followed by ice, precipitating liquid clouds and liquid clouds. A notably broader distribution for precipitable mixed-phase clouds were observed in summer, with a median of 3 [0.6 to 5.1]\,km. Where values in brackets represents the 25$^{th}$ and 75$^{th}$ percentiles, which demonstrate a greater uncertainty for this variable. Moreover, in this season, these clouds have less than 4\% of occurrence (refers to figure \ref{fig:cloud_available}). Throughout the remainder seasons, median cloud thickness for precipitable mixed-phase clouds are raging from 1 to 1.4\,km. Alternatively, for the entire period, non-precipitable mixed-phase clouds range from 1.4 to 1.7\,km, Ice clouds from 0.7 to 0.9\,km, precipitable liquid clouds from 0.27 to 0.8\,km, and liquid clouds, from 0.18 to 0.2\,km. In general, cloud-thickness distribution is skewed toward large thickness throughout all season, and the mode is consistently smaller than the median. Additionally, there is no evident seasonal pattern for this parameter due to its considerable variability.
 
-%In Figure \ref{fig:cloud_macrophys}, a comparison of cloud thickness ($\Delta$Z), base, and top for each cloud type by season is presented. This figure displays a boxplot for cloud thickness for each season within a density distribution contour. Consistent with previous findings, the top panel confirms that 
-%mixed-phase clouds exhibit the largest and most variable cloud thickness at our station, followed by ice clouds and then liquid clouds. Their median values are 2.0 (XXX) m, 1.2 (XXX) m, and 0.2 (XXX) m, respectively. However, it's noteworthy that the most likely values are consistently smaller than the median (as indicated in the top panel of Figure \ref{fig:cloud_macrophys}). This can be clearly seen for ice and mixed clouds, and is also observed for liquid clouds, although it might not be readily apparent in the graph due to the scale of the y-axis. On the other hand, no significant seasonal trend was observed for this variable, although it was clearly observed for cloud base and top.
+Subsequently, middle panel of figure \ref{fig:cloud_macrophys} shows that ice clouds have the highest cloud base height, followed by mixed-phase, precipitable mixed phase, and both liquid clouds, precipitable and non-precipitable. In summer, cloud base distribution experiences the most pronounced alterations. For instance, liquid clouds exhibited a wider and higher spread distribution, with a median height of 3 [1.8 to 4.9] km. In contrast, their median ranged from 1.4-1.8\,km for the remaining period. In relation to mixed-phase clouds, its base height distribution becomes sharper in summer, with a median height of 5.2\,[4.6 to 6.0]\,km, practically the same of fall, at 5.4 [4.0 to 7]\,km. For the rest of the seasons, their median height is approximately 1\,km lower, between 3.7 and 4.0\,km. 
+Moreover, precipitable mixed-phase cloud base are significantly higher in summer, with a median height of 3\,[1.8 to 4.9]\,km, in contrast with the remaining seasons, varying between 1.2 - 1.9\,km. 
+Precipitable liquid clouds also presented a higher and broader cloud base in summer, with a median height of 1.7\,[1.8 to 4.9]\,km, about 1\,km higher than other seasons, which fluctuates between 0.7 to 1.2\,km.
+For ice clouds, despite they exhibiting a higher median cloud base in fall, during summer, an uncommon mode in comparison with other seasons is observed at 5\,km - indeed, this is also observed for liquid and mixed-phase clouds. During fall, ice cloud base height exhibits a median value of 8.1\,km [6.7 to 9.3]\,km, also 1\,km higher than other seasons, quite well stable in 7.0\,km. 
 
-%In hot regimes (summer and fall), cloud base tends to reach higher levels as can be seen by the middle panel of Figure \ref{fig:cloud_macrophys}. Especially in summer, a prominent mode appears around 5\,km, even for liquid clouds that usually do not reach this level for the rest of the year. Indeed, most dramatic changes in the vertical distribution of the cloud base happened in summer, principally for liquid clouds. This clouds changed from sharp distribution at low levels to a spread one in summer, extending up to 5\,km as mentioned.
-%Still, in a general framework, cloud bases are typically higher for ice clouds, followed by mixed clouds and then liquid clouds. Also, except for summer, cloud base for mixed phase clouds presents the largest vertical variability, ice cloud bases are normally found above 6\,km, and liquid cloud bases stay below 2\,km. Consequently, the same qualitative behavior happened for cloud tops, once no significant changes in cloud thickness was observed before. Additionally, since liquid clouds are very thin, just a slight difference between cloud base and top distribution has been observed.
-
+Bottom panel of Figure \ref{fig:cloud_macrophys} shows a similar seasonal pattern for cloud top height, where the main differences was observed in summer. Particularly, for precipitable mixed-phase clouds, cloud top height have substantially greater variation than cloud base height, with skewed distributions toward large heights. Evidently, this variability reflects in clouds thickness as previously observed. Thus, cloud thickness is directly affected by cloud top measurements in precipitable clouds. Since the CDR reflectivity experienced greater attenuation in this case, cloud top height could be underestimated at some cases, leading to the observed variations.
+For these clouds, median cloud height, normally encountered between 2.3 - 3.7\,km, were found in 6.2\,[3.4 to 8.4]\,km in summer. Similarly, precipitable liquid clouds which has a median top height around 1.4 - 1.7\,km, reached at 2.2\,[2.0 to 2.6]\,km in summer. Alternatively, ice and mixed-phase clouds reached a maximum median height in fall of 9.5\,[8.3 to 10.4]\,km and 8.2\,[6.3 to 9.6]\,km, respectively. For the rest of period, their median top height stayed between 8.5 - 8.7 \,km and 6.3 - 6.7, respectively. Subsequently, liquid clouds presented larger top height variability in summer, similar to its cloud base height distribution. During this particular season, their median top height is 2.9 [1.8 to 4.9]\,km, roughly 1\,km higher than other seasons, which are varying from 1.4 - 1.8\,km. 
 
 \begin{figure}[htbp]
       \centering
@@ -292,9 +292,20 @@ Subsequently, middle panel of figure \ref{fig:cloud_macrophys} shows that ice cl
       \caption{....}
       \label{fig:cloud_macrophys}
 \end{figure}
+
+In general, cloud base and top height is higher in summer for almost all cloud types, except for ice and mixed-phase clouds, which occurred at higher levels in fall. In addition, despite seasonality would be observed in terms of median values, the interquartile range showed strong variability, especially for ice and mixed-phase clouds. Specifically, precipitable mixed-phase clouds exhibited heightened variability in cloud top height, notably less precise compared to their base height. This suggest a possible underestimation of cloud tops due to radar reflectivity attenuation by rain droplets. Same behaviour would be observed in precipitable liquid clouds, but they are normally thinner and almost do not occur under the analysed site, as can be seen in Figure \ref{fig:cloud_available}. 
+
+%In Figure \ref{fig:cloud_macrophys}, a comparison of cloud thickness ($\Delta$Z), base, and top for each cloud type by season is presented. This figure displays a boxplot for cloud thickness for each season within a density distribution contour. Consistent with previous findings, the top panel confirms that 
+%mixed-phase clouds exhibit the largest and most variable cloud thickness at our station, followed by ice clouds and then liquid clouds. Their median values are 2.0 (XXX) m, 1.2 (XXX) m, and 0.2 (XXX) m, respectively. However, it's noteworthy that the most likely values are consistently smaller than the median (as indicated in the top panel of Figure \ref{fig:cloud_macrophys}). This can be clearly seen for ice and mixed clouds, and is also observed for liquid clouds, although it might not be readily apparent in the graph due to the scale of the y-axis. On the other hand, no significant seasonal trend was observed for this variable, although it was clearly observed for cloud base and top.
+
+%In hot regimes (summer and fall), cloud base tends to reach higher levels as can be seen by the middle panel of Figure \ref{fig:cloud_macrophys}. Especially in summer, a prominent mode appears around 5\,km, even for liquid clouds that usually do not reach this level for the rest of the year. Indeed, most dramatic changes in the vertical distribution of the cloud base happened in summer, principally for liquid clouds. This clouds changed from sharp distribution at low levels to a spread one in summer, extending up to 5\,km as mentioned.
+%Still, in a general framework, cloud bases are typically higher for ice clouds, followed by mixed clouds and then liquid clouds. Also, except for summer, cloud base for mixed phase clouds presents the largest vertical variability, ice cloud bases are normally found above 6\,km, and liquid cloud bases stay below 2\,km. Consequently, the same qualitative behavior happened for cloud tops, once no significant changes in cloud thickness was observed before. Additionally, since liquid clouds are very thin, just a slight difference between cloud base and top distribution has been observed.
+
 % ADAPT
 
 \section{Clud properties evaluation}\label{sec:clod_prop_eval}
+
+\subsection{Liquid water content and liquid water path}
 
 Figure \ref{fig:LWC_liq} shows the monthly and seasonal mean vertical distribution of liquid water content (LWC) within liquid (top panel) and mixed-phase clouds (bottom panel). In liquid clouds, mean values can reach 0.1 g m $^{-3}$ until approximately 2.5 km above mean sea level (equivalent to 1.2 km in height above ground level), as expected (see figure \ref{fig:monthly_ice_liq_hydromet}). However, seasonal variations are indistinguishable due to the significant variability of this variable. It's worth noting that the shaded area in the seasonal profiles on the left panel represents the standard deviation divided by 10. Moreover, the monthly time evolution indicates that LWC is lower in July, during the summer, consistent with the observations of liquid water path (LWP) (refer to Figure \ref{fig:LWP_hist}). Additionally, during this month, elevated values in a yellowish tone are dispersed vertically up to 5 km. The vertical positioning of the yellowish tone corresponds to the most frequently observed cloud base height values depicted in the middle panel of Figure \ref{fig:cloud_macrophys}. 
 
@@ -338,6 +349,13 @@ Next, liquid hydrometeors partitioning can be reached trough LWP examination. Fi
       \label{fig:LWC_liq}
 \end{figure}
 
+\begin{figure}[htbp]
+      \centering
+      \includegraphics[width=.9\textwidth]{../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Pre_liquid}
+      \caption{....}
+      \label{fig:LWC_pre_liq}
+\end{figure}
+
 
 %\begin{figure}[htbp]
 %      \centering
@@ -351,6 +369,15 @@ Next, liquid hydrometeors partitioning can be reached trough LWP examination. Fi
       \caption{....}
       \label{fig:LWC_mixed}
 \end{figure}
+
+\begin{figure}[htbp]
+      \centering
+      \includegraphics[width=.9\textwidth]{../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Pre_mixed_phase}
+      \caption{....}
+      \label{fig:LWC_pre_mixed}
+\end{figure}
+
+\subsection{Ice water content and Ice water path}
 
 Regarding ice water content (IWC), almost the same monthly mean values were found for ice (Figure \ref{fig:IWC_ice})and mixed phase clouds (Figure \ref{fig:IWC_mixed}), in addition to the same mean vertical distribution by season. This outcome was unexpected given our previous demonstration that mixed-phase clouds exhibit higher values of ice water path (IWP) than ice clouds. Consequently, the monthly distribution of IWC appears more asymmetric than that of LWC, as this behavior is not observed for LWC. Consequently, the most probable value of IWC each month significantly differs from the average. Therefore, the monthly average proves to be an inadequate parameter for representing IWC. Moreover, a more accurate portrayal of IWC would entail sharper and higher distributions, as depicted in Figure \ref{fig:cloud_macrophys}, which cannot be achieved through averaging. Conversely, seasonal patterns can be discerned, with maximums around 0.14 and 0.19 g m $^{-3}$ for ice clouds in cold and warm regimes, respectively. For mixed-phase clouds, these values are 0.12 and 0.19 g m $^{-3}$. 
 
@@ -372,6 +399,14 @@ Same analises was done for ice hydrometeors, which can be partitioned between ic
       \label{fig:IWC_mixed}
 \end{figure}
 
+\begin{figure}[htbp]
+      \centering
+      \includegraphics[width=.9\textwidth]{../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Pre_mixed_phase}
+      \caption{....}
+      \label{fig:IWC_pre_mixed}
+\end{figure}
+
+\subsection{Droplet effective radius}
 
 To compare cloud microphysics between ice and mixed-phase clouds, droplet effective radius of Figure \ref{fig:DER_liq} and \ref{fig:DER_mixed} are presented using the same color scale. Left panel of this figure shows the seasonal vertical distribution of the median droplet effective radius where shaded area represents the 25 and 75 percentiles. Right top panel shows the monthly vertical distribution of the median, and bottom panel shows the median (solid line) and the distribution of R$_{eff}$ by month. Additionally, this panel has second y axis with the number of profiles used each month to compute the medians on the above panel.
 In the case of liquid clouds, the left panel of Figure \ref{fig:DER_liq}.a indicates no significant seasonal differences, with values ranging from 5 to 8 μm. Monthly distribution of R$_{eff}$ (right-top panel of figure \ref{fig:DER_liq}) show higher values in light blue tones, approximately around 10 μm between 6 and 8 km altitude, and only a few layers displaying green tones, indicating particles with a size of 15 μm. Additionally, monthly examination of violin plots of R$_{eff}$ in the bottom panel demonstrates variations in medians and modes between 4.5 and 6.5 μm, corresponding to the dark blue tones below 4 km altitude in the above panel, consistent with the presence of large values of LWC in Figure \ref{fig:LWC_liq}
@@ -383,6 +418,12 @@ In the case of liquid clouds, the left panel of Figure \ref{fig:DER_liq}.a indic
       \label{fig:DER_liq}
 \end{figure}
 
+\begin{figure}[htbp]
+      \centering
+      \includegraphics[width=.9\textwidth]{../phd_clouds/figures/grouped_by_month_evolution_for_der_Pre_liquid}
+      \caption{....}
+      \label{fig:DER_pre_liq}
+\end{figure}
 
 Concerning mixed-phase clouds, Figure \ref{fig:DER_mixed} presents a clearer monthly distribution. Although the left panel indicates higher values for liquid droplet radius compared to liquid clouds, no significant seasonal differences were observed. However, it is evident that higher values are encountered between 4 and 6\,km of altitude, and them could vary between 13 and 30 μm with peaks during summer (as observed in the top-right panel). Additionally, the violin plots (bottom-right panel) illustrate a higher probability of reaching higher values of R$_{eff}$ during summer. Nevertheless, it's noteworthy that particularly for colder periods (December to May), the median and mode of R$_{eff}$ are approximately 12 and 5 μm, respectively. These values correspond to a range of colors from dark blue to light green in the above panel, predominantly found below 4 km and between 6.5-10 km altitude.
 
@@ -392,6 +433,15 @@ Concerning mixed-phase clouds, Figure \ref{fig:DER_mixed} presents a clearer mon
       \caption{....}
       \label{fig:DER_mixed}
 \end{figure}
+
+\begin{figure}[htbp]
+      \centering
+      \includegraphics[width=.9\textwidth]{../phd_clouds/figures/grouped_by_month_evolution_for_der_Pre_mixed_phase}
+      \caption{....}
+      \label{fig:DER_pre_mixed}
+\end{figure}
+
+\subsection{Ice effective radius}
 
 Repeatedly, the left panel of Figure \ref{fig:IER_ice} shows no significant seasonal variations in the median ice effective radius for ice clouds. However, higher values of effective radius were notably observed during summer (June-August), reaching up to 65 μm (as shown in the top-right panel). This aligns with the distribution of summer R$_{eff}$ depicted in the bottom-right panel, where median values exceed 40 μm in July and August. Additionally, these months exhibit sharper distributions of R$_{eff}$. Overall, the R$_{eff}$ fluctuates around 35 μm for other seasons, with modes around 20 and 30 μm. This corresponds to colors ranging from light blue to green tones in the above panel, indicating that the most common R${eff}$ for ice clouds is typically situated between 8 and 12 km altitude (above mean sea level), likely associated with cirrus clouds. Conversely, while higher R$_{eff}$ values may be found in low to middle levels, their probability of occurrence is minimal, as evidenced by the small tails of each distribution extending beyond 60 μm. 
 
@@ -409,6 +459,13 @@ On the other hand, the median vertical distribution of R$_{eff}$ for mixed phase
       \includegraphics[width=.9\textwidth]{../phd_clouds/figures/grouped_by_month_evolution_for_ier_Mixed_phase}
       \caption{....}
       \label{fig:IER_mixed}
+\end{figure}
+
+\begin{figure}[htbp]
+      \centering
+      \includegraphics[width=.9\textwidth]{../phd_clouds/figures/grouped_by_month_evolution_for_ier_Pre_mixed_phase}
+      \caption{....}
+      \label{fig:IER_pre_mixed}
 \end{figure}
 
 
