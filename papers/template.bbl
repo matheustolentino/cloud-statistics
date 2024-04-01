@@ -1,4 +1,4 @@
-\begin{thebibliography}{4}
+\begin{thebibliography}{5}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \providecommand{\urlprefix}{}
@@ -6,6 +6,12 @@
   \providecommand{\doi}[1]{https://doi.org/\discretionary{}{}{}#1}\else
   \providecommand{\doi}{https://doi.org/\discretionary{}{}{}\begingroup
   \urlstyle{rm}\Url}\fi
+
+\bibitem[{Bühl et~al.(2016)Bühl, Seifert, Myagkov, and Ansmann}]{Buhl2016}
+Bühl, J., Seifert, P., Myagkov, A., and Ansmann, A.: Measuring ice-and
+  liquid-water properties in mixed-phase cloud layers at the Leipzig Cloudnet
+  station, Atmospheric Chemistry and Physics, 16, 10\,609--10\,620,
+  \doi{10.5194/acp-16-10609-2016}, 2016.
 
 \bibitem[{Hogan and O'connor(2004)}]{Hogan2004}
 Hogan, R.~J. and O'connor, E.~J.: Facilitating cloud radar and lidar

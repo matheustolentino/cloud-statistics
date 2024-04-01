@@ -1444,8 +1444,8 @@ hydrometeor_analysis = False
 cloud_properties_analysis = True
 plot_data_availability = False
 plot_cloud_data_availability = False
-plot_lwc_iwc_der_ier = False
-plot_integrated_water_and_ice_path=True
+plot_lwc_iwc_der_ier = True
+plot_integrated_water_and_ice_path=False
 
 cloud_macrophysics_analysis = False
 radar_variables_analysis = False
@@ -2162,8 +2162,8 @@ if cloud_properties_analysis:
     if plot_lwc_iwc_der_ier:
         # ylim_violin = [0, 70 ]
         # dreff =
-        micro_var = 'lwc'
-        integ_var = 'LWP'
+        micro_var = 'iwc'
+        integ_var = 'IWP'
         data              = microphysics_sigle[micro_var].compute() * 1000
         data1             = integrated_var_single_layer[integ_var].compute()
         clouds_to_analyse = ['Ice', 'Liquid', 'Mixed_phase', 'Pre_liquid', 'Pre_mixed_phase']
@@ -2211,6 +2211,7 @@ if cloud_properties_analysis:
 
             mean_by_season = microphysics_var_name.dropna(dim='time', how = "all" ).groupby('season').mean()
             std_by_season = microphysics_var_name.dropna(dim='time', how = "all" ).groupby('season').std()/10
+            mean_std_by_season = std_by_season/np.sqrt(microphysics_var_name.dropna(dim='time', how = "all" ).groupby('season').count(dim='time'))
 
             median_by_season = microphysics_var_name.dropna(dim='time', how = "all" ).groupby('season').quantile(dim='time', q=.5, skipna=True)
             if np.sum(median_by_season) == 0:
@@ -2222,7 +2223,7 @@ if cloud_properties_analysis:
 
             for season in mean_by_season.season.values:
                 mean_profile = mean_by_season.sel(season=season)
-                std_profile = std_by_season.sel(season=season)
+                std_profile = mean_std_by_season.sel(season=season)
                 # qinf_season = inf_quantile.sel(season=season)
                 # qsup_season = sup_quantile.sel(season=season)
 
@@ -2303,7 +2304,7 @@ if cloud_properties_analysis:
             # # ax3.set_yscale('log')
             fig.savefig(f"{PATH_FIG}grouped_by_month_evolution_for_{micro_var}_{var_name}.png", dpi=300, bbox_inches='tight')
             plt.show()
-        # set_trace()
+        set_trace()
 
         micro_var = 'ier'
         data = microphysics_sigle[micro_var].compute() * 1e6
