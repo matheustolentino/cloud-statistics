@@ -1021,7 +1021,6 @@ def process_cloud_data_parallel(args):
     # if not np.array_equal(height, categorize['height'][:]-categorize['altitude'][:]):
     #     print(f"Warning: radar and categorize files with different height bins - {date} : {radar.range.size} vs {height.size}")
     # if not np.array_equal(radar.range.values, height):
-    
     # ------------------------------------------------------------------------------------------------
     # reading some cloudnet products
     # ------------------------------------------------------------------------------------------------
@@ -1059,16 +1058,22 @@ def process_cloud_data_parallel(args):
     if np.any(mask_outliers_lwp):
         categorize['lwp'][mask_outliers_lwp] = np.nan
     # ------------------------------------------------------------------------------------------------
+    if cloudnet_iwc.iwc.time.values.size != time.size:
+        print(f"Warning: lwc, iwc, der and ier  time dimension and categorize time have different sizes - {date}")
+        print(f"lwc: {cloudnet_iwc.iwc.time.values.size} vs time: {time.size}")
+        print(f"Maybe cloudnet is filling missing values with nan, however, it is not done for categorize (input for lwc, iwc...)")
+        # removel all columns when all values are nan
+
     ds_integrated_variables = xr.Dataset(
                     {'LWP': (['time'], categorize['lwp'][:]),
-                     'IWP': (['time'], np.trapz(cloudnet_iwc.iwc, height, axis=1))},
+                     'IWP': (['time'], np.trapz(cloud_products.iwc.values, height, axis=1))},
                      coords={'time': time})
-    
     cloud_physical_properties = xr.merge([cloud_products, ds_integrated_variables], join='exact')
+    # set_trace()
     # print(f"LWP source: {categorize['lwp'].source}\n")
     # ------------------------------------------------------------------------------------------------
     xr_radar_variables = xr.merge([xr.DataArray(categorize['Z'][:], coords={'time': time, 'range': height}, name='Z'),
-                           xr.DataArray(categorize['v'][:], coords={'time': time, 'range': height}, name='v')], compat='no_conflicts', join='exact')
+                                   xr.DataArray(categorize['v'][:], coords={'time': time, 'range': height}, name='v')], compat='no_conflicts', join='exact')
     # ------------------------------------------------------------------------------------------------
     if process_for_specific_analysis:
         # ------------------------------------------------------------------------------------------------
@@ -2028,8 +2033,8 @@ database_intersection  = common_prefix_of_filenames(paths, extension)
 start_date = min(database_intersection) # first date of database
 end_date   = max(database_intersection) # last date of database
 
-# start_date = datetime.datetime(2022, 4, 22)
-# end_date   = datetime.datetime(2022, 4, 22, 23, 59, 59)
+# start_date = datetime.datetime(2020, 4, 3)
+# end_date   = datetime.datetime(2020, 4, 3, 23, 59, 59)
 
 # start_date = datetime.datetime(2018, 6, 1)
 # end_date   = datetime.datetime(2018, 11, 1)

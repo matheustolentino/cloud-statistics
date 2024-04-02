@@ -1448,6 +1448,7 @@ plot_lwc_iwc_der_ier = True
 plot_integrated_water_and_ice_path=False
 
 cloud_macrophysics_analysis = False
+
 radar_variables_analysis = False
 
 target_parent_folder = "number_of_layers"
@@ -1868,8 +1869,8 @@ if radar_variables_analysis:
     # # Pice of code for verification, uncomment if needed
     # #  -- analysis of radar data for one day
     # # -----------------------------------------------------------------------------------------------
-    # start_date = "2021-04-19 00:00:00"
-    # end_date = "2021-04-19 23:59:59"
+    # start_date = "2022-04-28 00:00:00"
+    # end_date = "2022-04-28 23:59:59"
     # sliced_variable = radar_data.sel(time=slice(start_date, end_date)).compute()
     # freq_str = "M"
 
@@ -2190,11 +2191,11 @@ if cloud_properties_analysis:
             # max_value = np.nanmax(mean_by_month)
 
             mesh = ax1.pcolormesh( mean_by_month.month.values,  mean_by_month.height_bins/1000,
-                        mean_by_month, shading='nearest', cmap='turbo', norm=mpl.colors.LogNorm(vmin=0.00001, vmax=1))
-            ax1.set_ylabel("Height [km] a.m.s.l.")
+                        mean_by_month, shading='nearest', cmap='turbo', norm=mpl.colors.LogNorm(vmin=0.001, vmax=1))
+            ax1.set_ylabel("Height (km) a.g.l.")
             ax1.set_xlabel("Time")
             ax1.set_title(f"{micro_var.upper()} for {var_name} Clouds")
-            ax1.set_ylim([.680, np.max(mean_by_month.height_bins/1000)])
+            ax1.set_ylim([.0, np.max(mean_by_month.height_bins/1000)])
             ax1.grid(True)
             ax1.xaxis.set_visible(False)
             ax1.set_xticks(np.arange(1, 13))
@@ -2231,9 +2232,9 @@ if cloud_properties_analysis:
                 # ax2.fill_betweenx(mean_profile.height_bins/1000, qinf_season, qsup_season, alpha=0.3)
                 ax2.fill_betweenx(mean_profile.height_bins/1000, mean_profile - std_profile, mean_profile + std_profile, alpha=0.3)
             ax2.set_xlabel(f"{micro_var.upper()}, g m" + r"$^{-3}$ ($\sigma$/10)")
-            ax2.set_ylabel("Height (km) a.m.s.l.")
+            ax2.set_ylabel("Height (km) a.g.l.")
             ax2.set_xlim([0, max_value + .1])
-            ax2.set_ylim([.680, np.max(mean_by_season.height_bins/1000)])
+            ax2.set_ylim([0, np.max(mean_by_season.height_bins/1000)])
             ax2.grid(True)
             ax2.legend()
             # -----------------------------------------------------------------------------------------------
