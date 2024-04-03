@@ -1923,9 +1923,17 @@ if radar_variables_analysis:
     # -----------------------------------------------------------------------------------------------
     # Histogram settings
     # -----------------------------------------------------------------------------------------------
-    x_edges   = np.linspace(-70, 20, 100)
-    y_edges   = np.linspace(0, 14, 50)
     clouds_to_analyse = ['Liquid', 'Mixed_phase', 'Ice']
+    # clouds_to_analyse = ['Pre_liquid', 'Pre_mixed_phase']
+
+    var = 'Z'
+    if var == 'Z':
+        x_edges   = np.linspace(-70, 20, 100)
+        y_edges   = np.linspace(0, 14, 50)
+    # -----------------------------------------------------------------------------------------------
+    if var == 'v':
+        x_edges   = np.linspace(-5, 5, 100)
+        y_edges   = np.linspace(0, 14, 50)
     # -----------------------------------------------------------------------------------------------
     # time interval to reduce the amount of data and time to plot
     # -----------------------------------------------------------------------------------------------
@@ -1934,8 +1942,8 @@ if radar_variables_analysis:
     end_date   = "2021-04-30 23:59:59"
     # -----------------------------------------------------------------------------------------------
     nplots = len(clouds_to_analyse) + 1
-    fig = plt.figure(figsize=(16, 7))
-    gs = fig.add_gridspec(1, nplots, width_ratios=[nplots/2, nplots/2, nplots/2, .15], wspace=0.1)
+    fig = plt.figure(figsize=(13, 6))
+    gs = fig.add_gridspec(1, nplots, width_ratios=[1]*(nplots-1)+[.05], wspace=0.08, hspace=0.3)
     ax = [None] * (len(clouds_to_analyse) + 1)
     max_hist = []
     for i, var_name in enumerate(clouds_to_analyse):
@@ -1948,8 +1956,8 @@ if radar_variables_analysis:
             radar_var_name = radar_var_name.sel(time=slice(start_date, end_date)).compute()
         # -----------------------------------------------------------------------------------------------
 
-        x_flat = radar_var_name['Z'].values.T.ravel()
-        y_flat = np.tile(radar_var_name['Z'].range_bins.values/1000, radar_var_name['Z'].time.size)
+        x_flat = radar_var_name[var].values.T.ravel()
+        y_flat = np.tile(radar_var_name[var].range_bins.values/1000, radar_var_name[var].time.size)
 
         # Get mask for NaN values in x
         nan_mask = np.isnan(x_flat)
@@ -1968,7 +1976,8 @@ if radar_variables_analysis:
 
         ax[i]     = fig.add_subplot(gs[0, i])
         max_hist.append(np.nanmax(hist))
-        contour = ax[i].contourf(x_centers, y_centers, hist.T, levels=20, cmap='rainbow', vmax=np.max(max_hist)/5, extend='both')
+        contour = ax[i].contourf(x_centers, y_centers, hist.T, levels=20, cmap='turbo', extend='both')
+        # pmesh = ax[i].pcolormesh(x_centers, y_centers, hist.T, shading='nearest', cmap='turbo')
 
         if i != 0:
            ax[i].yaxis.set_visible(False)
@@ -1981,14 +1990,18 @@ if radar_variables_analysis:
             cbar.set_label('Density')
 
         # Set the x-axis label
-        ax[i].set_xlabel('Reflectivity [dBZ]')
+        if var == 'Z':
+            ax[i].set_xlabel('Reflectivity (dBZ)')
+        if var == 'v':
+            ax[i].set_xlabel(r'$\upsilon_{D}$ (m/s)')
         # Set the title for the subplot
         ax[i].set_title(f"{var_name} Clouds")
         # Set the y-axis label
         ax[i].set_ylabel('Height [km] a.m.s.l.')
         # Show the plot
-    fig.savefig(f"{PATH_FIG}clouds_without_rain_2d_histogram.png", dpi=300, bbox_inches='tight')
+    fig.savefig(f"{PATH_FIG}{var}_clouds_wo_rain_2d_histogram.png", dpi=300, bbox_inches='tight')
     plt.show()
+    set_trace()
 
 if cloud_properties_analysis:
     print(" Starting cloud properties analysis...")
@@ -2307,17 +2320,19 @@ if cloud_properties_analysis:
             plt.show()
         set_trace()
 
-        micro_var = 'ier'
+        micro_var = 'der'
         data = microphysics_sigle[micro_var].compute() * 1e6
         # -----------------------------------------------------------------------------------------------
-        # norm_color = [0, 20] # for der
-        # ylim_violin = [0, 31 ] # for der
+        norm_color = [0, 15] # for der
+        ylim_violin = np.array([0, 31 ]) # for der
+        dreff = 10
         # -----------------------------------------------------------------------------------------------
-        norm_color = [0, 70] # for ier
-        ylim_violin = [0, 70 ] # for ier
-        dreff = 20
+        # norm_color = [0, 70] # for ier
+        # ylim_violin = [0, 70 ] # for ier
+        # dreff = 20
         # -----------------------------------------------------------------------------------------------
-        clouds_to_analyse = ['Mixed_phase', 'Ice']
+        # clouds_to_analyse = ['Mixed_phase', 'Ice', 'Pre_mixed_phase']
+        clouds_to_analyse = ['Liquid', 'Mixed_phase', 'Ice', 'Pre_liquid', 'Pre_mixed_phase']
         for var_name in clouds_to_analyse:
             print(f"Variable: {var_name}")
             cond                  = clouds_single_layer[var_name].compute() == 1
@@ -2336,13 +2351,16 @@ if cloud_properties_analysis:
 
             max_value = np.nanmax(monthly_data)
             cbar_max =  max_value
-
-            mesh = ax1.pcolormesh(monthly_data.month.values, monthly_data.height_bins/1000,
-                        monthly_data, shading='nearest', cmap='nipy_spectral', vmin=norm_color[0], vmax=norm_color[1])
+            if var_name == 'Liquid':
+                mesh = ax1.pcolormesh(monthly_data.month.values, monthly_data.height_bins/1000,
+                            monthly_data, shading='nearest', cmap='jet', vmin=norm_color[0], vmax=norm_color[1])
+            else:
+                mesh = ax1.pcolormesh(monthly_data.month.values, monthly_data.height_bins/1000,
+                        monthly_data, shading='nearest', cmap='jet')
             ax1.set_ylabel("Height [km] a.m.s.l.")
             ax1.set_xlabel("Time")
             ax1.set_title(f"Droplet effective radius for {var_name} clouds")
-            ax1.set_ylim([.7, 12])
+            ax1.set_ylim([.0, 13])
             ax1.grid(True)
             ax1.xaxis.set_visible(False)
             ax1.set_xticks(np.arange(1, 13))
@@ -2377,7 +2395,7 @@ if cloud_properties_analysis:
             ax2.set_ylabel("Height (km) a.m.s.l.")
             ax2.set_xlim([np.nanmin(mean_profile_by_season), np.nanmax(mean_profile_by_season)])
             ax2.set_xticks(np.arange(0, np.max(mean_profile_by_season), dreff))
-            ax2.set_ylim([.7, 13])
+            ax2.set_ylim([.0, 13])
             ax2.grid(True)
             ax2.legend()
             # -----------------------------------------------------------------------------------------------
@@ -2396,8 +2414,13 @@ if cloud_properties_analysis:
             ax3.set_xlabel("Months")
             ax3.set_xticks(np.arange(1, 13))
             ax3.set_xticklabels(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
-            ax3.set_yticks(np.arange(0, np.max(microphysics_var_name), dreff))
-            ax3.set_ylim(ylim_violin)
+            # ax3.set_yticks(np.arange(0, np.max(microphysics_var_name), dreff))
+            if var_name == 'Liquid':
+                ax3.set_ylim([0, 30])
+            elif var_name == 'Pre_liquid':
+                ax3.set_ylim([0, 40])
+            else: 
+                ax3.set_ylim(ylim_violin*2)
             ax3.grid(True, axis='y')
 
             number_profiles = microphysics_var_name.month.groupby('month').count(dim='time')
@@ -2405,7 +2428,7 @@ if cloud_properties_analysis:
             ax3_right.plot(number_profiles.month, number_profiles.values, '--s', linewidth=1, color='blue')  # Set zorder to 0
             ax3_right.set_ylabel(r"N$_{Profiles}$", color="blue")
             ax3_right.tick_params(axis='y', colors='blue')
-            ax3_right.set_yticks(np.linspace(np.min(number_profiles), np.max(number_profiles), 5))
+            # ax3_right.set_yticks(np.linspace(np.min(number_profiles), np.max(number_profiles), 5))
 
             ax3.spines['top'].set_visible(False)  # Remove the top spine
             ax3_right.spines['top'].set_visible(False)  # Remove the top spine
@@ -2584,7 +2607,7 @@ if cloud_properties_analysis:
     # melted_cloud_thickness = pd.melt(df_cloud_thickness.drop(columns=['time', 'years', 'month', 'Pre_liquid', 'Pre_mixed_phase']), id_vars=['season'], var_name='cloud_type', value_name='cloud_thickness')
     # melted_cloud_base = pd.melt(df_height_cloud_base.drop(columns=['time', 'years', 'month', 'Pre_liquid', 'Pre_mixed_phase']), id_vars=['season'], var_name='cloud_type', value_name='cloud_base')
     # melted_cloud_top = pd.melt(df_height_cloud_top.drop(columns=['time', 'years', 'month', 'Pre_liquid', 'Pre_mixed_phase']), id_vars=['season'], var_name='cloud_type', value_name='cloud_top')
-    
+
     melted_cloud_thickness = pd.melt(df_cloud_thickness.drop(columns=['time', 'years', 'month']), id_vars=['season'], var_name='cloud_type', value_name='cloud_thickness')
     melted_cloud_base = pd.melt(df_height_cloud_base.drop(columns=['time', 'years', 'month']), id_vars=['season'], var_name='cloud_type', value_name='cloud_base')
     melted_cloud_top = pd.melt(df_height_cloud_top.drop(columns=['time', 'years', 'month']), id_vars=['season'], var_name='cloud_type', value_name='cloud_top')
