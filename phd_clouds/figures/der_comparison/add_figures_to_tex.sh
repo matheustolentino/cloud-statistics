@@ -20,9 +20,13 @@ fi
 if [ ! -f "$tex_file" ]; then
     echo "\documentclass{article}" > "$tex_file"
     echo "\usepackage[letterpaper,top=2cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}" >> "$tex_file"
+    echo "\title{Figures}" >> "$tex_file"
+    echo "\author{Matheus Tolentino da Silva}" >> "$tex_file"
     echo "\usepackage{amsmath}" >> "$tex_file"
     echo "\usepackage{graphicx}" >> "$tex_file"
     echo "\begin{document}" >> "$tex_file"
+    echo "\maketitle" >> "$tex_file"
+    echo "\newpage" >> "$tex_file"
     echo "Created $tex_file with article document type."
 fi
 
@@ -32,7 +36,7 @@ for figure_file in "$figures_path"/*.png; do
     filename=$(basename "$figure_file")
 
     # Add the figure to the tex file
-    echo "\begin{figure}[htbp]" >> "$tex_file"
+    echo "\begin{figure}[H]" >> "$tex_file"
     echo "\centering" >> "$tex_file"
     echo "    \includegraphics[width=1.\textwidth]{$filename}" >> "$tex_file"
     echo "\end{figure}" >> "$tex_file"

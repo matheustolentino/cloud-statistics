@@ -51,10 +51,11 @@ plt.rcParams['font.size'] = fontsize
 #-------------------------------------------------------------------------------------------------------
 # paths
 #-------------------------------------------------------------------------------------------------------
-PATH_CLASS        = '/media/matheustolen/Seagate Basic/cloudnet/classification/'
-PATH_CATE         = '/media/matheustolen/Seagate Basic/cloudnet/categorize/'
-PATH_RADAR        = '/media/matheustolen/Seagate Basic/cloudnet/radar/'
+PATH_CLASS        = '/mnt/cloudnet_external/cloudnet/classification/'
+PATH_CATE         = '/mnt/cloudnet_external/cloudnet/categorize/'
+PATH_RADAR        = '/mnt/cloudnet_external/cloudnet/radar/'
 PATH_FIG          = '../figures/'
+PATH_FIG_DER_COMPARISON = '../figures/der_comparison/'
 PATH_CLOUDNET_LWC = '../../../output_retrievals/'
 PATH_CLOUDNET_IWC = '../../../output_retrievals/'
 PATH_CLOUDNET_DER = '../../../output_retrievals/'
@@ -688,8 +689,8 @@ def plot_cloud_comparison(df_class, df_ze, cloud_filter, name_title, z_min, z_ma
         ax1.set_ylabel(r'Height [km]')
         ax1.set_title(f'{der_complete_time.long_name} - CLOUDNET CORRECTED (Reff scaled - Reff)')
         ax1.xaxis.set_tick_params(labelbottom=False)
-        if len(time_high_diff) > 2:
-            ax1.set_xlim(time_high_diff[0], time_high_diff[-1])
+        # if len(time_high_diff) > 2:
+        #     ax1.set_xlim(time_high_diff[0], time_high_diff[-1])
         # ax1.set_ylim(der_corrected_complete_time.height.values[zind_min]/1000, der_corrected_complete_time.height.values[zind_max]/1000)
         ax1.grid()
         cax1  = fig.add_subplot(gs[0, 1])
@@ -731,12 +732,12 @@ def plot_cloud_comparison(df_class, df_ze, cloud_filter, name_title, z_min, z_ma
         ax4 = fig.add_subplot(gs[2,0], sharex=ax1)
         ax4.plot(liquid_water_path_complete_time.time, liquid_water_path_complete_time.values*1e3, marker='o', color='blue', label='LWP')
         ax4.set_ylabel(r'LWP [g m$^{-2}$]')
-        ax4.set_xlabel(r'Time [UTC]')
+        ax4.set_xlabel(r'Time [UTC] - DATE: '+new_start_time.strftime("%d/%m/%Y"))
 
         ax4.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
         ax4.grid()
         plt.suptitle(f"{cloud_prop.source}")
-        fig.savefig(f"{PATH_FIG}{date_string}_{name_title}_diff_der_pcolor.png", dpi=300, bbox_inches='tight')
+        fig.savefig(f"{PATH_FIG_DER_COMPARISON}{date_string}_{name_title}_diff_der_pcolor.png", dpi=300, bbox_inches='tight')
         plt.show()
 
         #Now, get all values of liquid radios and plot a PDF
@@ -775,10 +776,10 @@ def plot_cloud_comparison(df_class, df_ze, cloud_filter, name_title, z_min, z_ma
         axs.set_ylabel('Counts')
         axs.set_title(name_title +' Effective Radius Distribution')
         axs.legend()
-        fig.savefig(f"{PATH_FIG}{date_string}_{name_title}_der_comparison_hist.png", dpi=300, bbox_inches='tight')
+        fig.savefig(f"{PATH_FIG_DER_COMPARISON}{date_string}_{name_title}_der_comparison_hist.png", dpi=300, bbox_inches='tight')
         plt.show()
-        plt.close('all')
         # set_trace()
+        plt.close('all')
 
 def plot_variable_inside_cloud(df_class, ds_ze, cloud_filter, name_title, color_names):
     
@@ -1271,25 +1272,22 @@ def process_cloud_data(date: datetime.datetime,
             # ref_mh.replace(0, np.nan, inplace=True)
             cloud_physical_properties['num_knist_mh']  = xr.DataArray(num_mh.values[:,0], coords={'time': cloud_physical_properties['time'].values}, dims=['time'])
             cloud_physical_properties['reff_kist_mh']  = xr.DataArray(ref_mh.values, coords=cloud_physical_properties.coords, dims=cloud_physical_properties.dims)
-            # getting data for same pixels as cloudnet products
-            # mask_for_data = cloud_physical_properties['der'].isnull()
-            # cloud_physical_properties['reff_kist_mh'] = cloud_physical_properties['reff_kist_mh'].where(mask_for_data)
-            # set_trace()
-            # plot_cloud_comparison(df_classification,
-            #                         df_reflectivity, 
-            #                         classification_filter, 
-            #                         cloud, .1, 5., 
-            #                         CLASSIFICATION_TICK_LABELS, 
-            #                         cloud_type= CLOUD_TYPES[cloud],
-            #                         targ_between_cloud= TARG_BET_CLOUD[cloud],
-            #                         integrated_variables= cloud_physical_properties, 
-            #                         cloud_prop=cloud_physical_properties,
-            #                         plot_cloud_prop=True)
-            plot_variable_inside_cloud(df_classification, 
-                                      xr_radar_variables, 
-                                      classification_filter, 
-                                      cloud, 
-                                      CLASSIFICATION_TICK_LABELS)
+            # ------------------------------------------------------------------------------------------------
+            plot_cloud_comparison(df_classification,
+                                    df_reflectivity, 
+                                    classification_filter, 
+                                    cloud, .1, 5., 
+                                    CLASSIFICATION_TICK_LABELS, 
+                                    cloud_type= CLOUD_TYPES[cloud],
+                                    targ_between_cloud= TARG_BET_CLOUD[cloud],
+                                    integrated_variables= cloud_physical_properties, 
+                                    cloud_prop=cloud_physical_properties,
+                                    plot_cloud_prop=True)
+            # plot_variable_inside_cloud(df_classification, 
+            #                           xr_radar_variables, 
+            #                           classification_filter, 
+            #                           cloud, 
+            #                           CLASSIFICATION_TICK_LABELS)
     #------------------------------------------------------------------------------------------------
     # Analisis hydrometeors 
     #------------------------------------------------------------------------------------------------ 
@@ -2006,9 +2004,9 @@ def plot_chirp_intervals(intervals_dic: Dict[Any, Any], height_dic: Dict[Any, An
 check_files_without_ldr = False
 plot_chirp_time_series  = False
 process_database        = True
-save_cloudnet_products  = True
+save_cloudnet_products  = False
 
-process_for_specific_analysis = False
+process_for_specific_analysis = True
 #-------------------------------------------------------------------------------------------------------
 # Check the size day folder withot LDR for nephele in NAS
 #-------------------------------------------------------------------------------------------------------
@@ -2033,8 +2031,8 @@ database_intersection  = common_prefix_of_filenames(paths, extension)
 start_date = min(database_intersection) # first date of database
 end_date   = max(database_intersection) # last date of database
 
-# start_date = datetime.datetime(2020, 4, 3)
-# end_date   = datetime.datetime(2020, 4, 3, 23, 59, 59)
+start_date = datetime.datetime(2023, 11, 30)
+end_date   = datetime.datetime(2023, 11, 30, 23, 59, 59)
 
 # start_date = datetime.datetime(2018, 6, 1)
 # end_date   = datetime.datetime(2018, 11, 1)
@@ -2077,26 +2075,26 @@ if process_database:
             #                            PATH_CLOUDNET_IWC, 
             #                            PATH_CLOUDNET_DER)
             #------------------------------------------------------------------------------------------------
-            processing_args.append((height, nchirp, date, key_res))
-            # process_cloud_data_parallel((height, nchirp, date, key_res))
+            # processing_args.append((height, nchirp, date, key_res))
+            process_cloud_data_parallel((height, nchirp, date, key_res))
 
     # end_time = time_module.time()
-    #------------------------------------------------------------------------------------------------
-    # Parallel execution using multiprocessing.Pool
-    # ------------------------------------------------------------------------------------------------
-    num_processes = 4  # You can adjust this as needed
-    # Start the timer for parallel execution
-    print("Starting parallel execution...")
-    start_time = time_module.time()
-    # Parallel execution using multiprocessing.Pool
-    with multiprocessing.Pool(processes=num_processes) as pool:
-        pool.map(process_cloud_data_parallel, processing_args)
-    end_time = time_module.time()
-    print("Parallel execution finished.")
-    # ------------------------------------------------------------------------------------------------
-    # Calculate and print the execution time
-    execution_time = (end_time - start_time) / 60
-    print(f"Execution time: {execution_time:.2f} minutes")
+    # #------------------------------------------------------------------------------------------------
+    # # Parallel execution using multiprocessing.Pool
+    # # ------------------------------------------------------------------------------------------------
+    # num_processes = 4  # You can adjust this as needed
+    # # Start the timer for parallel execution
+    # print("Starting parallel execution...")
+    # start_time = time_module.time()
+    # # Parallel execution using multiprocessing.Pool
+    # with multiprocessing.Pool(processes=num_processes) as pool:
+    #     pool.map(process_cloud_data_parallel, processing_args)
+    # end_time = time_module.time()
+    # print("Parallel execution finished.")
+    # # ------------------------------------------------------------------------------------------------
+    # # Calculate and print the execution time
+    # execution_time = (end_time - start_time) / 60
+    # print(f"Execution time: {execution_time:.2f} minutes")
 
 # if __name__ == "__main__":
 #     main()

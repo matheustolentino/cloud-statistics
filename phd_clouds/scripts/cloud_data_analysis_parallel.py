@@ -1441,15 +1441,15 @@ def calculate_time_remove(ds_available, ds_reference_complete, freq_rm: str = "M
 
 hydrometeor_analysis = False
 
-cloud_properties_analysis = True
+cloud_properties_analysis = False
 plot_data_availability = False
-plot_cloud_data_availability = False
-plot_lwc_iwc_der_ier = True
+plot_cloud_data_availability = True
+plot_lwc_iwc_der_ier = False
 plot_integrated_water_and_ice_path=False
 
 cloud_macrophysics_analysis = False
 
-radar_variables_analysis = False
+radar_variables_analysis = True
 
 target_parent_folder = "number_of_layers"
 file_extension = '.nc'
@@ -1926,8 +1926,8 @@ if radar_variables_analysis:
     clouds_to_analyse = ['Liquid', 'Mixed_phase', 'Ice']
     # clouds_to_analyse = ['Pre_liquid', 'Pre_mixed_phase']
 
-    var = 'Z'
-    if var == 'Z':
+    var = 'v'
+    if var == 'v':
         x_edges   = np.linspace(-70, 20, 100)
         y_edges   = np.linspace(0, 14, 50)
     # -----------------------------------------------------------------------------------------------
@@ -2172,10 +2172,11 @@ if cloud_properties_analysis:
         # add name to months
         fig2.savefig(f"{PATH_FIG}cloud_single_layer_frequency_by_month.png", dpi=300, bbox_inches='tight')
         plt.show()
-
+    set_trace()
     if plot_lwc_iwc_der_ier:
         # ylim_violin = [0, 70 ]
         # dreff =
+        # set_trace()
         micro_var = 'iwc'
         integ_var = 'IWP'
         data              = microphysics_sigle[micro_var].compute() * 1000
@@ -2328,7 +2329,7 @@ if cloud_properties_analysis:
         dreff = 10
         # -----------------------------------------------------------------------------------------------
         # norm_color = [0, 70] # for ier
-        # ylim_violin = [0, 70 ] # for ier
+        # ylim_violin = np.array([0, 70 ]) # for ier
         # dreff = 20
         # -----------------------------------------------------------------------------------------------
         # clouds_to_analyse = ['Mixed_phase', 'Ice', 'Pre_mixed_phase']
@@ -2357,10 +2358,10 @@ if cloud_properties_analysis:
             else:
                 mesh = ax1.pcolormesh(monthly_data.month.values, monthly_data.height_bins/1000,
                         monthly_data, shading='nearest', cmap='jet')
-            ax1.set_ylabel("Height [km] a.m.s.l.")
+            ax1.set_ylabel("Height [km] a.g.l.")
             ax1.set_xlabel("Time")
             ax1.set_title(f"Droplet effective radius for {var_name} clouds")
-            ax1.set_ylim([.0, 13])
+            ax1.set_ylim([.0, 15])
             ax1.grid(True)
             ax1.xaxis.set_visible(False)
             ax1.set_xticks(np.arange(1, 13))
@@ -2392,10 +2393,10 @@ if cloud_properties_analysis:
                 # ax2.fill_betweenx(mean_profile.height_bins/1000, mean_profile - std_profile, mean_profile + std_profile, alpha=0.3)
                 ax2.fill_betweenx(mean_profile.height_bins/1000, qinf_season, qsup_season, alpha=0.3)
             ax2.set_xlabel(r"$\tilde{R_{eff}}$ ($\mu$m)")
-            ax2.set_ylabel("Height (km) a.m.s.l.")
+            ax2.set_ylabel("Height (km) a.g.l.")
             ax2.set_xlim([np.nanmin(mean_profile_by_season), np.nanmax(mean_profile_by_season)])
             ax2.set_xticks(np.arange(0, np.max(mean_profile_by_season), dreff))
-            ax2.set_ylim([.0, 13])
+            ax2.set_ylim([.0, 15])
             ax2.grid(True)
             ax2.legend()
             # -----------------------------------------------------------------------------------------------
@@ -2636,7 +2637,8 @@ if cloud_properties_analysis:
     percentile75_values_cloud_thickness = melted_cloud_thickness.groupby(['season', 'cloud_type'])['cloud_thickness'].quantile(0.75).reset_index()
     df_cloud_thickness_stats = pd.merge(median_values_cloud_thickness, percentile25_values_cloud_thickness, on=['season', 'cloud_type'], suffixes=('_median', '_25_percentile'))
     df_cloud_thickness_stats = pd.merge(df_cloud_thickness_stats, percentile75_values_cloud_thickness, on=['season', 'cloud_type'], suffixes=('', '_75_percentile'))
-
+    df_cloud_thickness_stats.to_csv('/home/matheustolen/Documentos/matheus_doctorado/processed_data/files_to_analyse/df_cloud_thickness.txt', sep='\t', index=False, decimal=',')
+    
     ax2 = fig.add_subplot(gs[1, 0], sharex=ax1)
     sns.violinplot(x='season', y='cloud_base', hue='cloud_type', quantiles=[0.25, 0.5, 0.75], data=melted_cloud_base, ax=ax2, inner_kws=dict(box_width=7, whis_width=.2), scale='width')
     # ax2.set_ylim([-1, 10])
@@ -2653,6 +2655,7 @@ if cloud_properties_analysis:
     percentile75_values_cloud_base = melted_cloud_base.groupby(['season', 'cloud_type'])['cloud_base'].quantile(0.75).reset_index()
     df_cloud_base_stats = pd.merge(median_values_cloud_base, percentile25_values_cloud_base, on=['season', 'cloud_type'], suffixes=('_median', '_25_percentile'))
     df_cloud_base_stats = pd.merge(df_cloud_base_stats, percentile75_values_cloud_base, on=['season', 'cloud_type'], suffixes=('', '_75_percentile'))
+    df_cloud_base_stats.to_csv('/home/matheustolen/Documentos/matheus_doctorado/processed_data/files_to_analyse/df_cloud_base.txt', sep='\t', index=False, decimal=',')
 
     ax3 = fig.add_subplot(gs[2, 0], sharex=ax1, sharey=ax2)
     sns.violinplot(x='season', y='cloud_top', hue='cloud_type', quantiles=[0.25, 0.5, 0.75], data=melted_cloud_top, ax=ax3, inner_kws=dict(box_width=7, whis_width=.2), scale='width')
@@ -2669,6 +2672,8 @@ if cloud_properties_analysis:
     percentile75_values_cloud_top = melted_cloud_top.groupby(['season', 'cloud_type'])['cloud_top'].quantile(0.75).reset_index()
     df_cloud_top_stats = pd.merge(median_values_cloud_top, percentile25_values_cloud_top, on=['season', 'cloud_type'], suffixes=('_median', '_25_percentile'))
     df_cloud_top_stats = pd.merge(df_cloud_top_stats, percentile75_values_cloud_top, on=['season', 'cloud_type'], suffixes=('', '_75_percentile'))
+    df_cloud_top_stats.to_csv('/home/matheustolen/Documentos/matheus_doctorado/processed_data/files_to_analyse/df_cloud_top.txt', sep='\t', index=False, decimal=',')
+
 
     # ax4 = fig.add_subplot(gs[3, 0], sharex=ax1)
     # sns.lineplot(x='season', y='N_Profiles', hue='cloud_type', data=melted_n_profiles, ax=ax4, marker='o',style='cloud_type', markersize=10)
