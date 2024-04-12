@@ -1441,15 +1441,16 @@ def calculate_time_remove(ds_available, ds_reference_complete, freq_rm: str = "M
 
 hydrometeor_analysis = False
 
-cloud_properties_analysis = False
+cloud_properties_analysis = True
 plot_data_availability = False
-plot_cloud_data_availability = True
+plot_cloud_data_availability = False
+plot_daily_cloud_availability = True
 plot_lwc_iwc_der_ier = False
 plot_integrated_water_and_ice_path=False
 
 cloud_macrophysics_analysis = False
 
-radar_variables_analysis = True
+radar_variables_analysis = False
 
 target_parent_folder = "number_of_layers"
 file_extension = '.nc'
@@ -1923,11 +1924,11 @@ if radar_variables_analysis:
     # -----------------------------------------------------------------------------------------------
     # Histogram settings
     # -----------------------------------------------------------------------------------------------
-    clouds_to_analyse = ['Liquid', 'Mixed_phase', 'Ice']
-    # clouds_to_analyse = ['Pre_liquid', 'Pre_mixed_phase']
+    # clouds_to_analyse = ['Liquid', 'Mixed_phase', 'Ice']
+    clouds_to_analyse = ['Pre_liquid', 'Pre_mixed_phase']
 
     var = 'v'
-    if var == 'v':
+    if var == 'Z':
         x_edges   = np.linspace(-70, 20, 100)
         y_edges   = np.linspace(0, 14, 50)
     # -----------------------------------------------------------------------------------------------
@@ -1999,7 +2000,7 @@ if radar_variables_analysis:
         # Set the y-axis label
         ax[i].set_ylabel('Height [km] a.m.s.l.')
         # Show the plot
-    fig.savefig(f"{PATH_FIG}{var}_clouds_wo_rain_2d_histogram.png", dpi=300, bbox_inches='tight')
+    fig.savefig(f"{PATH_FIG}{var}_clouds_w_rain_2d_histogram.png", dpi=300, bbox_inches='tight')
     plt.show()
     set_trace()
 
@@ -2153,8 +2154,8 @@ if cloud_properties_analysis:
         gs2  = fig2.add_gridspec(1, 1)
         ax2 = fig2.add_subplot(gs2[0, 0])
 
-        clouds_to_analyse  = ['Liquid', 'Mixed_phase', 'Ice', 'Pre_liquid', 'Pre_mixed_phase']
-        cloud_single_layer_freq     = mask_cloud_availability[clouds_to_analyse].groupby('time.month').mean()
+        clouds_to_analyse       = ['Liquid', 'Mixed_phase', 'Ice', 'Pre_liquid', 'Pre_mixed_phase']
+        cloud_single_layer_freq = mask_cloud_availability[clouds_to_analyse].groupby('time.month').mean()
         cloud_single_layer_variance = cloud_single_layer_freq * (1 - cloud_single_layer_freq)
         for i, var_name in enumerate(clouds_to_analyse):
             ax2.plot(cloud_single_layer_freq['month'], cloud_single_layer_freq[var_name]*100,
@@ -2172,29 +2173,127 @@ if cloud_properties_analysis:
         # add name to months
         fig2.savefig(f"{PATH_FIG}cloud_single_layer_frequency_by_month.png", dpi=300, bbox_inches='tight')
         plt.show()
-    set_trace()
+
+    if plot_daily_cloud_availability:
+        clouds_to_analyse       = ['Liquid', 'Mixed_phase', 'Ice', 'Pre_liquid', 'Pre_mixed_phase']
+        freq_time = 'M'
+        delta_time = 1
+        cloud_single_layer_freq     = mask_cloud_availability[clouds_to_analyse].resample(time=freq_time).mean()
+        years = np.unique(mask_cloud_availability['time.year'])
+
+        fig = plt.figure(figsize=(30, 25))  # Increase the size of the plot for better visibility
+        gs  = fig.add_gridspec(len(years), 1, hspace=0.05)
+
+        for i, var_name in enumerate(clouds_to_analyse):
+            axs  = fig.add_subplot(gs[i, :])
+            for j, year in enumerate(years):
+                cloud_single_layer_freq_year = cloud_single_layer_freq[var_name].sel(time=cloud_single_layer_freq['time.year'] == year)
+                if freq_time == 'D':
+                    axs.plot(cloud_single_layer_freq_year.time.dt.dayofyear.values, cloud_single_layer_freq_year*100,
+                        '-o',
+                        linewidth=1,
+                        label=f"{year}",
+                        markersize=6)
+                    axs.set_xticks(cloud_single_layer_freq_year.time.dt.dayofyear[::delta_time].values)
+                    axs.set_xlim([cloud_single_layer_freq_year.time.dt.dayofyear.values[0], cloud_single_layer_freq_year.time.dt.dayofyear.values[-1]])
+                if freq_time == 'W':
+                    axs.plot(cloud_single_layer_freq_year.time.dt.isocalendar().week.values, cloud_single_layer_freq_year*100,
+                        '-o',
+                        linewidth=1,
+                        label=f"{year}",
+                        markersize=6)
+                    axs.set_xticks(cloud_single_layer_freq_year.time.dt.isocalendar().week[::delta_time].values)
+                    # set_trace()
+                    axs.set_xlim([1, 52])
+                if freq_time == 'M':
+                    axs.plot(cloud_single_layer_freq_year.time.dt.month.values, cloud_single_layer_freq_year*100,
+                        '-o',
+                        linewidth=1,
+                        label=f"{year}",
+                        markersize=6)
+                    axs.set_xticks(np.arange(1, 13))
+                    axs.set_xlim([.5, 12.5])
+            
+            axs.set_ylabel(f"{var_name.replace('_', '-').title()} (%)")
+            axs.grid(True)
+            if i == 0:
+                axs.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15), ncol=len(years), frameon=False)
+            if i == len(clouds_to_analyse)-1:
+                axs.set_xticklabels(cloud_single_layer_freq_year.time[::delta_time].dt.strftime('%d/%m').values, rotation=45)
+                axs.set_xlabel("Time")
+            else:
+                axs.xaxis.set_tick_params(labelbottom=False)
+            # add name to months
+            # axs.set_xticks(cloud_single_layer_freq_year.time[::delta_time].values)
+            # axs.set_xticklabels(cloud_single_layer_freq_year.time[::delta_time].dt.strftime('%d/%m/%y'))
+            # add name to months
+        fig.savefig(f"{PATH_FIG}cloud_single_layer_frequency_by_{freq_time}.png", dpi=300, bbox_inches='tight')
+        plt.show()
+        
+        fig2 = plt.figure(figsize=(30, 25))  # Increase the size of the plot for better visibility
+        gs2  = fig2.add_gridspec(len(years), 1, hspace=0.05)
+        for i, var_name in enumerate(clouds_to_analyse):
+            axs  = fig2.add_subplot(gs2[i, :])
+            cond = clouds_single_layer[var_name].compute() == 1
+            data = integrated_var_single_layer.sel(time=cond).resample(time=freq_time).mean()    
+            for j, year in enumerate(years):
+                iwp_year = data['IWP'].sel(time=data['time.year'] == year)
+                if freq_time == 'D':
+                    axs.plot(iwp_year.time.dt.dayofyear.values, iwp_year,
+                        '-o',
+                        linewidth=1,
+                        label=f"{year}",
+                        markersize=6)
+                    
+                    axs.set_xticks(iwp_year.time.dt.dayofyear[::delta_time].values)
+                    axs.set_xlim([iwp_year.time.dt.dayofyear.values, iwp_year.time.dt.dayofyear.values[-1]])
+                
+            axs.set_ylabel(f"{var_name.replace('_', '-').title()} (g m$^{-2}$)")
+            axs.grid(True)
+            if i == 0:
+                axs.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15), ncol=len(years), frameon=False)
+            
+            if i == len(clouds_to_analyse)-1:
+                axs.set_xticklabels(iwp_year.time[::delta_time].dt.strftime('%d/%m').values, rotation=45)
+                axs.set_xlabel("Time")
+            else:
+                axs.xaxis.set_tick_params(labelbottom=False)
+            # add name to months
+            # axs.set_xticks(cloud_single_layer_freq_year.time[::delta_time].values)
+            # axs.set_xticklabels(cloud_single_layer_freq_year.time[::delta_time].dt.strftime('%d/%m/%y'))
+            # add name to months
+        fig2.savefig(f"{PATH_FIG}IWP_by_{freq_time}.png", dpi=300, bbox_inches='tight')
+        plt.show()
+        
+        set_trace()
+
     if plot_lwc_iwc_der_ier:
         # ylim_violin = [0, 70 ]
         # dreff =
         # set_trace()
-        micro_var = 'iwc'
-        integ_var = 'IWP'
+        micro_var = 'lwc'
+        integ_var = 'LWP'
         data              = microphysics_sigle[micro_var].compute() * 1000
-        data1             = integrated_var_single_layer[integ_var].compute()
+        if integ_var == 'LWP':
+            data1 = data.sum(dim='height_bins')*delta_range/1000
+        else:
+            data1 = integrated_var_single_layer[integ_var].compute()
         clouds_to_analyse = ['Ice', 'Liquid', 'Mixed_phase', 'Pre_liquid', 'Pre_mixed_phase']
         for var_name in clouds_to_analyse:
             print(f"Variable: {var_name}")
             cond                  = clouds_single_layer[var_name].compute() == 1
             microphysics_var_name = data.sel(time=cond)
-
             integrated_var_name   = data1.sel(time=cond)*1000
+
             # Rechunk the 'microphysics_var_name' array along the 'time' dimension into a single chunk
             # microphysics_var_name = microphysics_var_name.chunk({'time': -1})
             median_by_month = microphysics_var_name.dropna(dim='time', how = "all" ).groupby('month').quantile(.5, skipna=True)
+
+
             if np.sum(median_by_month) == 0:
                 print(f"\nMonthly median is only zero for {var_name} clouds\n")
             mean_by_month = microphysics_var_name.dropna(dim='time', how="all").groupby('month').mean()
-            std_by_month = microphysics_var_name.dropna(dim='time', how="all").groupby('month').std()
+            std_by_month  = microphysics_var_name.dropna(dim='time', how="all").groupby('month').std()
 
             fig = plt.figure(figsize=(18, 9))
             gs = fig.add_gridspec(2, 3, width_ratios=[1.8, 5, .15], height_ratios=[3, 1.2], hspace=0.05, wspace=0.4)
@@ -2259,6 +2358,7 @@ if cloud_properties_analysis:
             for month in mean_by_month.month.values:
                 mask_month = integrated_var_name['month'] == month
                 month_data = integrated_var_name.sel(time=mask_month).values
+                # month_data =
                 # removing nans from month data
                 month_data = month_data[(~np.isnan(month_data)) & (month_data >= 0)]
                 # mean_profile = monthly_data.sel(month=month).dropna(dim='height_bins')
@@ -2420,7 +2520,7 @@ if cloud_properties_analysis:
                 ax3.set_ylim([0, 30])
             elif var_name == 'Pre_liquid':
                 ax3.set_ylim([0, 40])
-            else: 
+            else:
                 ax3.set_ylim(ylim_violin*2)
             ax3.grid(True, axis='y')
 
@@ -2638,7 +2738,7 @@ if cloud_properties_analysis:
     df_cloud_thickness_stats = pd.merge(median_values_cloud_thickness, percentile25_values_cloud_thickness, on=['season', 'cloud_type'], suffixes=('_median', '_25_percentile'))
     df_cloud_thickness_stats = pd.merge(df_cloud_thickness_stats, percentile75_values_cloud_thickness, on=['season', 'cloud_type'], suffixes=('', '_75_percentile'))
     df_cloud_thickness_stats.to_csv('/home/matheustolen/Documentos/matheus_doctorado/processed_data/files_to_analyse/df_cloud_thickness.txt', sep='\t', index=False, decimal=',')
-    
+
     ax2 = fig.add_subplot(gs[1, 0], sharex=ax1)
     sns.violinplot(x='season', y='cloud_base', hue='cloud_type', quantiles=[0.25, 0.5, 0.75], data=melted_cloud_base, ax=ax2, inner_kws=dict(box_width=7, whis_width=.2), scale='width')
     # ax2.set_ylim([-1, 10])

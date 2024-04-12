@@ -1,9 +1,9 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2022/dev/Debian) (preloaded format=pdflatex 2024.3.15)  5 APR 2024 20:56
+This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2022/dev/Debian) (preloaded format=pdflatex 2024.3.15)  8 APR 2024 18:47
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
-**figures_der_comparison.tex
-(./figures_der_comparison.tex
+**figures.tex
+(./figures.tex
 LaTeX2e <2021-11-15> patch level 1
 L3 programming layer <2022-01-21>
 (/usr/share/texlive/texmf-dist/tex/latex/base/article.cls
@@ -132,8 +132,8 @@ File: l3backend-pdftex.def 2022-01-12 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count274
 \l__pdf_internal_box=\box52
 )
-No file figures_der_comparison.aux.
-\openout1 = `figures_der_comparison.aux'.
+No file figures.aux.
+\openout1 = `figures.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 7.
 LaTeX Font Info:    ... okay on input line 7.
@@ -236,11 +236,12 @@ l.14 \begin{figure}[H]
                       
 Option `H' ignored and `p' used.
 
-<20231130_Ice_diff_der_pcolor.png, id=11, 1109.8263pt x 869.649pt>
-File: 20231130_Ice_diff_der_pcolor.png Graphic file (type png)
-<use 20231130_Ice_diff_der_pcolor.png>
-Package pdftex.def Info: 20231130_Ice_diff_der_pcolor.png  used on input line 1
-6.
+<20231130_Ice_diff_der_pcolor_mwr_temperature.png, id=11, 1109.8263pt x 869.649
+pt>
+File: 20231130_Ice_diff_der_pcolor_mwr_temperature.png Graphic file (type png)
+<use 20231130_Ice_diff_der_pcolor_mwr_temperature.png>
+Package pdftex.def Info: 20231130_Ice_diff_der_pcolor_mwr_temperature.png  used
+ on input line 16.
 (pdftex.def)             Requested size: 443.57848pt x 347.57477pt.
 
 ! LaTeX Error: Unknown float option `H'.
@@ -270,11 +271,13 @@ l.22 \begin{figure}[H]
                       
 Option `H' ignored and `p' used.
 
-<20231130_Liquid_diff_der_pcolor.png, id=13, 1109.8263pt x 869.649pt>
-File: 20231130_Liquid_diff_der_pcolor.png Graphic file (type png)
-<use 20231130_Liquid_diff_der_pcolor.png>
-Package pdftex.def Info: 20231130_Liquid_diff_der_pcolor.png  used on input lin
-e 24.
+<20231130_Liquid_diff_der_pcolor_model_temperature.png, id=13, 1109.8263pt x 86
+9.649pt>
+File: 20231130_Liquid_diff_der_pcolor_model_temperature.png Graphic file (type 
+png)
+<use 20231130_Liquid_diff_der_pcolor_model_temperature.png>
+Package pdftex.def Info: 20231130_Liquid_diff_der_pcolor_model_temperature.png 
+ used on input line 24.
 (pdftex.def)             Requested size: 443.57848pt x 347.57477pt.
 
 ! LaTeX Error: Unknown float option `H'.
@@ -287,12 +290,14 @@ l.26 \begin{figure}[H]
                       
 Option `H' ignored and `p' used.
 
-<20231130_Mixed_phase_der_comparison_hist.png, id=14, 784.8522pt x 460.6008pt>
-File: 20231130_Mixed_phase_der_comparison_hist.png Graphic file (type png)
-<use 20231130_Mixed_phase_der_comparison_hist.png>
-Package pdftex.def Info: 20231130_Mixed_phase_der_comparison_hist.png  used on 
-input line 28.
-(pdftex.def)             Requested size: 443.57848pt x 260.31725pt.
+<20231130_Liquid_diff_der_pcolor_mwr_temperature.png, id=14, 1109.8263pt x 869.
+649pt>
+File: 20231130_Liquid_diff_der_pcolor_mwr_temperature.png Graphic file (type pn
+g)
+<use 20231130_Liquid_diff_der_pcolor_mwr_temperature.png>
+Package pdftex.def Info: 20231130_Liquid_diff_der_pcolor_mwr_temperature.png  u
+sed on input line 28.
+(pdftex.def)             Requested size: 443.57848pt x 347.57477pt.
 
 ! LaTeX Error: Unknown float option `H'.
 
@@ -304,12 +309,12 @@ l.30 \begin{figure}[H]
                       
 Option `H' ignored and `p' used.
 
-<20231130_Mixed_phase_diff_der_pcolor.png, id=15, 1109.8263pt x 869.649pt>
-File: 20231130_Mixed_phase_diff_der_pcolor.png Graphic file (type png)
-<use 20231130_Mixed_phase_diff_der_pcolor.png>
-Package pdftex.def Info: 20231130_Mixed_phase_diff_der_pcolor.png  used on inpu
-t line 32.
-(pdftex.def)             Requested size: 443.57848pt x 347.57477pt.
+<20231130_Mixed_phase_der_comparison_hist.png, id=15, 784.8522pt x 460.6008pt>
+File: 20231130_Mixed_phase_der_comparison_hist.png Graphic file (type png)
+<use 20231130_Mixed_phase_der_comparison_hist.png>
+Package pdftex.def Info: 20231130_Mixed_phase_der_comparison_hist.png  used on 
+input line 32.
+(pdftex.def)             Requested size: 443.57848pt x 260.31725pt.
 
 ! LaTeX Error: Unknown float option `H'.
 
@@ -321,12 +326,14 @@ l.34 \begin{figure}[H]
                       
 Option `H' ignored and `p' used.
 
-<20231130_Pre_liquid_der_comparison_hist.png, id=16, 793.7655pt x 460.6008pt>
-File: 20231130_Pre_liquid_der_comparison_hist.png Graphic file (type png)
-<use 20231130_Pre_liquid_der_comparison_hist.png>
-Package pdftex.def Info: 20231130_Pre_liquid_der_comparison_hist.png  used on i
-nput line 36.
-(pdftex.def)             Requested size: 443.57848pt x 257.40054pt.
+<20231130_Mixed_phase_diff_der_pcolor_mwr_temperature.png, id=16, 1109.8263pt x
+ 869.649pt>
+File: 20231130_Mixed_phase_diff_der_pcolor_mwr_temperature.png Graphic file (ty
+pe png)
+<use 20231130_Mixed_phase_diff_der_pcolor_mwr_temperature.png>
+Package pdftex.def Info: 20231130_Mixed_phase_diff_der_pcolor_mwr_temperature.p
+ng  used on input line 36.
+(pdftex.def)             Requested size: 443.57848pt x 347.57477pt.
 
 ! LaTeX Error: Unknown float option `H'.
 
@@ -338,12 +345,12 @@ l.38 \begin{figure}[H]
                       
 Option `H' ignored and `p' used.
 
-<20231130_Pre_liquid_diff_der_pcolor.png, id=17, 1109.8263pt x 869.649pt>
-File: 20231130_Pre_liquid_diff_der_pcolor.png Graphic file (type png)
-<use 20231130_Pre_liquid_diff_der_pcolor.png>
-Package pdftex.def Info: 20231130_Pre_liquid_diff_der_pcolor.png  used on input
- line 40.
-(pdftex.def)             Requested size: 443.57848pt x 347.57477pt.
+<20231130_Pre_liquid_der_comparison_hist.png, id=17, 793.7655pt x 460.6008pt>
+File: 20231130_Pre_liquid_der_comparison_hist.png Graphic file (type png)
+<use 20231130_Pre_liquid_der_comparison_hist.png>
+Package pdftex.def Info: 20231130_Pre_liquid_der_comparison_hist.png  used on i
+nput line 40.
+(pdftex.def)             Requested size: 443.57848pt x 257.40054pt.
 
 ! LaTeX Error: Unknown float option `H'.
 
@@ -355,13 +362,14 @@ l.42 \begin{figure}[H]
                       
 Option `H' ignored and `p' used.
 
-<20231130_Pre_mixed_phase_der_comparison_hist.png, id=18, 784.8522pt x 460.6008
-pt>
-File: 20231130_Pre_mixed_phase_der_comparison_hist.png Graphic file (type png)
-<use 20231130_Pre_mixed_phase_der_comparison_hist.png>
-Package pdftex.def Info: 20231130_Pre_mixed_phase_der_comparison_hist.png  used
- on input line 44.
-(pdftex.def)             Requested size: 443.57848pt x 260.31725pt.
+<20231130_Pre_liquid_diff_der_pcolor_mwr_temperature.png, id=18, 1109.8263pt x 
+869.649pt>
+File: 20231130_Pre_liquid_diff_der_pcolor_mwr_temperature.png Graphic file (typ
+e png)
+<use 20231130_Pre_liquid_diff_der_pcolor_mwr_temperature.png>
+Package pdftex.def Info: 20231130_Pre_liquid_diff_der_pcolor_mwr_temperature.pn
+g  used on input line 44.
+(pdftex.def)             Requested size: 443.57848pt x 347.57477pt.
 
 ! LaTeX Error: Unknown float option `H'.
 
@@ -373,12 +381,13 @@ l.46 \begin{figure}[H]
                       
 Option `H' ignored and `p' used.
 
-<20231130_Pre_mixed_phase_diff_der_pcolor.png, id=19, 1109.8263pt x 869.649pt>
-File: 20231130_Pre_mixed_phase_diff_der_pcolor.png Graphic file (type png)
-<use 20231130_Pre_mixed_phase_diff_der_pcolor.png>
-Package pdftex.def Info: 20231130_Pre_mixed_phase_diff_der_pcolor.png  used on 
-input line 48.
-(pdftex.def)             Requested size: 443.57848pt x 347.57477pt.
+<20231130_Pre_mixed_phase_der_comparison_hist.png, id=19, 784.8522pt x 460.6008
+pt>
+File: 20231130_Pre_mixed_phase_der_comparison_hist.png Graphic file (type png)
+<use 20231130_Pre_mixed_phase_der_comparison_hist.png>
+Package pdftex.def Info: 20231130_Pre_mixed_phase_der_comparison_hist.png  used
+ on input line 48.
+(pdftex.def)             Requested size: 443.57848pt x 260.31725pt.
 
 ! LaTeX Error: Unknown float option `H'.
 
@@ -390,32 +399,35 @@ l.50 \begin{figure}[H]
                       
 Option `H' ignored and `p' used.
 
-<v_clouds_without_rain_2d_histogram.png, id=20, 877.8396pt x 417.2388pt>
-File: v_clouds_without_rain_2d_histogram.png Graphic file (type png)
-<use v_clouds_without_rain_2d_histogram.png>
-Package pdftex.def Info: v_clouds_without_rain_2d_histogram.png  used on input 
-line 52.
-(pdftex.def)             Requested size: 443.57848pt x 210.83444pt.
-[2 <./20231130_Ice_der_comparison_hist.png> <./20231130_Ice_diff_der_pcolor.png
->] [3 <./20231130_Liquid_der_comparison_hist.png> <./20231130_Liquid_diff_der_p
-color.png>] [4 <./20231130_Mixed_phase_der_comparison_hist.png> <./20231130_Mix
-ed_phase_diff_der_pcolor.png>] [5 <./20231130_Pre_liquid_der_comparison_hist.pn
-g> <./20231130_Pre_liquid_diff_der_pcolor.png>] [6 <./20231130_Pre_mixed_phase_
-der_comparison_hist.png> <./20231130_Pre_mixed_phase_diff_der_pcolor.png>]
-[7 <./v_clouds_without_rain_2d_histogram.png>] (./figures_der_comparison.aux) )
- 
+<20231130_Pre_mixed_phase_diff_der_pcolor_mwr_temperature.png, id=20, 1109.8263
+pt x 869.649pt>
+File: 20231130_Pre_mixed_phase_diff_der_pcolor_mwr_temperature.png Graphic file
+ (type png)
+<use 20231130_Pre_mixed_phase_diff_der_pcolor_mwr_temperature.png>
+Package pdftex.def Info: 20231130_Pre_mixed_phase_diff_der_pcolor_mwr_temperatu
+re.png  used on input line 52.
+(pdftex.def)             Requested size: 443.57848pt x 347.57477pt.
+[2 <./20231130_Ice_der_comparison_hist.png> <./20231130_Ice_diff_der_pcolor_mwr
+_temperature.png>] [3 <./20231130_Liquid_der_comparison_hist.png> <./20231130_L
+iquid_diff_der_pcolor_model_temperature.png>] [4 <./20231130_Liquid_diff_der_pc
+olor_mwr_temperature.png> <./20231130_Mixed_phase_der_comparison_hist.png>]
+[5 <./20231130_Mixed_phase_diff_der_pcolor_mwr_temperature.png> <./20231130_Pre
+_liquid_der_comparison_hist.png>] [6 <./20231130_Pre_liquid_diff_der_pcolor_mwr
+_temperature.png> <./20231130_Pre_mixed_phase_der_comparison_hist.png>]
+[7 <./20231130_Pre_mixed_phase_diff_der_pcolor_mwr_temperature.png>]
+(./figures.aux) ) 
 Here is how much of TeX's memory you used:
  2595 strings out of 478287
- 42126 string characters out of 5849289
- 337045 words of memory out of 5000000
+ 42656 string characters out of 5849289
+ 337015 words of memory out of 5000000
  20792 multiletter control sequences out of 15000+600000
  472968 words of font info for 41 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 55i,6n,62p,239b,233s stack positions out of 5000i,500n,10000p,200000b,80000s
-</usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/s
-hare/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/share/te
-xlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb>
-Output written on figures_der_comparison.pdf (7 pages, 4303580 bytes).
+ 55i,6n,62p,224b,233s stack positions out of 5000i,500n,10000p,200000b,80000s
+</usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/
+cmr10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.p
+fb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb>
+Output written on figures.pdf (7 pages, 5513035 bytes).
 PDF statistics:
  66 PDF objects out of 1000 (max. 8388607)
  28 compressed objects within 1 object stream
