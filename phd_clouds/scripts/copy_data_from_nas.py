@@ -4,6 +4,7 @@ import os
 import numpy as np
 import netCDF4 as nc
 import datetime
+import glob
 from pdb import set_trace
 import time as time_module
 
@@ -135,14 +136,62 @@ def get_data_without_ldr(path: str, path_download_1: str, path_download_2: str):
             print(f"Folder {folder_path} downloaded to {os.path.join(path_to_download, os.path.basename(folder_path))}")
         except Exception as e:
             print(f"Error while downloading folder {folder_path}: {e}")
-        
+
+def get_data(filepaths, path_download_1: str, path_download_2: str):
+    """
+    Downloads data from NAS to a specified folder
+
+    """
+    path_to_download = path_download_1
+    
+    # Iterate over each file path
+    print("Starting download...")
+    for filepath in filepaths:
+        try:
+            # Get the available disk space in percentage
+            disk_space = psutil.disk_usage(path_to_download).percent
+            print(f"Used disk space: {disk_space}% in {path_to_download}")
+           
+            # Check if the available disk space is less than 2%
+            if disk_space > 98 and path_to_download == path_download_1:
+                print("Not enough free disk space in external hard drive. Changing to second download path (should be the second hard drive).")
+                path_to_download = path_download_2
+                set_trace()
+            elif disk_space > 98:
+                print("Not enough free disk space. Stopping download.")
+                return
+            
+            path_to_copy = os.path.join(path_to_download, '/'.join(filepath.split('/')[-4:-1]))
+            # check if file already exists in the download path and then rewrite it
+            if not os.path.exists(path_to_copy):
+                os.makedirs(path_to_copy)
+            # Download the data from the NAS folder to specified path
+            print(f"Copying {filepath} to {path_to_copy}")
+            shutil.copy(filepath, path_to_copy)
+            print(f"Folder {filepath} downloaded to {os.path.join(path_to_download, os.path.basename(filepath))}")
+        except Exception as e:
+            print(f"Error while downloading folder {filepath}: {e}")
 
 if __name__ == "__main__":
    
+    # start_time = time_module.time()
+    # path_to_download_1 = "/media/matheustolen/EXTERNAL_USB/raw_data"
+    # path_to_download_2 = "/media/matheustolen/EXTERNAL_USB1/raw_data"
+    # get_data_without_ldr(PATH_RADAR, path_to_download_1, path_to_download_2)
+    # end_time = time_module.time()
+    # print(f"Execution time: {(end_time - start_time)/60:.2f} minutes")
+
     start_time = time_module.time()
-    path_to_download_1 = "/media/matheustolen/EXTERNAL_USB/raw_data"
-    path_to_download_2 = "/media/matheustolen/EXTERNAL_USB1/raw_data"
-    get_data_without_ldr(PATH_RADAR, path_to_download_1, path_to_download_2)
+    days_to_get_from_nas = [3, 9, 10, 24, 25, 26, 30]
+    path_nas             = '/home/matheustolen/shared/NAS_raw_data/UGR/nebula_ka/2024/03/'
+    # # get all files in the path_nas ended with *.LV1, including in the subdirectories 
+    # filepaths = [f for f in glob.glob(path_nas + "**/*.LV1", recursive=True)]
+    # same but for the days in days_to_get_from_nas
+    filepaths =  [filepath for day in days_to_get_from_nas for filepath in glob.glob(path_nas + f"{day:02d}/*ZEN.LV1")]
+    path_to_download_1   = "/mnt/cloudnet_external/data_to_send"
+    get_data(filepaths, path_to_download_1, path_to_download_1)  
     end_time = time_module.time()
     print(f"Execution time: {(end_time - start_time)/60:.2f} minutes")
+
+
     # OBS: last executioin time: 49 hours
