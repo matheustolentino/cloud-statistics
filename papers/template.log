@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2022/dev/Debian) (preloaded format=pdflatex 2024.3.15)  12 APR 2024 11:56
+This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2022/dev/Debian) (preloaded format=pdflatex 2024.3.15)  26 APR 2024 12:26
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -3265,7 +3265,7 @@ File: ../phd_clouds/figures/cloud_thickness_base_top_violin_plot.png Graphic fi
 le (type png)
 <use ../phd_clouds/figures/cloud_thickness_base_top_violin_plot.png>
 Package pdftex.def Info: ../phd_clouds/figures/cloud_thickness_base_top_violin_
-plot.png  used on input line 360.
+plot.png  used on input line 364.
 (pdftex.def)             Requested size: 503.61377pt x 238.53946pt.
  [10] [11 <../phd_clouds/figures/cloud_thickness_base_top_violin_plot.png>]
 <../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Liquid.png, id=155, 1
@@ -3274,7 +3274,7 @@ File: ../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Liquid.png Graph
 ic file (type png)
 <use ../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Liquid.png>
 Package pdftex.def Info: ../phd_clouds/figures/grouped_by_month_evolution_for_l
-wc_Liquid.png  used on input line 378.
+wc_Liquid.png  used on input line 382.
 (pdftex.def)             Requested size: 453.24931pt x 236.90642pt.
  [12 <../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Liquid.png>]
 <../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Pre_liquid.png, id=16
@@ -3283,7 +3283,7 @@ File: ../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Pre_liquid.png G
 raphic file (type png)
 <use ../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Pre_liquid.png>
 Package pdftex.def Info: ../phd_clouds/figures/grouped_by_month_evolution_for_l
-wc_Pre_liquid.png  used on input line 391.
+wc_Pre_liquid.png  used on input line 395.
 (pdftex.def)             Requested size: 453.24931pt x 236.90642pt.
  [13 <../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Pre_liquid.png>]
 <../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Mixed_phase.png, id=1
@@ -3292,7 +3292,7 @@ File: ../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Mixed_phase.png
 Graphic file (type png)
 <use ../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Mixed_phase.png>
 Package pdftex.def Info: ../phd_clouds/figures/grouped_by_month_evolution_for_l
-wc_Mixed_phase.png  used on input line 400.
+wc_Mixed_phase.png  used on input line 404.
 (pdftex.def)             Requested size: 453.24931pt x 236.90642pt.
 <../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Pre_mixed_phase.png, 
 id=181, 1125.003pt x 588.0369pt>
@@ -3301,7 +3301,7 @@ png Graphic file (type png)
 <use ../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Pre_mixed_phase.p
 ng>
 Package pdftex.def Info: ../phd_clouds/figures/grouped_by_month_evolution_for_l
-wc_Pre_mixed_phase.png  used on input line 411.
+wc_Pre_mixed_phase.png  used on input line 415.
 (pdftex.def)             Requested size: 453.24931pt x 236.90642pt.
  [14 <../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Mixed_phase.png>
 ] [15 <../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Pre_mixed_phase
@@ -3312,7 +3312,7 @@ File: ../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Ice.png Graphic
 file (type png)
 <use ../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Ice.png>
 Package pdftex.def Info: ../phd_clouds/figures/grouped_by_month_evolution_for_i
-wc_Ice.png  used on input line 464.
+wc_Ice.png  used on input line 468.
 (pdftex.def)             Requested size: 453.24931pt x 236.90642pt.
  [16 <../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Ice.png>]
 <../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Mixed_phase.png, id=2
@@ -3321,7 +3321,7 @@ File: ../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Mixed_phase.png
 Graphic file (type png)
 <use ../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Mixed_phase.png>
 Package pdftex.def Info: ../phd_clouds/figures/grouped_by_month_evolution_for_i
-wc_Mixed_phase.png  used on input line 475.
+wc_Mixed_phase.png  used on input line 479.
 (pdftex.def)             Requested size: 453.24931pt x 236.90642pt.
  [17 <../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Mixed_phase.png>
 ]
@@ -3332,11 +3332,11 @@ png Graphic file (type png)
 <use ../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Pre_mixed_phase.p
 ng>
 Package pdftex.def Info: ../phd_clouds/figures/grouped_by_month_evolution_for_i
-wc_Pre_mixed_phase.png  used on input line 484.
+wc_Pre_mixed_phase.png  used on input line 488.
 (pdftex.def)             Requested size: 453.24931pt x 236.90642pt.
 
 
-Package natbib Warning: Citation `XXX' on page 18 undefined on input line 502.
+Package natbib Warning: Citation `XXX' on page 18 undefined on input line 506.
 
 [18 <../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Pre_mixed_phase.p
 ng>]
@@ -3346,7 +3346,7 @@ File: ../phd_clouds/figures/grouped_by_month_evolution_for_der_Liquid.png Graph
 ic file (type png)
 <use ../phd_clouds/figures/grouped_by_month_evolution_for_der_Liquid.png>
 Package pdftex.def Info: ../phd_clouds/figures/grouped_by_month_evolution_for_d
-er_Liquid.png  used on input line 508.
+er_Liquid.png  used on input line 512.
 (pdftex.def)             Requested size: 453.24931pt x 264.1015pt.
 <../phd_clouds/figures/grouped_by_month_evolution_for_der_Pre_liquid.png, id=23
 1, 1107.1764pt x 645.1302pt>
@@ -3354,7 +3354,7 @@ File: ../phd_clouds/figures/grouped_by_month_evolution_for_der_Pre_liquid.png G
 raphic file (type png)
 <use ../phd_clouds/figures/grouped_by_month_evolution_for_der_Pre_liquid.png>
 Package pdftex.def Info: ../phd_clouds/figures/grouped_by_month_evolution_for_d
-er_Pre_liquid.png  used on input line 518.
+er_Pre_liquid.png  used on input line 522.
 (pdftex.def)             Requested size: 453.24931pt x 264.1015pt.
  [19 <../phd_clouds/figures/grouped_by_month_evolution_for_der_Liquid.png>]
 <../phd_clouds/figures/grouped_by_month_evolution_for_der_Mixed_phase.png, id=2
@@ -3363,7 +3363,7 @@ File: ../phd_clouds/figures/grouped_by_month_evolution_for_der_Mixed_phase.png
 Graphic file (type png)
 <use ../phd_clouds/figures/grouped_by_month_evolution_for_der_Mixed_phase.png>
 Package pdftex.def Info: ../phd_clouds/figures/grouped_by_month_evolution_for_d
-er_Mixed_phase.png  used on input line 528.
+er_Mixed_phase.png  used on input line 532.
 (pdftex.def)             Requested size: 453.24931pt x 260.13441pt.
 [20 <../phd_clouds/figures/grouped_by_month_evolution_for_der_Pre_liquid.png>]
 <../phd_clouds/figures/grouped_by_month_evolution_for_der_Pre_mixed_phase.png, 
@@ -3373,7 +3373,7 @@ png Graphic file (type png)
 <use ../phd_clouds/figures/grouped_by_month_evolution_for_der_Pre_mixed_phase.p
 ng>
 Package pdftex.def Info: ../phd_clouds/figures/grouped_by_month_evolution_for_d
-er_Pre_mixed_phase.png  used on input line 537.
+er_Pre_mixed_phase.png  used on input line 541.
 (pdftex.def)             Requested size: 453.24931pt x 264.1015pt.
 
 [21 <../phd_clouds/figures/grouped_by_month_evolution_for_der_Mixed_phase.png>]
@@ -3385,7 +3385,7 @@ File: ../phd_clouds/figures/grouped_by_month_evolution_for_ier_Ice.png Graphic
 file (type png)
 <use ../phd_clouds/figures/grouped_by_month_evolution_for_ier_Ice.png>
 Package pdftex.def Info: ../phd_clouds/figures/grouped_by_month_evolution_for_i
-er_Ice.png  used on input line 552.
+er_Ice.png  used on input line 556.
 (pdftex.def)             Requested size: 453.24931pt x 264.1015pt.
 <../phd_clouds/figures/grouped_by_month_evolution_for_ier_Mixed_phase.png, id=2
 72, 1107.1764pt x 645.1302pt>
@@ -3393,7 +3393,7 @@ File: ../phd_clouds/figures/grouped_by_month_evolution_for_ier_Mixed_phase.png
 Graphic file (type png)
 <use ../phd_clouds/figures/grouped_by_month_evolution_for_ier_Mixed_phase.png>
 Package pdftex.def Info: ../phd_clouds/figures/grouped_by_month_evolution_for_i
-er_Mixed_phase.png  used on input line 562.
+er_Mixed_phase.png  used on input line 566.
 (pdftex.def)             Requested size: 453.24931pt x 264.1015pt.
  [23 <../phd_clouds/figures/grouped_by_month_evolution_for_ier_Ice.png>]
 <../phd_clouds/figures/grouped_by_month_evolution_for_ier_Pre_mixed_phase.png, 
@@ -3403,12 +3403,12 @@ png Graphic file (type png)
 <use ../phd_clouds/figures/grouped_by_month_evolution_for_ier_Pre_mixed_phase.p
 ng>
 Package pdftex.def Info: ../phd_clouds/figures/grouped_by_month_evolution_for_i
-er_Pre_mixed_phase.png  used on input line 571.
+er_Pre_mixed_phase.png  used on input line 575.
 (pdftex.def)             Requested size: 453.24931pt x 264.1015pt.
 
 [24 <../phd_clouds/figures/grouped_by_month_evolution_for_ier_Mixed_phase.png>]
 
-LaTeX Warning: Reference `fig:LWP_hist' on page 25 undefined on input line 584.
+LaTeX Warning: Reference `fig:LWP_hist' on page 25 undefined on input line 588.
 
 
 [25 <../phd_clouds/figures/grouped_by_month_evolution_for_ier_Pre_mixed_phase.p
@@ -3441,7 +3441,7 @@ m/cmsy10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy
 share/texlive/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/share/texlive/t
 exmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/share/texlive/texmf-dist/fonts
 /type1/urw/times/utmri8a.pfb>
-Output written on template.pdf (27 pages, 9395642 bytes).
+Output written on template.pdf (27 pages, 9395674 bytes).
 PDF statistics:
  383 PDF objects out of 1000 (max. 8388607)
  289 compressed objects within 3 object streams

@@ -29,6 +29,7 @@ import glob
 from matplotlib import cm
 from matplotlib.patches import Patch
 from mwr_class import Mwr
+from sklearn.cluster import DBSCAN
 # from cloudnetpy_qc import quality
 #-------------------------------------------------------------------------------------------------------
 from cloudnetpy.products import generate_lwc
@@ -804,6 +805,131 @@ def plot_cloud_comparison(df_class, categorize,  df_ze, cloud_filter, name_title
 
         # plt.close('all')
 
+def plot_cloud_mask_2(df_class, categorize, cloud_filter, name_title, color_names, plot_ze=True,
+                         cloud_type= List[int], targ_between_cloud= List[int], integrated_variables=pd.DataFrame(),
+                         cloud_prop=xr.Dataset(), plot_cloud_prop=False, show_only_clouds_for_classification=False):
+
+    time_series    = df_class.index
+    new_start_time = time_series.min().replace(hour=0, minute=0, second=15, microsecond=0)
+    new_end_time   = time_series.max().replace(hour=23, minute=59, second=59, microsecond=0)
+    new_time_index = pd.date_range(start=new_start_time, end=new_end_time, freq="30S")
+    date_string    = new_start_time.strftime("%Y%m%d")
+
+    # List of manually specified colors (replace these with your desired colors)
+    manual_colors = ["#FFFFFF","#007CFF", "#0A2658", "#FFFF00", "#4EF6C1",\
+                      "#D05BAC", "#BFBD8D", "#118527","#8794B3", "#DA6F49", "#88183E", "#DDDEDA"]
+    ncolors       = len(color_names)
+    manual_cmap   = plt.cm.colors.ListedColormap(manual_colors)
+
+    df_class_filtered = df_class[cloud_filter.cloud_mask()]
+   
+    ds_mask = xr.Dataset({'cloud_mask': (['time', 'height'], cloud_filter.cloud_mask())}, coords={'time': df_class.index, 'height': df_class.columns})
+    ds_mask_reindexed = ds_mask.reindex(time=new_time_index, fill_value=False)
+    cloud_time_mask   = ds_mask_reindexed.cloud_mask.any(dim='height')
+
+    # Reindex the dataframes to fill missing data with NANs
+    cloud_prop_reindexed = cloud_prop.reindex(time=new_time_index, fill_value=np.nan)
+    
+    df_class_complete_time          = df_class.reindex(index=new_time_index, fill_value=np.nan)
+    df_class_filtered_complete_time = df_class_filtered.reindex(index=new_time_index, fill_value=np.nan)
+    liquid_water_path_complete_time = cloud_prop_reindexed['LWP'].sel(time=cloud_time_mask.values)
+ 
+    if plot_cloud_prop:
+        fig = plt.figure(figsize=(15, 13))
+        gs = fig.add_gridspec(3, 2, width_ratios=[3, .05], height_ratios=[3, 3, 1.5], hspace=0.12, wspace=0.05)
+        # diff_relative = 1 - (der_scaled_corrected_complete_time / der_corrected_complete_time)
+        # here, get time when difference is higher than 1
+
+        # Plot der corrected complete time:
+        ax1 = fig.add_subplot(gs[0,0])
+        # f2 = ax1.pcolormesh(df_class_complete_time.index,
+        #                     df_class_complete_time.columns/1000,
+        #                     np.transpose(df_class_complete_time),
+        #                     cmap=manual_cmap,
+        #                     )
+        f2 = ax1.pcolormesh(ds_mask_reindexed.time,
+                            ds_mask_reindexed.height/1000,
+                            ds_mask_reindexed.cloud_mask.T,
+                            cmap='binary',
+                            vmin=0,
+                            vmax=1)
+
+
+        ax1.set_ylabel(r'Height [km]')
+        ax1.xaxis.set_tick_params(labelbottom=False)
+        # if len(time_high_diff) > 2:
+        #     ax1.set_xlim(time_high_diff[0], time_high_diff[-1])
+        # ax1.set_ylim(der_corrected_complete_time.height.values[zind_min]/1000, der_corrected_complete_time.height.values[zind_max]/1000)
+        ax1.set_ylim([.0, df_class_complete_time.columns[-1]/1000])
+        ax1.grid()
+        # cax1  = fig.add_subplot(gs[0, 1])
+        # cbar1 = plt.colorbar(f2, cax=cax1, orientation='vertical', ticks=[])
+
+        # Plot the the classificatio
+        ax3 = fig.add_subplot(gs[1,0], sharey=ax1, sharex=ax1)
+        # Plot the mixed phase categories heatmap
+        f4 = ax3.pcolormesh(df_class_filtered_complete_time.index,
+                            df_class_filtered_complete_time.columns/1000,
+                            np.transpose(df_class_filtered_complete_time),
+                            cmap=manual_cmap,
+                            vmin=0,
+                            vmax=ncolors)
+        time_model = categorize.variables['model_time'][:]
+        time_model_datetime = pd.to_datetime(categorize.variables['time'].units.split(' ')[-3]) + pd.to_timedelta(time_model, unit='h')
+
+        print("No MWR files found in NAS. Using model data.")
+        countour = ax3.contour(time_model_datetime, (categorize.variables['model_height'][:]-680)/1000,
+                    categorize.variables['temperature'][:].T - 273.15,
+                    levels=[-40, -25, -10, 0, 5], colors='black', linewidths=0.5)
+        posfix   = 'model_temperature'
+        
+        countour.clabel(inline=True, fmt='%2.1f'+r'$^{\circ}$C', fontsize=12)
+        
+        i = 0
+        for sublist in cloud_filter.cloud_base:
+            ax3.plot(np.tile(cloud_filter.time_cbt[i], len(sublist)), df_class.columns[sublist]/1000, "*", color='black', markersize=3)
+            i += 1
+        i = 0
+        for sublist in cloud_filter.cloud_top:
+            ax3.plot(np.tile(cloud_filter.time_cbt[i], len(sublist)), df_class.columns[sublist]/1000, "*", color='red', markersize=3)
+            i += 1
+
+        ax3.set_ylabel(r'Height [km]')
+        ax3.xaxis.set_tick_params(labelbottom=False)
+        # ax3.grid()
+
+        # Create a colorbar with custom color patches and labels (vertical)
+        cax3 = fig.add_subplot(gs[1, 1])
+        cbar3 = plt.colorbar(f4, cax=cax3, ticks=[], orientation='vertical')
+
+        # Adjust the position of colorbar and add color patches with names
+        for idx, (color, name) in enumerate(zip(manual_cmap.colors, color_names)):
+            rect = plt.Rectangle((0, idx), 1, 1, color=color)
+            cbar3.ax.add_patch(rect)
+            cbar3.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=20)
+
+        ax4 = fig.add_subplot(gs[2,0], sharex=ax1)
+        ax4.plot(liquid_water_path_complete_time.time, liquid_water_path_complete_time.values*1e3, marker='o', color='blue', label='LWP')
+        ax4.set_ylabel(r'LWP [g m$^{-2}$]')
+        ax4.set_xlabel(r'Time [UTC] - DATE: '+new_start_time.strftime("%d/%m/%Y"))
+
+        ax4.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+        ax4.grid()
+        # plt.suptitle(f"{cloud_prop.source}")
+        # fig.savefig(f"{PATH_FIG_DER_COMPARISON}{date_string}_{name_title}_diff_der_pcolor_{posfix}.png", dpi=300, bbox_inches='tight')
+        plt.show()
+        # Create a new xarray dataset
+        new_dataset = xr.Dataset({
+            'cloud_classification': (['time', 'height'], df_class_filtered_complete_time.values),
+            'cloud_mask': (['time', 'height'], ds_mask_reindexed.cloud_mask.values)
+        }, coords={
+            'time': df_class_filtered_complete_time.index,
+            'height': df_class_filtered_complete_time.columns
+        })
+
+        new_dataset.to_netcdf("./ds_mask_reindexed.nc")
+        set_trace()
+
 def plot_variable_inside_cloud(df_class, ds_ze, cloud_filter, name_title, color_names):
 
     time_series    = df_class.index
@@ -1298,17 +1424,18 @@ def process_cloud_data(date: datetime.datetime,
             cloud_physical_properties['num_knist_mh']  = xr.DataArray(num_mh.values[:,0], coords={'time': cloud_physical_properties['time'].values}, dims=['time'])
             cloud_physical_properties['reff_kist_mh']  = xr.DataArray(ref_mh.values, coords=cloud_physical_properties.coords, dims=cloud_physical_properties.dims)
             # ------------------------------------------------------------------------------------------------
-            plot_cloud_comparison(df_classification,
-                                    categorize,
-                                    df_reflectivity,
-                                    classification_filter,
-                                    cloud, .1, 5.,
-                                    CLASSIFICATION_TICK_LABELS,
-                                    cloud_type= CLOUD_TYPES[cloud],
-                                    targ_between_cloud= TARG_BET_CLOUD[cloud],
-                                    integrated_variables= cloud_physical_properties,
-                                    cloud_prop=cloud_physical_properties,
-                                    plot_cloud_prop=True)
+            # plot_cloud_comparison(df_classification,
+            #                         categorize,
+            #                         df_reflectivity,
+            #                         classification_filter,
+            #                         cloud, .1, 5.,
+            #                         CLASSIFICATION_TICK_LABELS,
+            #                         cloud_type= CLOUD_TYPES[cloud],
+            #                         targ_between_cloud= TARG_BET_CLOUD[cloud],
+            #                         integrated_variables= cloud_physical_properties,
+            #                         cloud_prop=cloud_physical_properties,
+            #                         plot_cloud_prop=True)
+
             # plot_variable_inside_cloud(df_classification,
             #                           xr_radar_variables,
             #                           classification_filter,
@@ -1323,13 +1450,18 @@ def process_cloud_data(date: datetime.datetime,
                                              TARG_BET_HYDRO,
                                              NBINS_BETWEEN_HYDRO)
 
-        cloud_mask = classification_filter.cloud_mask()
+        cloud_mask            = classification_filter.cloud_mask()
         ds_hydrometeor[cloud] = xr.DataArray(cloud_mask, dims=('time', 'range'), coords={'time': time, 'range': height})
-        # with sns.axes_style("whitegrid"):
-        #     plot_cloud_type(df_classification,
-        #                     df_reflectivity,
-        #                     classification_filter,
-        #                     cloud, .1, 12., CLASSIFICATION_TICK_LABELS)
+        
+        if cloud == "Total":
+            plot_cloud_mask_2(df_class=df_classification,
+                            categorize=categorize,
+                            cloud_filter=classification_filter,
+                            name_title=cloud,
+                            color_names=CLASSIFICATION_TICK_LABELS,
+                            cloud_prop=cloud_physical_properties,
+                            plot_cloud_prop=True
+                            )
     #------------------------------------------------------------------------------------------------
     number_of_layers.index.name = 'time'
     ds_layers          = xr.Dataset.from_dataframe(number_of_layers)
@@ -2032,7 +2164,7 @@ plot_chirp_time_series  = False
 process_database        = True
 save_cloudnet_products  = False
 
-process_for_specific_analysis = True
+process_for_specific_analysis = False
 #-------------------------------------------------------------------------------------------------------
 # Check the size day folder withot LDR for nephele in NAS
 #-------------------------------------------------------------------------------------------------------
