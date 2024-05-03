@@ -28,7 +28,7 @@ import seaborn as sns
 import glob
 from matplotlib import cm
 from matplotlib.patches import Patch
-from mwr_class import Mwr
+from phd_clouds.mwr_class import Mwr
 from sklearn.cluster import DBSCAN
 # from cloudnetpy_qc import quality
 #-------------------------------------------------------------------------------------------------------
