@@ -753,31 +753,31 @@ def plot_histograms_with_profiles(datasets: list, bin_width: float,
     fig.savefig(figname, dpi=300)
     plt.show()
 
-def create_frequency_cloud_layers_plot(frequency_cloud_layers):
-    # List of markers for the plot
-    markers = ["o", "*", "s", "<", "X"]
+# def create_frequency_cloud_layers_plot(frequency_cloud_layers):
+#     # List of markers for the plot
+#     markers = ["o", "*", "s", "<", "X"]
 
-    # Create a subplot
-    fig, ax = plt.subplots(figsize=(10, 6))
+#     # Create a subplot
+#     fig, ax = plt.subplots(figsize=(10, 6))
 
-    # Loop over each variable and create a plot
-    for i, variable in enumerate(frequency_cloud_layers):
-        p = ax.plot(frequency_cloud_layers['time'],
-                    frequency_cloud_layers[variable],
-                    label=variable,
-                    color=np.random.rand(3),  # Generate random color
-                    marker=markers[i])
+#     # Loop over each variable and create a plot
+#     for i, variable in enumerate(frequency_cloud_layers):
+#         p = ax.plot(frequency_cloud_layers['time'],
+#                     frequency_cloud_layers[variable],
+#                     label=variable,
+#                     color=np.random.rand(3),  # Generate random color
+#                     marker=markers[i])
 
-    ax.xaxis.set_major_locator(mdates.MonthLocator())  # Set x-axis tick locator to show ticks by month
-    ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%y'))  # Set x-axis tick formatter to show month and year
-    ax.set_xticks(dataset["time"][::3])  # Set x-axis ticks at every 3 months
-    plt.xticks(rotation=45)  # Rotate x-axis labels for better visibility
-    # Add a legend
-    ax.legend()
-    plt.xticks(rotation=45)  # Rotate x-axis labels for better visibility
+#     ax.xaxis.set_major_locator(mdates.MonthLocator())  # Set x-axis tick locator to show ticks by month
+#     ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%y'))  # Set x-axis tick formatter to show month and year
+#     ax.set_xticks(dataset["time"][::3])  # Set x-axis ticks at every 3 months
+#     plt.xticks(rotation=45)  # Rotate x-axis labels for better visibility
+#     # Add a legend
+#     ax.legend()
+#     plt.xticks(rotation=45)  # Rotate x-axis labels for better visibility
 
-    # Display the plot
-    plt.show()
+#     # Display the plot
+#     plt.show()
 
 def interpolate_2d(
     x: np.ndarray,

@@ -26,3 +26,16 @@ CLASSIFICATION_TICK_LABELS = ['Clear  sky',
                'No Data']
 
 TARG_BET_HYDRO = [CLEAR_SKY, AERO_NO_CLOUD, INSECT_NO_CLOUD, AERO_WITH_INSECT_NO_CLOUD]
+
+GRANADA_ALTITUDE = 680.0  # Altitude of Granada in meters
+
+SEASONS = {
+        'summer': (6, 8),   # from 1st June to 31st August
+        'fall': (9, 11),    # from 1st September to 30th November
+        'winter': (12,2),   # from 1st December to 28th February
+        'spring': (3, 5)    # from 1st March to 31st May
+    }
+
+CLASSIFICATION_COLORS = ["#FFFFFF","#007CFF", "#0A2658", "#FFFF00", "#4EF6C1",\
+                    "#D05BAC", "#BFBD8D", "#118527","#8794B3", "#DA6F49", "#88183E", "#DDDEDA"]
+

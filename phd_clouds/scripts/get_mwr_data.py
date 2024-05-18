@@ -13,7 +13,7 @@ import dask
 import re
 import matplotlib.font_manager as fm
 import os
-from mwr_class import Mwr
+from phd_clouds.mwr_class import Mwr
 
 # Define the path to the figures directory
 PATH_FIG = '../figures/'
