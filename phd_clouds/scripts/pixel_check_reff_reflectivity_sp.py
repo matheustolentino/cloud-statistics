@@ -446,8 +446,8 @@ def weight_finding_algorithm(time_guess,
 # -------------------------------------------------------------------------------------------------------------------------------------------------
 instrument_name   = 'nephele'
 
-# date = datetime.datetime.strptime('2021-09-13', '%Y-%m-%d') # el codigo de cris funciona para chirps en esta fecha
-date = datetime.datetime.strptime('2022-11-16', '%Y-%m-%d')
+date = datetime.datetime.strptime('2021-09-13', '%Y-%m-%d') # el codigo de cris funciona para chirps en esta fecha
+# date = datetime.datetime.strptime('2022-11-16', '%Y-%m-%d')
 
 
 filepath_classification = f"{PATH_CLASS}/{date.strftime('%Y%m%d')}_granada_classification.nc"
@@ -480,10 +480,13 @@ for t in time_high_diff:
     dic_range_for_time[t.values] = ds_diff_der['height'][mask_high_diff.sel(time=t).values].values
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------
-time_to_study = time_high_diff[0].values
+time_guess_chriss = np.datetime64('2021-09-13T11:30:00') ##CHANGE THIS
+# time_to_study = time_high_diff[0].values
+time_to_study = time_guess_chriss
 ti_datetime = pd.to_datetime(time_to_study)
 time_guess = ti_datetime.strftime('%Y%m%dT%H%M%S.%f')[:-3]
-ranges_to_study = dic_range_for_time[time_to_study]
+# ranges_to_study = dic_range_for_time[time_to_study] ##########CHANGE THIS
+ranges_to_study = ranges = np.arange(2000, 3000, 60)
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------
 pattern               = f"{ti_datetime.strftime('%y%m%d_%H')}*.LV0"
@@ -558,7 +561,7 @@ nearest_time_raw = gpy_radarnc.data.time.sel(time=time_to_study, method='nearest
 if len(ranges_to_study) > 1:
     fig, filepath =  gpy_radarnc.plot_spectra_by_range(target_time=time_to_study, 
                                                    range_slice=ranges_to_study.tolist(),
-                                                   **{"savefig": False, "velocity_limits": (-4, 4)}
+                                                   **{"savefig": False, "velocity_limits": (-8, 0)}
                                                    )
 else:
     fig, filepath = gpy_radarnc.plot_spectra_by_time(target_range=ranges_to_study[0],
