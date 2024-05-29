@@ -1442,7 +1442,7 @@ def calculate_time_remove(ds_available, ds_reference_complete, freq_rm: str = "M
 hydrometeor_analysis = False
 
 cloud_properties_analysis = True
-plot_data_availability = False
+plot_data_availability = True
 plot_cloud_data_availability = False
 plot_daily_cloud_availability = True
 plot_lwc_iwc_der_ier = False
@@ -2175,9 +2175,10 @@ if cloud_properties_analysis:
         plt.show()
 
     if plot_daily_cloud_availability:
-        clouds_to_analyse       = ['Liquid', 'Mixed_phase', 'Ice', 'Pre_liquid', 'Pre_mixed_phase']
-        freq_time = 'M'
-        delta_time = 1
+        # clouds_to_analyse       = ['Liquid', 'Mixed_phase', 'Ice', 'Pre_liquid', 'Pre_mixed_phase']
+        clouds_to_analyse       = ['Mixed_phase', 'Ice']
+        freq_time = 'D'
+        delta_time = 30
         cloud_single_layer_freq     = mask_cloud_availability[clouds_to_analyse].resample(time=freq_time).mean()
         years = np.unique(mask_cloud_availability['time.year'])
 
@@ -2230,8 +2231,8 @@ if cloud_properties_analysis:
         fig.savefig(f"{PATH_FIG}cloud_single_layer_frequency_by_{freq_time}.png", dpi=300, bbox_inches='tight')
         plt.show()
         
-        fig2 = plt.figure(figsize=(30, 25))  # Increase the size of the plot for better visibility
-        gs2  = fig2.add_gridspec(len(years), 1, hspace=0.05)
+        fig2 = plt.figure(figsize=(18, 6.5))  # Increase the size of the plot for better visibility
+        gs2  = fig2.add_gridspec(len(clouds_to_analyse), 1, hspace=0.05)
         for i, var_name in enumerate(clouds_to_analyse):
             axs  = fig2.add_subplot(gs2[i, :])
             cond = clouds_single_layer[var_name].compute() == 1
@@ -2241,21 +2242,21 @@ if cloud_properties_analysis:
                 if freq_time == 'D':
                     axs.plot(iwp_year.time.dt.dayofyear.values, iwp_year,
                         '-o',
-                        linewidth=1,
+                        linewidth=2,
                         label=f"{year}",
                         markersize=6)
                     
                     axs.set_xticks(iwp_year.time.dt.dayofyear[::delta_time].values)
-                    axs.set_xlim([iwp_year.time.dt.dayofyear.values, iwp_year.time.dt.dayofyear.values[-1]])
+                    axs.set_xlim([iwp_year.time.dt.dayofyear.values[0], iwp_year.time.dt.dayofyear.values[-1]])
                 
-            axs.set_ylabel(f"{var_name.replace('_', '-').title()} (g m$^{-2}$)")
+            axs.set_ylabel(f"{var_name.replace('_', '-').title()}"+r", g m$^{-2}$", fontsize=15)
             axs.grid(True)
             if i == 0:
-                axs.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15), ncol=len(years), frameon=False)
+                axs.legend(loc='upper center', ncol=len(years)//2, frameon=False, prop={'size': 14})
             
             if i == len(clouds_to_analyse)-1:
-                axs.set_xticklabels(iwp_year.time[::delta_time].dt.strftime('%d/%m').values, rotation=45)
-                axs.set_xlabel("Time")
+                axs.set_xticklabels(iwp_year.time[::delta_time].dt.strftime('%d/%m').values, rotation=30)
+                axs.set_xlabel("Day/Month")
             else:
                 axs.xaxis.set_tick_params(labelbottom=False)
             # add name to months
@@ -2264,8 +2265,7 @@ if cloud_properties_analysis:
             # add name to months
         fig2.savefig(f"{PATH_FIG}IWP_by_{freq_time}.png", dpi=300, bbox_inches='tight')
         plt.show()
-        
-        set_trace()
+        breakpoint()
 
     if plot_lwc_iwc_der_ier:
         # ylim_violin = [0, 70 ]
@@ -2509,7 +2509,8 @@ if cloud_properties_analysis:
                 # removing nans from month data
                 month_data = month_data[~np.isnan(month_data)]
                 # mean_profile = monthly_data.sel(month=month).dropna(dim='height_bins')
-                ax3.violinplot(month_data, positions=[month], showmeans=False, showmedians=True, showextrema=False)
+                ax3.violinplot(month_data, positions=[month], 
+                               showmeans=False, showmedians=True, showextrema=False)
 
             ax3.set_ylabel(r"R$_{eff}$ ($\mu$m)")
             ax3.set_xlabel("Months")
@@ -3179,7 +3180,7 @@ if cloud_macrophysics_analysis:
     #             ax.grid(True)
     #             plt.show()
     #             fig.savefig(f"{PATH_FIG}mwr_profiles_humidity_{var_name}_cloud_base.png", dpi=300)
-    set_trace()
+
     # -----------------------------------------------------------------------------------------------
     # Tests
     # -----------------------------------------------------------------------------------------------

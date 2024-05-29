@@ -3,7 +3,8 @@ import xarray as xr
 
 from phd_clouds.utils import find_local_maxima, fit_gaussian,\
         get_smoothed_for_weight, fit_gaussian_bimode, fit_gaussian_triple, \
-        gaussian_distribution, calculate_r_squared, get_lv0_gfatpy, estimate_baseline
+        gaussian_distribution, calculate_r_squared, get_lv0_gfatpy, \
+            estimate_baseline, checkAliasing, find_max_num
 from phd_clouds.constants import CLASSIFICATION_TICK_LABELS, CLASSIFICATION_COLORS, CLASSIFICATION_TICK_LABELS, GRANADA_ALTITUDE 
 import time
 from tabulate import tabulate
@@ -471,7 +472,7 @@ ds_diff_der = ds_diff_der.rename('diff_der')
 ds_diff_der.attrs['long_name'] = 'difference between scaled and not scaled droplet re'
 ds_diff_der.attrs['units'] = r'$\mu$m'
 
-mask_high_diff = (ds_diff_der > 60) # pixels with more than 10 um of difference
+mask_high_diff = (ds_diff_der > 10) # pixels with more than 10 um of difference
 time_mask      = np.max(mask_high_diff, axis=1)
 time_high_diff = ds_diff_der.time[time_mask]
 
@@ -480,13 +481,14 @@ for t in time_high_diff:
     dic_range_for_time[t.values] = ds_diff_der['height'][mask_high_diff.sel(time=t).values].values
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------
-time_guess_chriss = np.datetime64('2021-09-13T11:30:00') ##CHANGE THIS
-# time_to_study = time_high_diff[0].values
-time_to_study = time_guess_chriss
+# time_guess_chriss = np.datetime64('2021-09-13T11:30:00') ##CHANGE THIS
+# time_to_study = time_guess_chriss
+
+time_to_study = time_high_diff[2].values
 ti_datetime = pd.to_datetime(time_to_study)
 time_guess = ti_datetime.strftime('%Y%m%dT%H%M%S.%f')[:-3]
-# ranges_to_study = dic_range_for_time[time_to_study] ##########CHANGE THIS
-ranges_to_study = ranges = np.arange(2000, 3000, 60)
+ranges_to_study = dic_range_for_time[time_to_study] ##########CHANGE THIS
+# ranges_to_study = ranges = np.arange(2000, 3000, 60)
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------
 pattern               = f"{ti_datetime.strftime('%y%m%d_%H')}*.LV0"
@@ -555,19 +557,19 @@ gpy_radarnc = gfp_radarnc(path_lv0nc)
 assert gpy_radarnc.level == 0
 assert gpy_radarnc.type == 'ZEN'
 
-# gpy_radarnc._data = gpy_radarnc._data.resample(time='30S').mean()
-nearest_time_raw = gpy_radarnc.data.time.sel(time=time_to_study, method='nearest').values
+# # gpy_radarnc._data = gpy_radarnc._data.resample(time='30S').mean()
+# nearest_time_raw = gpy_radarnc.data.time.sel(time=time_to_study, method='nearest').values
 
 if len(ranges_to_study) > 1:
     fig, filepath =  gpy_radarnc.plot_spectra_by_range(target_time=time_to_study, 
                                                    range_slice=ranges_to_study.tolist(),
-                                                   **{"savefig": False, "velocity_limits": (-8, 0)}
+                                                   **{"savefig": False, "velocity_limits": (-6, 0)}
                                                    )
-else:
-    fig, filepath = gpy_radarnc.plot_spectra_by_time(target_range=ranges_to_study[0],
-                                                     time_slice=(nearest_time_raw-pd.Timedelta(minutes=2), nearest_time_raw+pd.Timedelta(minutes=2)),
-                                                     **{"savefig": False}
-                                                     )
+# else:
+#     fig, filepath = gpy_radarnc.plot_spectra_by_time(target_range=ranges_to_study[0],
+#                                                      time_slice=(nearest_time_raw-pd.Timedelta(minutes=2), nearest_time_raw+pd.Timedelta(minutes=2)),
+#                                                      **{"savefig": False}
+#                                                      )
 fig, filepath = gpy_radarnc.plot_2D_spectrum(
         target_time=time_to_study,
         range_limits=(ranges_to_study[0], ranges_to_study[-1]),
@@ -580,44 +582,53 @@ fig, filepath = gpy_radarnc.plot_2D_spectrum(
 # for axis in ax:
 #     axis.set_xlim(-2.5, 2.5)
 # fig.show()
-
+angle_rada = np.sin(np.radians(30))
 # -------------------------------------------------------------------------------------------------------------------------------------------------
 # Example
 # -------------------------------------------------------------------------------------------------------------------------------------------------
-ds_pixel = gpy_radarnc.data.sel(time=time_to_study, range=ranges_to_study[2], method='nearest')
+for range_to_study in ranges_to_study:
+    ds_pixel = gpy_radarnc.data.sel(time=time_to_study, range=range_to_study, method='nearest')
 
-mask_finite = np.isfinite(ds_pixel["doppler_spectrum"].values)
+    mask_finite = np.isfinite(ds_pixel["doppler_spectrum"].values)
 
-# Convert to dBZe
-ds_pixel["doppler_spectrum_dBZe"] = retrieve_dBZe(ds_pixel["doppler_spectrum"], gpy_radarnc.band)
-ds_pixel["doppler_spectrum_dBZe"].attrs = {
-            "long_name": "Power density",
-            "units": "dB",
-        }
+    # Convert to dBZe
+    ds_pixel["doppler_spectrum_dBZe"] = retrieve_dBZe(ds_pixel["doppler_spectrum"], gpy_radarnc.band)
+    ds_pixel["doppler_spectrum_dBZe"].attrs = {
+                "long_name": "Power density",
+                "units": "dB",
+            }
 
-spectrum = ds_pixel["doppler_spectrum_dBZe"].values[mask_finite]
-velocity = ds_pixel["velocity_vectors"].sel(chirp=ds_pixel["chirp_number"]).values[mask_finite]
+    spectrum = ds_pixel["doppler_spectrum_dBZe"].values[mask_finite]
+    velocity = ds_pixel["velocity_vectors"].sel(chirp=ds_pixel["chirp_number"]).values[mask_finite]
+    
+    if ds_pixel.compression.values == 1:
+        smoothed_spectrum = gaussian_filter1d(spectrum, 2)
+    else:
+        smoothed_spectrum = gaussian_filter1d(spectrum, 10)
+    baseline          = estimate_baseline(smoothed_spectrum, 1)
+    peaks, peak_info  = find_peaks(smoothed_spectrum, prominence=1.5)
+    baseline          = estimate_baseline(smoothed_spectrum, 1)
+    aliasing_1, toplevel= checkAliasing(smoothed_spectrum)
+    num, flag, aliasing_2 = find_max_num(smoothed_spectrum, toplevel)
+    aliasing = bool(aliasing_1 or aliasing_2)
+    peak_values       = smoothed_spectrum[peaks]
+    peak_velocities   = velocity[peaks]
+    # print(peak_info)
+    print(f" Alias: {aliasing}, flag: {flag}, num: {num}")
 
-
-smoothed_spectrum = gaussian_filter1d(spectrum, 3)
-baseline          = estimate_baseline(smoothed_spectrum, 1)
-peaks, peak_info  = find_peaks(smoothed_spectrum,prominence=10)
-baseline          = estimate_baseline(smoothed_spectrum, 1)
-peak_values       = smoothed_spectrum[peaks]
-peak_velocities   = velocity[peaks]
-print(peak_info)
-
-fig, ax = plt.subplots(1, figsize=[9, 6])
-ax.plot(velocity, spectrum)
-ax.plot(velocity, smoothed_spectrum, "-k", linewidth=2)
-ax.axhline(y=baseline, color='r', linestyle='--', label='Baseline')
-for peak_value, peak_velocity in zip(peak_values, peak_velocities):
-    ax.axvline(x=peak_velocity, color='g', linestyle='--', label=f'Peak: {peak_value:.2f} dB')
-ax.set_xlabel("Velocity [m/s]")
-ax.set_ylabel("Power density [dB]")
-ax.set_title("Doppler spectrum")
-ax.legend()
-plt.show()
+    fig, ax = plt.subplots(1, figsize=[9, 6])
+    ax.plot(velocity, spectrum)
+    ax.plot(velocity, smoothed_spectrum, "-k", linewidth=2)
+    ax.axhline(y=baseline, color='r', linestyle='--', label='Baseline')
+    for peak_value, peak_velocity in zip(peak_values, peak_velocities):
+        ax.axvline(x=peak_velocity, color='g', linestyle='--', label=f'Peak: {peak_value:.2f} dB')
+    if aliasing:
+        ax.axhline(y=toplevel, color='b', linestyle='--', label='Aliasing')
+    ax.set_xlabel("Velocity [m/s]")
+    ax.set_ylabel("Power density [dB]")
+    ax.set_title(f"Doppler spectrum - Range {range_to_study}")
+    ax.legend()
+    plt.show()
 # # -------------------------------------------------------------------------------------------------------------------------------------------------
 
 # # -------------------------------------------------------------------------------------------------------------------------------------------------
@@ -638,9 +649,8 @@ plt.show()
 # )
 
 # for time_cloudnet in time_section_cloudnet:
-#     closest_time_radarnc = gpy_radar.data.time.sel(time=time_cloudnet, method='nearest').values
 #     rpg_radar            = get_lv0_gfatpy(time_cloudnet, instrument_name, filepath_output)
-#     sdata                = rpg_radar.data.sel(time=closest_time_radarnc)
+#     sdata                = rpg_radar.data.sel(time=time_cloudnet, method='nearest')
 #     sdata["doppler_spectrum_dBZe"] = retrieve_dBZe(sdata["doppler_spectrum"], rpg_radar.band)
 #     for i, z in enumerate(range_cloudnet):
 #         closest_range_radarnc = sdata["range"].sel(range=z, method='nearest').values
@@ -655,4 +665,4 @@ plt.show()
 #             ds_modes["target_mode"].loc[{"time": time_cloudnet, "height": z}] = n_modes
 
 # sliced_modes = ds_modes.sel(time=slice(*slice_time_radarnc))
-# print(np.sum(sliced_modes['target_mode'].values==2))
+# print(np.sum(sliced_modes['target_mode'].values==4))

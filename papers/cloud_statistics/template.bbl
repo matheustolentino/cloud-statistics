@@ -1,0 +1,29 @@
+\begin{thebibliography}{2}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\providecommand{\urlprefix}{}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{https://doi.org/\discretionary{}{}{}#1}\else
+  \providecommand{\doi}{https://doi.org/\discretionary{}{}{}\begingroup
+  \urlstyle{rm}\Url}\fi
+
+\bibitem[{{Alexandre Rios-Entenza} et~al.(){Alexandre Rios-Entenza},
+  Rios-Entenza, {Pedro M. M. Soares}, Soares, {Ricardo M. Trigo}, Trigo, {Rita
+  M. Cardoso}, Cardoso, {Gonzalo Miguez‐Macho}, and
+  Miguez-Macho}]{alexandrerios-entenzaMoistureRecyclingIberian2014}
+{Alexandre Rios-Entenza}, Rios-Entenza, A., {Pedro M. M. Soares}, Soares, P.
+  M.~M., {Ricardo M. Trigo}, Trigo, R.~M., {Rita M. Cardoso}, Cardoso, R.~M.,
+  {Gonzalo Miguez‐Macho}, and Miguez-Macho, G.: Moisture Recycling in the
+  {{Iberian Peninsula}} from a Regional Climate Simulation: {{Spatiotemporal}}
+  Analysis and Impact on the Precipitation Regime, 119, 5895--5912,
+  \doi{10.1002/2013jd021274}.
+
+\bibitem[{Shahi et~al.()Shahi, Polcher, Bastin, Pennel, and
+  Fita}]{shahiAssessmentSpatiotemporalVariability2022}
+Shahi, N.~K., Polcher, J., Bastin, S., Pennel, R., and Fita, L.: Assessment of
+  the Spatio-Temporal Variability of the Added Value on Precipitation of
+  Convection-Permitting Simulation over the {{Iberian Peninsula}} Using the
+  {{RegIPSL}} Regional Earth System Model, 59, 471--498,
+  \doi{10.1007/s00382-022-06138-y}.
+
+\end{thebibliography}

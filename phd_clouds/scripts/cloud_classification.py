@@ -13,6 +13,13 @@ from scipy import ndimage
 import numpy as np
 import pandas as pd
 import matplotlib.dates as mdates
+import matplotlib
+from IPython import get_ipython
+ipython = get_ipython()
+
+# if ipython is not None:
+#     # ipython.run_line_magic('matplotlib', 'inline')
+#     ipython.run_line_magic('matplotlib', 'notebook')
 
 fontsize = 14
 # Set the font to Times New Roman using LaTeX
@@ -22,10 +29,21 @@ plt.rcParams['font.serif'] = ['Times New Roman'] + plt.rcParams['font.serif']
 # Set the fontsize for all elements in the plot
 plt.rcParams['font.size'] = fontsize
 
-plt.ion()
 plt.close('all')
 
 PATH_FIG          = '../figures/'
+PATH_FIG_TEST     = '../../tests/figures/'
+
+def israinabove(hydromet_only_column: np.ndarray, rain_value: int) -> bool:
+    """
+    Check if there is rain above the cloud column
+    """
+    rain_above = False
+    for i in range(hydromet_only_column.shape[0]):
+        if hydromet_only_column[i] == rain_value:
+            rain_above = True
+            return rain_above
+
 # hydromet colors
 manual_colors = ["#FFFFFF","#007CFF", "#0A2658", "#FFFF00", "#4EF6C1",\
                     "#D05BAC", "#BFBD8D", "#118527","#8794B3", "#DA6F49", "#88183E", "#DDDEDA"]
@@ -75,31 +93,78 @@ all_hydromet_values = [CLOUD_LIQUID, DRIZZLE_OR_RAIN, DRIZZLE_OR_RAIN_LIQUID_DRO
                                                 MELTING_ICE_LIQUID_DROPLETS]
 
 path_save = "/media/matheustolen/Seagate Basic/cloudnet/cloud_classification" # Path to save the cloud classification files
-case_study  = True
-if case_study:
-    path_output = "../../tests/data" # Path to save cloudnet downloaded files
-    site= 'granada'
-    product_1 = 'classification'
-    product_2 = 'categorize'
-    date_ini = "2022-11-17"
-    date_end = "2022-11-17"
+path_microphys = "/home/matheustolen/Documentos/matheus_doctorado/output_retrievals" # Path with files already downloaded
+path_categorize = "/media/matheustolen/Seagate Basic/cloudnet/categorize" # Path with files already downloaded
+site= 'granada'
+product_1 = 'classification'
+product_2 = 'categorize'
+
+process_all  = False
+save_files = False
+
+make_plot = False
+show_figure = False
+
+filter_abl_ice_clouds = True
+
+if filter_abl_ice_clouds:
+    print("Filtering ice clouds in the ABL")
+else:
+    path_save = "/media/matheustolen/Seagate Basic/cloudnet/cloud_classification_without_filtering_ice_ABL"
+    print("*****************Warning**********************\nNot filtering ice clouds in the ABL")
+
+if ipython is not None and show_figure:
+    ipython.run_line_magic('matplotlib', 'notebook')
+else:
+    matplotlib.use('TkAgg')
+
+case_to_only_save = False
+if not process_all:
+    plt.ion()
+    path_to_data = "../../tests/data" # Path to save cloudnet downloaded files
+
+    date_ini = "2019-11-18"
+    date_end = "2019-11-18"
     date_end_new = date_end.replace("-", "")
 
-    download_cloudnet_products(date_ini, date_end, path_output, product=product_1, site=site)
-    download_cloudnet_products(date_ini, date_end, path_output, product=product_2, site=site)
+    download_cloudnet_products(date_ini, date_end, path_to_data, product=product_1, site=site)
+    download_cloudnet_products(date_ini, date_end, path_to_data, product=product_2, site=site)
 
     # Load the NetCDF file
     filenames = [f"{date_end_new}_{site}_{product_1}.nc"]
-    categorize = xr.open_dataset(os.path.join(path_output, f"{date_end_new}_{site}_{product_2}.nc"))
+    lwc_filepaths = [f"{date_end_new}_{site}_lwc-scaled-adiabatic.nc"]
+    iwc_filepaths = [f"{date_end_new}_{site}_iwc-Z-T-method.nc"]
+    der_filepaths = [f"{date_end_new}_{site}_der.nc"]
+    ier_filepaths = [f"{date_end_new}_{site}_ier.nc"]
 else:
-    path_output = "/media/matheustolen/Seagate Basic/cloudnet/classification" # Path with files already downloaded
+    path_to_data    = "/media/matheustolen/Seagate Basic/cloudnet/classification" # Path with files already downloaded
+    lwc_filepaths = [file for file in os.listdir(path_microphys) if file.endswith("lwc-scaled-adiabatic.nc")]
+    iwc_filepaths = [file for file in os.listdir(path_microphys) if file.endswith("iwc-Z-T-method")]
+    der_filepaths = [file for file in os.listdir(path_microphys) if file.endswith("der.nc")] 
+    ier_filepaths = [file for file in os.listdir(path_microphys) if file.endswith("ier.nc")]
+
     # Get a linst of filenames of products
-    filenames = os.listdir(path_output)
+    filenames = os.listdir(path_to_data)
 
-for file in filenames:
+for idx_file, file in enumerate(filenames):
     # Load the downloaded with xarray pandas:
-    data = xr.open_dataset(os.path.join(path_output, file))
+    data         = xr.open_dataset(os.path.join(path_to_data, file))
+    date_end_new = pd.to_datetime(data.time.values[-1]).strftime("%Y%m%d")
+    
+    if process_all:
+        categorize   = xr.open_dataset(os.path.join(path_categorize, f"{date_end_new}_{site}_{product_2}.nc"))
+    else: 
+        categorize   = xr.open_dataset(os.path.join(path_to_data, f"{date_end_new}_{site}_{product_2}.nc"))
+    # # Load the microphysical data
+    # lwc = xr.open_dataset(os.path.join(path_microphys, lwc_filepaths[idx_file]))
+    # iwc = xr.open_dataset(os.path.join(path_microphys, iwc_filepaths[idx_file]))
+    # der = xr.open_dataset(os.path.join(path_microphys, der_filepaths[idx_file]))
+    # ier = xr.open_dataset(os.path.join(path_microphys, ier_filepaths[idx_file]))
 
+    # # der_new = der['der'].where(data['target_classification'] == CLOUD_LIQUID)
+    # # ier_new = ier['ier'].where(data['target_classification'] == ICE_PARTICLES)
+    # new_der = der.copy()
+    # new_ier = ier.copy()
     # ----------------------------------------------------------------------------------------------------------------------
     # generating the cloud mask
     # ----------------------------------------------------------------------------------------------------------------------
@@ -129,7 +194,7 @@ for file in filenames:
     # dilated_array = ndimage.binary_dilation(a, structure=s).astype(a.dtype)
     # print(dilated_array)
     # Set the desired connectivity distance
-    distance = 1
+    distance = 2
     # Create a binary structure with specified connectivity
     s = ndimage.generate_binary_structure(cloud_mask.ndim, connectivity=distance)
 
@@ -181,65 +246,68 @@ for file in filenames:
         hydro_inside_cloud = hydro_cloud[mask_withou_rain]
         n_pixels_inside_cloud = len(indx_inside_cloud[cloud_number])
 
-        hydromet_freq = {}
-        for hydromet_name, hydromet_val in HYDROMET_VALUES.items():
-            count = np.count_nonzero(hydro_inside_cloud == hydromet_val)
-            if n_pixels_inside_cloud == 0:  # Only rain
-                hydromet_freq[hydromet_name] = 0
-            else:
-                hydromet_freq[hydromet_name]  = 100*(count/n_pixels_inside_cloud)
-            cloud_composition[cloud_number] = hydromet_freq
-
-        liquid_percentage = cloud_composition[cloud_number]["CLOUD_LIQUID"]+cloud_composition[cloud_number]["DRIZZLE_OR_RAIN_LIQUID_DROPLETS"]
-
-        if liquid_percentage > 70:
-            if n_pixels_rain > min_rain_pixels:
-                ds_classification[cloud_number] = "Liquid-Precipitable"
-                cloud_type["Liquid-Precipitable"][np.unique(indx_inside_cloud[cloud_number][:, 0])] = 1
-            else:
-                ds_classification[cloud_number] = "Liquid"
-                cloud_type["Liquid"][np.unique(indx_inside_cloud[cloud_number][:, 0])] = 1
-
-        elif cloud_composition[cloud_number]["ICE_PARTICLES"] > 90 or \
-            (cloud_composition[cloud_number]["CLOUD_LIQUID"] + cloud_composition[cloud_number]["ICE_WITH_SUP_WATER"]) < 10:
-
-            if cloud_composition[cloud_number]["DRIZZLE_OR_RAIN_LIQUID_DROPLETS"] > 0:
-                drizzle_index = np.where(hydro_inside_cloud == DRIZZLE_OR_RAIN_LIQUID_DROPLETS)
-                # remove drizzle icdx from indx_inside_cloud
-                indx_inside_cloud[cloud_number] = np.delete(indx_inside_cloud[cloud_number], drizzle_index, axis=0)
-
-            if n_pixels_rain > min_rain_pixels:
-                # set_trace()
-                ds_classification[cloud_number] = "Ice-Precipitable"
-                cloud_type["Ice-Precipitable"][np.unique(indx_inside_cloud[cloud_number][:, 0])] = 1
-            else:
-                ds_classification[cloud_number] = "Ice"
-                cloud_type["Ice"][np.unique(indx_inside_cloud[cloud_number][:, 0])] = 1
-
-        # elif cloud_composition[cloud_number]["MELTING_ICE"]  + cloud_composition[cloud_number]["MELTING_ICE_LIQUID_DROPLETS"] > 0:
-
-        #     if cloud_composition[cloud_number]["ICE_PARTICLES"] > cloud_composition[cloud_number]["DRIZZLE_OR_RAIN_LIQUID_DROPLETS"]:
-        #         ds_classification[cloud_number] = "Ice-Precipitable"
-
-        elif n_pixels_rain > min_rain_pixels:
-            ds_classification[cloud_number] = "Mixed-Phase-Precipitable"
-            cloud_type["Mixed-Phase-Precipitable"][np.unique(indx_inside_cloud[cloud_number][:, 0])] = 1
-
-            drizzle_index = np.where(hydro_inside_cloud == DRIZZLE_OR_RAIN_LIQUID_DROPLETS)
-            indx_inside_cloud[cloud_number] = np.delete(indx_inside_cloud[cloud_number], drizzle_index, axis=0)
-
-        else:
-            ds_classification[cloud_number] = "Mixed-Phase"
-            cloud_type["Mixed-Phase"][np.unique(indx_inside_cloud[cloud_number][:, 0])] = 1
-
-        if n_pixels_inside_cloud > cloud_min_pixels:
-            valid_clouds.append(cloud_number)
-            time_idx_valid_clouds.append(np.unique(indx_inside_cloud[cloud_number][:, 0]))
-        else:
+        if n_pixels_inside_cloud == 0:  # Only rain
             ds_classification[cloud_number] = "Noise"
-            idx_noise = np.unique(indx_inside_cloud[cloud_number][:, 0])
+            idx_noise = np.unique(indx[:, 0])
             time_idx_noise[idx_noise] = 1
             cloud_type["Noise"][idx_noise] = 1
+        else:
+            hydromet_freq = {}
+            for hydromet_name, hydromet_val in HYDROMET_VALUES.items():
+                count = np.count_nonzero(hydro_inside_cloud == hydromet_val)
+                hydromet_freq[hydromet_name]  = 100*(count/n_pixels_inside_cloud)
+                cloud_composition[cloud_number] = hydromet_freq
+
+            liquid_percentage = cloud_composition[cloud_number]["CLOUD_LIQUID"]+cloud_composition[cloud_number]["DRIZZLE_OR_RAIN_LIQUID_DROPLETS"]
+
+            if liquid_percentage > 70:
+                if n_pixels_rain > min_rain_pixels:
+                    ds_classification[cloud_number] = "Liquid-Precipitable"
+                    cloud_type["Liquid-Precipitable"][np.unique(indx_inside_cloud[cloud_number][:, 0])] = 1
+                else:
+                    ds_classification[cloud_number] = "Liquid"
+                    cloud_type["Liquid"][np.unique(indx_inside_cloud[cloud_number][:, 0])] = 1
+
+            elif cloud_composition[cloud_number]["ICE_PARTICLES"] > 90 or \
+                (cloud_composition[cloud_number]["CLOUD_LIQUID"] + cloud_composition[cloud_number]["ICE_WITH_SUP_WATER"]) < 10:
+
+                if cloud_composition[cloud_number]["DRIZZLE_OR_RAIN_LIQUID_DROPLETS"] > 0:
+                    drizzle_index = np.where(hydro_inside_cloud == DRIZZLE_OR_RAIN_LIQUID_DROPLETS)
+                    # remove drizzle icdx from indx_inside_cloud
+                    indx_inside_cloud[cloud_number] = np.delete(indx_inside_cloud[cloud_number], drizzle_index, axis=0)
+
+                if n_pixels_rain > min_rain_pixels:
+                    # set_trace()
+                    ds_classification[cloud_number] = "Ice-Precipitable"
+                    cloud_type["Ice-Precipitable"][np.unique(indx_inside_cloud[cloud_number][:, 0])] = 1
+                else:
+                    ds_classification[cloud_number] = "Ice"
+                    cloud_type["Ice"][np.unique(indx_inside_cloud[cloud_number][:, 0])] = 1
+
+            # elif cloud_composition[cloud_number]["MELTING_ICE"]  + cloud_composition[cloud_number]["MELTING_ICE_LIQUID_DROPLETS"] > 0:
+
+            #     if cloud_composition[cloud_number]["ICE_PARTICLES"] > cloud_composition[cloud_number]["DRIZZLE_OR_RAIN_LIQUID_DROPLETS"]:
+            #         ds_classification[cloud_number] = "Ice-Precipitable"
+
+            elif n_pixels_rain > min_rain_pixels:
+                ds_classification[cloud_number] = "Mixed-Phase-Precipitable"
+                cloud_type["Mixed-Phase-Precipitable"][np.unique(indx_inside_cloud[cloud_number][:, 0])] = 1
+
+                drizzle_index = np.where(hydro_inside_cloud == DRIZZLE_OR_RAIN_LIQUID_DROPLETS)
+                indx_inside_cloud[cloud_number] = np.delete(indx_inside_cloud[cloud_number], drizzle_index, axis=0)
+
+            else:
+                ds_classification[cloud_number] = "Mixed-Phase"
+                cloud_type["Mixed-Phase"][np.unique(indx_inside_cloud[cloud_number][:, 0])] = 1
+
+            if n_pixels_inside_cloud > cloud_min_pixels:
+                valid_clouds.append(cloud_number)
+                time_idx_valid_clouds.append(np.unique(indx_inside_cloud[cloud_number][:, 0]))
+            else:
+                ds_classification[cloud_number] = "Noise"
+                idx_noise = np.unique(indx_inside_cloud[cloud_number][:, 0])
+                time_idx_noise[idx_noise]      = 1
+                cloud_type["Noise"][idx_noise] = 1
 
     # Print number of valid clouds
     # print(f"Valid clouds: {cloud_composition.keys()}")
@@ -255,13 +323,26 @@ for file in filenames:
     # Assign values to cloud properties for each cloud variable
     for var in cloud_var:
         cloud_props[var] = xr.DataArray(data=np.full(data.time.shape, np.nan), coords={'time': data.time}, dims='time')
-
+    
+    time_range_start = "06:00"
+    time_range_end   = "18:00"
+    thick_threshold = 700
+    base_threshold = 4000
     previous_single_layer = 0
     # Iterating inside each valid cloud group:
     for key in valid_clouds:
         indx     =  indx_inside_cloud[key]
         time_idx = np.unique(indx[:, 0])
-
+        aux_time_single_layer = []
+        # base_cloud_indx = []
+        # top_cloud_indx  = []
+        # for i in time_idx:
+        #     mask_time = indx[:, 0] == i
+        #     first_column_indx = indx[mask_time, 1].min()
+        #     last_column_indx = indx[mask_time, 1].max()
+        #     base_cloud_indx.append(first_column_indx)
+        #     top_cloud_indx.append(last_column_indx)
+        
         for i in time_idx:
             mask_time             = indx[:, 0] == i
             height_idx            = indx[mask_time, :][:, 1]
@@ -269,31 +350,42 @@ for file in filenames:
             n_layers              = len(layers)
 
             if n_layers == 1: #single layer
-                cloud_occurrence["single_layer"][i] = 1
-                cloud_props["cloud_base"][i] = data.height[layers[0][0]]
-                cloud_props["cloud_top"][i]  = data.height[layers[0][-1]]
-                cloud_props["cloud_thickness"][i] = cloud_props["cloud_top"][i] - cloud_props["cloud_base"][i]
 
-                # cloud_type[i] = dic_acronyms[ds_classification[key]]
-            # elif n_layers > 1: #multi layer
-            #     real_n_layers = n_layers
-            #     real_layers   = layers
-            #     for layer in layers:
-            #         hydromet_sequence = np.unique(cloud_classification.values[i, layer])
-            #         unique_hydro_layer_type  = hydromet_sequence[0]
-            #         if hydromet_sequence.shape[0] == 1 and unique_hydro_layer_type == DRIZZLE_OR_RAIN_LIQUID_DROPLETS:
-            #             real_n_layers = n_layers - 1
-            #             real_layers.remove(layer)
-            #     if real_n_layers == 1:
-            #         cloud_occurrence["single_layer"][i] = 1
-            #         cloud_props["cloud_base"][i] = data.height[real_layers[0][0]]
-            #         cloud_props["cloud_top"][i]  = data.height[real_layers[0][-1]]
-            #         cloud_props["cloud_thickness"][i] = cloud_props["cloud_top"][i] - cloud_props["cloud_base"][i]
-            #     else:
-            #         cloud_occurrence["multi_layer"][i] = 1
+                rain_above = israinabove(data['target_classification'][i, layers[0][-1]+1:].values, DRIZZLE_OR_RAIN)
+                if rain_above:
+                    cloud_occurrence["multi_layer"][i] = 1
+                    cloud_props["cloud_base"][i] = np.nan
+                    cloud_props["cloud_top"][i]  = np.nan
+                    cloud_props["cloud_thickness"][i] = np.nan
+                else:
+                    cloud_occurrence["single_layer"][i] = 1
+                    aux_time_single_layer.append(i)
+                    cloud_props["cloud_base"][i] = data.height[layers[0][0]]
+                    cloud_props["cloud_top"][i]  = data.height[layers[0][-1]]
+                    # cloud_props["cloud_base"][i] = data['cloud_base_height_amsl'][i]
+                    # cloud_props["cloud_top"][i]  = data['cloud_top_height_amsl'][i]
+                    cloud_props["cloud_thickness"][i] = cloud_props["cloud_top"][i] - cloud_props["cloud_base"][i]  
             else:
                 cloud_occurrence["multi_layer"][i] = 1
                 # cloud_type[i] = "ML"
+        if filter_abl_ice_clouds:
+            if len(aux_time_single_layer)>0:
+                if ds_classification[key] == 'Ice-Precipitable' or ds_classification[key] == 'Ice':
+                    # breakpoint()
+                    mean_cloud_base = cloud_props["cloud_base"][aux_time_single_layer].mean()
+                    mean_cloud_thickness = cloud_props["cloud_thickness"][aux_time_single_layer].mean()
+
+                    # time_component = data.time[time_idx].dt.strftime('%H:%M')
+                    # is_within_range = (time_component >= time_range_start) & (time_component <= time_range_end)
+                    is_thick_enough = mean_cloud_thickness < thick_threshold
+                    is_base_enough  = mean_cloud_base < base_threshold
+                    if is_thick_enough and is_base_enough:
+                        cloud_occurrence["single_layer"][aux_time_single_layer] = 0
+                        time_idx_noise[aux_time_single_layer] = 1
+                        cloud_props["cloud_base"][aux_time_single_layer] = np.nan
+                        cloud_props["cloud_top"][aux_time_single_layer]  = np.nan
+                        cloud_props["cloud_thickness"][aux_time_single_layer] = np.nan
+                        case_to_only_save = True
 
                         # Correct classification for single layer
         # if n_layers == 1:
@@ -336,19 +428,25 @@ for file in filenames:
         cloud_props["cloud_thickness"][index] = np.nan
         # cloud_type[index] = "ML"
 
-
     mask_clear_sky = cloud_occurrence.to_dataframe().sum(axis=1) == 0
     mask_clear_sky = mask_clear_sky.astype(float)
     cloud_occurrence["clear_sky"] = xr.DataArray(data=mask_clear_sky.values, coords={'time': data.time}, dims='time')
     cloud_occurrence["noise"]     = xr.DataArray(data=time_idx_noise, coords={'time': data.time}, dims='time')  # not mutually exclusive with clear sky
 
+    new_height = np.arange(0, 14000+100, 100)
+    # Identify single layer and non-noise clouds in time
+    single_layer_mask = (cloud_occurrence["single_layer"] == 1) & (cloud_occurrence["noise"] == 0)
+    # new_der = new_der.where(single_layer_mask, np.nan)['der'].groupby_bins('height', new_height, labels=new_height[1:]).mean()
     # cloud_occurrence.coords['cloud_type'] = ('time', cloud_type)
     # cloud_props.coords['cloud_type']      = ('time', cloud_type)
-    # Save cloud occurrence as netCDF
+    
     date_str = cloud_occurrence.time[0].dt.strftime('%Y%m%d').values.item()
-    cloud_occurrence.to_netcdf(path_save + f"/cloud_occurence/{date_str}_cloud_occurrence.nc")
-    cloud_props.to_netcdf(path_save + f"/cloud_properties/{date_str}_cloud_props.nc")
-    cloud_type.to_netcdf(path_save + f"/cloud_type/{date_str}_cloud_type.nc")
+    # Save cloud occurrence as netCDF
+    if save_files and process_all:
+        cloud_occurrence.to_netcdf(path_save + f"/cloud_occurence/{date_str}_cloud_occurrence.nc")
+        cloud_props.to_netcdf(path_save + f"/cloud_properties/{date_str}_cloud_props.nc")
+        cloud_type.to_netcdf(path_save + f"/cloud_type/{date_str}_cloud_type.nc")
+    # new_der.to_netcdf(f"/media/matheustolen/Seagate Basic/cloudnet/der/{date_str}_new_der.nc")
 
     array_cloud = np.zeros((data.time.shape[0], data.height.shape[0]))
     cloud_int= {
@@ -371,9 +469,9 @@ for file in filenames:
 
     ds_cloud = xr.Dataset(data_vars={'cloud_classification': (['time', 'height'], array_cloud)},
                           coords={'time': data.time, 'height': data.height})
-
+    
     show_category = False
-    if case_study:
+    if not process_all or make_plot:
 
         # fig, ax = plt.subplots(figsize=(15, 9))
         # for cloud_number, indx in cloud_indx.items():
@@ -458,9 +556,43 @@ for file in filenames:
             ax3.set_xlabel('Time (UTC) HH:MM')
             ax3.grid()
 
-        fig.savefig(PATH_FIG + f"{date_str}_cloud_classification.png", dpi=300, bbox_inches='tight')
-        plt.show()
+        if case_to_only_save:
+            fig.savefig(PATH_FIG_TEST + f"{date_str}_cloud_classification.png", dpi=300, bbox_inches='tight')
+            case_to_only_save = False
+        if show_figure:
+            plt.show()
 
+    
+    # # Coarsen der and ier
+    # target_height = np.arange(0, 14000+100, 100)
+    # target_time   = data.time.values[::2]
+    # coarsened_array = np.full((target_time.shape[0], target_height.shape[0]), np.nan)
+    # test_data = new_der['der'].values
+    # # Loop over each cell in the target grid
+    # for i in range(target_time.shape[0]-1):
+    #     for j in range(target_height.shape[0]-1):
+    #         t_min = target_time[i]
+    #         t_max = target_time[i+1]
+    #         h_min = target_height[j]
+    #         h_max = target_height[j+1]
+
+    #         # Find the data points that fall within the current cell
+    #         cell_data = test_data.sel(time=slice(t_min, t_max-1),
+    #                                 height=slice(h_min, h_max-1)
+    #                                 )
+    #         # Calculate the mean of the data points within the current cell
+    #         coarsened_array[i, j] = cell_data.mean()
+
+    # test_data.groupby_bins('height', target_height, labels=target_height[1:]).mean()
+   # Create a new DataArray with the manually coarsened data
+    
+    # coarsened_der = xr.DataArray(
+    # data=coarsened_array,
+    # dims=['time', 'height'],
+    # coords={'time': target_time,
+    #         'height': (target_height[0:] + target_height[:-1]) / 2},
+    # name='coarsened_der'
+    # )
 
     # number_of_layers = pd.DataFrame(0, index=cloud_classification['time'],
     #                                 columns=["Liquid", "Ice", "Mixed_phase", "Pre_liquid", "Pre_mixed_phase"])

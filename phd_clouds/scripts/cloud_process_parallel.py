@@ -53,9 +53,9 @@ plt.rcParams['font.size'] = fontsize
 #-------------------------------------------------------------------------------------------------------
 # paths
 #-------------------------------------------------------------------------------------------------------
-PATH_CLASS        = '/mnt/cloudnet_external/cloudnet/classification/'
-PATH_CATE         = '/mnt/cloudnet_external/cloudnet/categorize/'
-PATH_RADAR        = '/mnt/cloudnet_external/cloudnet/radar/'
+PATH_CLASS        = '/media/matheustolen/Seagate Basic/cloudnet/classification/'
+PATH_CATE         = '/media/matheustolen/Seagate Basic/cloudnet/categorize/'
+PATH_RADAR        = '/media/matheustolen/Seagate Basic/cloudnet/radar/'
 PATH_FIG          = '../figures/'
 PATH_FIG_DER_COMPARISON = '../figures/der_comparison/'
 PATH_CLOUDNET_LWC = '../../../output_retrievals/'
@@ -1115,6 +1115,7 @@ def generate_cloudnet_products(date, path_cate, path_cloudnet_lwc = None, path_c
         generate_ier(ier_input_path, ier_output_path)
 
 def check_time_resolution(classification, categorize, date):
+    
     try:
         if (classification.dimensions['time'].size == categorize.dimensions['time'].size
             and sum(categorize['time'][:] == classification['time'][:]) == categorize.dimensions['time'].size):
@@ -1122,8 +1123,9 @@ def check_time_resolution(classification, categorize, date):
             time_auxiliary = []
             for h in categorize['time']:
                 time_auxiliary.append(date.strftime('%Y%m%d') + ' ' + str(timedelta(hours=float(h))))
-
-            time = round_datetimeindex_to_seconds(pd.to_datetime(time_auxiliary, format='mixed', dayfirst=True))
+            
+            time = round_datetimeindex_to_seconds(pd.to_datetime(time_auxiliary))
+            
             return time
         else:
             print("Red flag: classification and categorize files with different time resolution - ", date)

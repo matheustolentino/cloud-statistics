@@ -24,6 +24,8 @@ from scipy.ndimage import gaussian_filter1d
 from gfatpy.radar.rpg_nc import rpg as gfp_radarnc
 from pathlib import Path
 import glob
+import dask
+from typing import Dict, Union, Any, List
 from rpgpy import rpg2nc as rpg2nc_rpgpy
 
 def groupSequence(lst, cloud_bins=0):
@@ -599,3 +601,133 @@ def get_lv0_gfatpy(ti_datetime, instrument_name, filepath_output):
         print(f"File created at {filepath_raw_netcdf}")
     
     return gfp_radarnc(filepath_raw_netcdf)
+
+def checkAliasing(data: np.ndarray) -> tuple:
+    """
+    Check if aliasing is present in the data array.
+
+    Args:
+        data (np.ndarray): Input data array.
+
+    Returns:
+        tuple: Alias status (True if aliasing is present), and top-level threshold value.
+    """
+    minval = np.min(data)
+    maxval = np.max(data)
+
+    baseval = estimate_baseline(data, 1)
+    diff = baseval - minval
+    toplevel = baseval + diff * 300
+    if toplevel > maxval:
+        toplevel = baseval + diff * 200
+        if toplevel > maxval:
+            toplevel = baseval + diff * 2
+
+    if (data[0] and data[-1]) > toplevel:
+        return True, toplevel
+    else:
+        return False, toplevel
+    
+def find_max_num(data: np.ndarray, toplevel: float, recurse: bool = True) -> tuple:
+    """
+    Count the number of local maxima above an empirical threshold determined by multiplier.
+
+    Args:
+        data (np.ndarray): Input data array.
+        toplevel (float): Empirical threshold for local maxima.
+        recurse (bool, optional): Whether to perform recursive threshold adjustment. Default is True.
+
+    Returns:
+        tuple: Number of local maxima, flag indicating any specific condition, and aliasing status.
+    """
+    count = 1
+    flag = 0
+    aliasing = False
+    hasFalling = False
+    
+    min_threshold = toplevel
+    local_maxima_indices = np.where((data[1:-1] > data[:-2]) & (data[1:-1] > data[2:]) & (data[1:-1] > min_threshold))[0] + 1
+    
+    left_maximum_index = 0
+    if len(local_maxima_indices) > 0:
+        left_maximum_index = local_maxima_indices[0]
+        if left_maximum_index < 600:
+            hasFalling = True
+            
+    left_value = data[left_maximum_index]
+
+    for i in local_maxima_indices:
+        intermediate_range = np.arange(left_maximum_index, i)
+        midpoint_threshold = min(left_value, data[i]) 
+
+        if (data[intermediate_range] < midpoint_threshold).any():
+#             print(i)
+            count = count + 1
+            left_maximum_index = i
+            left_value = data[i]
+            if hasFalling:
+                if i > 900:
+                    aliasing = True
+        else:
+            if data[i] > left_value:
+                left_maximum_index = i
+                left_value = data[i]
+                
+    #If the count is very high, try once to increase the min threshold
+    if count > 3 and recurse:
+        count, flag, aliasing = find_max_num(data, toplevel * 2, recurse = False)
+    if not recurse:
+        if count > 5:
+            flag = 2
+    return count, flag, aliasing
+
+def reading_dataset_chunking(root_folder: str, target_parent_folder: str, file_extension: str = '.nc') -> Dict[str, xr.Dataset]:
+    concatenated_datasets_dict = {}
+
+    for parent_folder, _, _ in os.walk(root_folder):
+        parent_folder_name = os.path.basename(parent_folder)
+
+        if parent_folder_name == target_parent_folder:
+            previous_folder_name = os.path.basename(os.path.dirname(parent_folder))
+
+            delayed_datasets = []
+
+            for _, _, filenames in os.walk(parent_folder):
+                for filename in filenames:
+                    filepath = os.path.join(parent_folder, filename)
+
+                    if filename.endswith(file_extension):
+                        if file_extension == '.nc':
+                            # Create a delayed function to open the file as a Dask-backed xarray dataset
+                            delayed_dataset = dask.delayed(xr.open_dataset)(filepath)
+                            delayed_datasets.append(delayed_dataset)
+                        elif file_extension == '.json':
+                            # Read and process JSON file using the json library
+                            # Read the JSON file into a pandas DataFrame
+                            df = pd.read_json(filepath, orient='index')
+                            df.index.name = 'time'
+                            delayed_dataset = dask.delayed(xr.Dataset.from_dataframe)(df)
+                            delayed_datasets.append(delayed_dataset)
+
+            if delayed_datasets:
+                # Use Dask's delayed computation to parallelize the dataset opening
+                datasets = dask.compute(*delayed_datasets)
+
+                concatenated_datasets = []
+
+                for dataset in datasets:
+                    # Calculate chunking based on the dimensions of the current dataset
+                    chunking = {}
+                    for dim in dataset.dims:
+                        chunking[dim] = dataset.sizes[dim]
+
+                    # Apply chunking to the current dataset
+                    chunked_dataset = dataset.chunk(chunking)
+                    concatenated_datasets.append(chunked_dataset)
+
+                # Concatenate the chunked datasets along the 'time' dimension
+                concatenated_dataset = xr.concat(concatenated_datasets, dim='time')
+
+                concatenated_datasets_dict[previous_folder_name] = concatenated_dataset.sortby('time')
+
+    return concatenated_datasets_dict

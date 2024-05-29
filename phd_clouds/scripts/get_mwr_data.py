@@ -14,6 +14,7 @@ import re
 import matplotlib.font_manager as fm
 import os
 from phd_clouds.mwr_class import Mwr
+from phd_clouds.utils import assign_season
 
 # Define the path to the figures directory
 PATH_FIG = '../figures/'
@@ -34,6 +35,7 @@ plt.close('all')
 path_daily_mwr = '/home/matheustolen/shared/NAS_raw_data/UGR/mwr/Y2016/M04/D07'
 mwr_files_lwp  = glob.glob(path_daily_mwr + '/*.LWP', recursive=True)
 mwr_object = Mwr()
+
 mwd_data      = mwr_object.concatenate_mwr_files_lwp_2([mwr_files_lwp[0]])
 mwr_scan      = mwr_object.concatenate_mwr_files_lwp_2([mwr_files_lwp[1]])
 resampled_mwd = mwd_data.resample(time='30S').mean()
@@ -64,7 +66,7 @@ set_trace()
 input_directory = '/home/matheustolen/shared/NAS_raw_data/UGR/mwr/'
 # -----------------------------------------------------------------------------------------------
 quicklook_temperature = True
-quicklook_humidity = True
+quicklook_humidity = False
 save_data = False
 # -----------------------------------------------------------------------------------------------
 # initialize the Mwr class
@@ -72,7 +74,7 @@ save_data = False
 mwr_data = Mwr()
 # -----------------------------------------------------------------------------------------------
 # Use glob to find files matching the pattern '*.CMP.TPC' in all subdirectories of input_directory
-mwr_files_tpc = glob.glob(input_directory + '**/*.TPC', recursive=True)
+mwr_files_tpc = glob.glob(input_directory + '**/*.CMP.TPC', recursive=True)
 
 # Use glob to find files matching the pattern '*.CMP.TPC' in all subdirectories of input_directory
 mwr_files_hpc = glob.glob(input_directory + '**/*.HPC', recursive=True)
