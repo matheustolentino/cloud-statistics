@@ -1,4 +1,4 @@
-\begin{thebibliography}{2}
+\begin{thebibliography}{7}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \providecommand{\urlprefix}{}
@@ -7,23 +7,87 @@
   \providecommand{\doi}{https://doi.org/\discretionary{}{}{}\begingroup
   \urlstyle{rm}\Url}\fi
 
-\bibitem[{{Alexandre Rios-Entenza} et~al.(){Alexandre Rios-Entenza},
-  Rios-Entenza, {Pedro M. M. Soares}, Soares, {Ricardo M. Trigo}, Trigo, {Rita
-  M. Cardoso}, Cardoso, {Gonzalo Miguez‐Macho}, and
-  Miguez-Macho}]{alexandrerios-entenzaMoistureRecyclingIberian2014}
-{Alexandre Rios-Entenza}, Rios-Entenza, A., {Pedro M. M. Soares}, Soares, P.
-  M.~M., {Ricardo M. Trigo}, Trigo, R.~M., {Rita M. Cardoso}, Cardoso, R.~M.,
-  {Gonzalo Miguez‐Macho}, and Miguez-Macho, G.: Moisture Recycling in the
-  {{Iberian Peninsula}} from a Regional Climate Simulation: {{Spatiotemporal}}
-  Analysis and Impact on the Precipitation Regime, 119, 5895--5912,
-  \doi{10.1002/2013jd021274}.
+\bibitem[{{A. Cazorla} et~al.(){A. Cazorla}, Cazorla, {Juan Andrés
+  Casquero-Vera}, Casquero-Vera, {Roberto Román}, Román, {Juan Luís
+  Guerrero-Rascado}, Guerrero-Rascado, {Carlos Toledano}, Toledano, {Victoria
+  E. Cachorro}, Cachorro, {J.A.G. Orza}, Orza, {M. L. Cancillo}, Cancillo, {A.
+  Serrano}, Serrano, {Gloria Titos}, Titos, {M. Pandolfi}, Pandolfi, {Andrés
+  Alastuey}, Alastuey, {Natalie Hanrieder}, Hanrieder, {L. Alados-Arboledas},
+  and Alados-Arboledas}]{a.cazorlaNearrealtimeProcessingCeilometer2017}
+{A. Cazorla}, Cazorla, A., {Juan Andrés Casquero-Vera}, Casquero-Vera, J.~A.,
+  {Roberto Román}, Román, R., {Juan Luís Guerrero-Rascado},
+  Guerrero-Rascado, J.~L., {Carlos Toledano}, Toledano, C., {Victoria E.
+  Cachorro}, Cachorro, V.~E., {J.A.G. Orza}, Orza, J., {M. L. Cancillo},
+  Cancillo, M.~L., {A. Serrano}, Serrano, A., {Gloria Titos}, Titos, G., {M.
+  Pandolfi}, Pandolfi, M., {Andrés Alastuey}, Alastuey, A., {Natalie
+  Hanrieder}, Hanrieder, N., {L. Alados-Arboledas}, and Alados-Arboledas, L.:
+  Near-Real-Time Processing of a Ceilometer Network Assisted with
+  Sun-Photometer Data: Monitoring a Dust Outbreak over the {{Iberian
+  Peninsula}}, 17, 11\,861--11\,876, \doi{10.5194/acp-17-11861-2017}.
 
-\bibitem[{Shahi et~al.()Shahi, Polcher, Bastin, Pennel, and
-  Fita}]{shahiAssessmentSpatiotemporalVariability2022}
-Shahi, N.~K., Polcher, J., Bastin, S., Pennel, R., and Fita, L.: Assessment of
-  the Spatio-Temporal Variability of the Added Value on Precipitation of
-  Convection-Permitting Simulation over the {{Iberian Peninsula}} Using the
-  {{RegIPSL}} Regional Earth System Model, 59, 471--498,
-  \doi{10.1007/s00382-022-06138-y}.
+\bibitem[{{Francisco Navas-Guzmán} et~al.(){Francisco Navas-Guzmán},
+  Navas-Guzmán, {J. Fernández‐Gálvez}, Fernández-Gálvez, {Jesús
+  Fernández-Gálvez}, {María José Granados-Muñoz}, Granados-Muñoz, {Juan
+  Luís Guerrero-Rascado}, Guerrero-Rascado, {Juan Antonio Bravo-Aranda},
+  Bravo-Aranda, {L. Alados-Arboledas}, and
+  Alados-Arboledas}]{francisconavas-guzmanTroposphericWaterVapour2014}
+{Francisco Navas-Guzmán}, Navas-Guzmán, F., {J. Fernández‐Gálvez},
+  Fernández-Gálvez, J., {Jesús Fernández-Gálvez}, {María José
+  Granados-Muñoz}, Granados-Muñoz, M.~J., {Juan Luís Guerrero-Rascado},
+  Guerrero-Rascado, J.~L., {Juan Antonio Bravo-Aranda}, Bravo-Aranda, J.~A.,
+  {L. Alados-Arboledas}, and Alados-Arboledas, L.: Tropospheric Water Vapour
+  and Relative Humidity Profiles from Lidar and Microwave Radiometry, 7,
+  1201--1211, \doi{10.5194/amt-7-1201-2014}.
+
+\bibitem[{{Hannes Griesche} et~al.(){Hannes Griesche}, Griesche, {Patric
+  Seifert}, Seifert, {Albert Ansmann}, Ansmann, {Holger Baars}, Baars, {Carola
+  Barrientos Velasco}, Velasco, {Johannes Bühl}, Bühl, {Ronny Engelmann},
+  Engelmann, {Martin Radenz}, Radenz, Yin, {Zhenping Yin}, Zhenping, {Andreas
+  Macke}, and Macke}]{hannesgriescheApplicationShipborneRemote2020}
+{Hannes Griesche}, Griesche, H., {Patric Seifert}, Seifert, P., {Albert
+  Ansmann}, Ansmann, A., {Holger Baars}, Baars, H., {Carola Barrientos
+  Velasco}, Velasco, C.~B., {Johannes Bühl}, Bühl, J., {Ronny Engelmann},
+  Engelmann, R., {Martin Radenz}, Radenz, M., Yin, Z., {Zhenping Yin},
+  Zhenping, Y., {Andreas Macke}, and Macke, A.: Application of the Shipborne
+  Remote Sensing Supersite {{OCEANET}} for Profiling of {{Arctic}} Aerosols and
+  Clouds during {{Polarstern}} Cruise {{PS106}}, 13, 5335--5358,
+  \doi{10.5194/amt-2019-434}.
+
+\bibitem[{{Julien Delanoë} et~al.(){Julien Delanoë}, Delanoë, {Alain
+  Protat}, Protat, {Alain Protat}, {Dominique Bouniol}, Bouniol, Bouniol,
+  {Andrew J. Heymsfield}, Heymsfield, {Aaron Bansemer}, Bansemer, {Philip R. A.
+  Brown}, Brown, and Brown}]{juliendelanoeCharacterizationIceCloud2007}
+{Julien Delanoë}, Delanoë, J., {Alain Protat}, Protat, A., {Alain Protat},
+  {Dominique Bouniol}, Bouniol, D., Bouniol, D., {Andrew J. Heymsfield},
+  Heymsfield, A.~J., {Aaron Bansemer}, Bansemer, A., {Philip R. A. Brown},
+  Brown, P., and Brown, P. R.~A.: The Characterization of Ice Cloud Properties
+  from Doppler Radar Measurements, 46, 1682--1698, \doi{10.1175/jam2543.1}.
+
+\bibitem[{{Nils Küchler} et~al.(){Nils Küchler}, Küchler, {Stefan Kneifel},
+  Kneifel, {Ulrich Löhnert}, Löhnert, {Pavlos Kollias}, Kollias, {Harald
+  Czekala}, Czekala, {Thomas Rose}, and
+  Rose}]{nilskuchlerWBandRadarRadiometer2017}
+{Nils Küchler}, Küchler, N., {Stefan Kneifel}, Kneifel, S., {Ulrich
+  Löhnert}, Löhnert, U., {Pavlos Kollias}, Kollias, P., {Harald Czekala},
+  Czekala, H., {Thomas Rose}, and Rose, T.: A {{W-Band Radar}}–{{Radiometer
+  System}} for {{Accurate}} and {{Continuous Monitoring}} of {{Clouds}} and
+  {{Precipitation}}, 34, 2375--2392, \doi{10.1175/jtech-d-17-0019.1}.
+
+\bibitem[{{Robin J. Hogan} et~al.(){Robin J. Hogan}, Hogan, {Marion
+  Mittermaier}, Mittermaier, {Anthony J. Illingworth}, and
+  Illingworth}]{robinj.hoganRetrievalIceWater2006}
+{Robin J. Hogan}, Hogan, R.~J., {Marion Mittermaier}, Mittermaier, M.~P.,
+  {Anthony J. Illingworth}, and Illingworth, A.~J.: The Retrieval of Ice Water
+  Content from Radar Reflectivity Factor and Temperature and Its Use in
+  Evaluating a Mesoscale Model, 45, 301--317, \doi{10.1175/jam2340.1}.
+
+\bibitem[{{S. Frisch} et~al.(){S. Frisch}, Frisch, {Matthew D. Shupe}, Shupe,
+  {Irina V. Djalalova}, Djalalova, {Graham Feingold}, Feingold, {Michael R.
+  Poellot}, and Poellot}]{s.frischRetrievalStratusCloud2002}
+{S. Frisch}, Frisch, S., {Matthew D. Shupe}, Shupe, M.~D., {Irina V.
+  Djalalova}, Djalalova, I., {Graham Feingold}, Feingold, G., {Michael R.
+  Poellot}, and Poellot, M.~R.: The {{Retrieval}} of {{Stratus Cloud Droplet
+  Effective Radius}} with {{Cloud Radars}}, 19, 835--842,
+  \doi{10.1175/1520-0426(2002)019<0835:troscd>2.0.co;2}.
 
 \end{thebibliography}

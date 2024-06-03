@@ -12,6 +12,7 @@ import seaborn as sns
 import matplotlib
 import statsmodels.api as sm
 from IPython import get_ipython
+import seaborn as sns
 ipython = get_ipython()
 if ipython is not None:
     ipython.run_line_magic('matplotlib', 'inline')
@@ -27,7 +28,7 @@ plt.rcParams['font.serif'] = ['Times New Roman'] + plt.rcParams['font.serif']
 plt.rcParams['font.size'] = fontsize
 
 # plt.ion()
-# plt.close('all')
+plt.close('all')
 
 # Define a function to calculate skewness
 def calculate_skewness(group):
@@ -201,7 +202,7 @@ label_data_ava = str_year + ['Missing Data']
 fig1 = plt.figure(figsize=(20, 6))  # Increase the size of the plot for better visibility
 gs1  = gs = fig1.add_gridspec(1, 2, width_ratios=[1, 1.5], wspace=0.1)
 ax1  = fig1.add_subplot(gs1[0, 0])
- 
+
 bottom = np.zeros(len(total_data_per_month))
 for year in unique_years:
     sliced_year = ds_cloud_occurence['single_layer'].where(ds_cloud_occurence['year'] == year)
@@ -241,6 +242,39 @@ ax2.set_xticks(monthly_cloud_occurence['month'])
 ax2.set_xticklabels(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], rotation=30)
 ax2.legend()
 fig1.savefig(PATH_FIG + 'new_method_monthly_cloud_occurence.png', dpi=300, bbox_inches='tight')
+plt.show()
+
+
+color_data_ava = ["#ff0000", "#00ff00", "#0000ff", "#ffff00", "#00ffff", "#ff00ff", "#ffa500", "#ababab"]
+# Rest of the code...
+fig, ax = plt.subplots(1, 1, figsize=(15, 6))
+bottom = np.zeros(len(total_data_per_month))
+for year in unique_years:
+    sliced_year = ds_cloud_occurence['single_layer'].where(ds_cloud_occurence['year'] == year)
+    data_available_per_month = sliced_year.groupby('time.month').count(dim='time')
+
+    freq_data_available  = 100*data_available_per_month/total_data_per_month
+    ax.bar(freq_data_available.month, freq_data_available.values, 0.95,
+             label=str(year), color=color_data_ava[unique_years.tolist().index(year)],
+             bottom=bottom)
+    bottom += freq_data_available.values
+
+# Adding missing data BAR
+missing_data = (1 - count_available_data/total_data_per_month)*100
+ax.bar(missing_data.month, missing_data.values, 0.95, label='Missing Data', color=color_data_ava[-1],
+        bottom=bottom)
+
+# Adding name of the months values
+ax.set_xticks(freq_data_available.month)
+ax.set_ylabel("Data occurence (%)")
+ax.set_xlabel("Months")
+# hide x-axis label
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+ax.set_xticklabels(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], rotation=30)
+ax.set_ylim([0, 101])
+ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15), ncol=len(unique_years)//2+1, frameon=False, fontsize='small')  # Decrease the size of the legend
+fig.savefig(PATH_FIG + 'new_method_separated_monthly_data_occurence.png', dpi=300, bbox_inches='tight')
 plt.show()
 
 
@@ -717,3 +751,26 @@ plt.show()
 #                                                                                           ).drop(columns=['month', 'season', 'year'])
 # add a column for the season
 
+
+# Add colorbar
+cbar1 = fig.colorbar(heat1, ax=ax1)
+cbar1.set_label('Pearson Correlation')
+
+# Plot for pearson_corr_old_method
+ax2 = fig.add_subplot(gs[0, 1])
+heat2 = ax2.imshow(pearson_corr_old_method,
+                   cmap='coolwarm',
+                   vmin=-1, vmax=1)
+
+# Add colorbar
+cbar2 = fig.colorbar(heat2, ax=ax2)
+cbar2.set_label('Pearson Correlation')
+
+# Adjust subplot spacing
+fig.tight_layout()
+
+# Save the figure
+fig.savefig(PATH_FIG + 'correlation_heatmap.png', dpi=300, bbox_inches='tight')
+
+# Show the plot
+plt.show()

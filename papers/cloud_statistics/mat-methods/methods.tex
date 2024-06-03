@@ -1,16 +1,16 @@
 \subsection{Data availability and station}
 
-An extensive dataset spanning the years 2018 to 2023 was utilized in this study. Specifically, high-level post-processed data from Cloudnet \citep{Illingworth2007}, including levels 1c and 2 (categorize, classification, and microphysical files), along with microwave radiometer humidity and temperature profiles, were employed. Figure \ref{fig:data_availability} illustrates the monthly data availability for the 6-year Cloudnet post-processed dataset at the AGORA ACTRIS-CCRES station (CCRES stands for Centre for Cloud Remote Sensing, and AGORA for Andalusian Global ObseRvatory of the Atmosphere), situated within a broad intramontane depression in the foothills of Sierra Nevada, Spain. This figure highlighted the available percentage of categorize, classification and microphysical data files which were obtained  by a synergy between a RPG-HATPRO radiometer, a CHM15k ceilometer, a RPG-FMCW 94 GHz cloud Doppler radar and the European model ECMWF (acronym for European Centre for Medium-Range Weather Forecasts). 
+An extensive dataset spanning the years 2018 to 2023 was utilized in this study. Specifically, high-level post-processed data from Cloudnet \citep{Illingworth2007}, including levels 1c and 2 (categorize, classification, and microphysical files), along with microwave radiometer humidity and temperature profiles, were employed. Figure \ref{fig:data_availability} illustrates the monthly data availability for the 6-year Cloudnet post-processed dataset at the AGORA ACTRIS-CCRES station (CCRES stands for Centre for Cloud Remote Sensing, and AGORA for Andalusian Global ObseRvatory of the Atmosphere), situated within a broad intramontane depression in the foothills of Sierra Nevada, Spain. This figure also highlighted the available percentage of data per year, which were obtained by a simultaneous availability of RPG-HATPRO radiometer, CHM15k ceilometer, RPG-FMCW 94 GHz cloud Doppler radar and European model ECMWF (acronym for European Centre for Medium-Range Weather Forecasts) data.
 
 \begin{figure}[H]
       \centering
-      \includegraphics[width=.8\textwidth]{../../phd_clouds/figures/new_method_monthly_cloud_occurence}
+      \includegraphics[width=.8\textwidth]{../../phd_clouds/figures/new_method_separated_monthly_data_occurence}
       \caption{...}
       \label{fig:data_availability}
 \end{figure}
 
 
-Figure \ref{fig:data_availability} illustrates the monthly data availability from 2018 to 2023, revealing significant variability across different months and years. The dataset shows that data collection efforts improved over time, with 2021 exhibiting the highest and most consistent data availability throughout the year. In contrast, 2018 had no data for the early months, indicating that data collection commenced mid-year. The gray bars denote periods with missing data due to instrument maintenance and technical issues. Despite these challenges, 
+The dataset shows that data collection efforts improved over time, with 2020 exhibiting the highest and most consistent data availability throughout the year. In contrast, 2018 had no data for the early months, indicating that data collection commenced mid-year. The gray bars denote periods with missing data due to instrument maintenance and technical issues. Despite these challenges, 
 these three instruments have been continuously operated since 2018. 
 
 It is worthy to note that this dataset represents a robust database for cloud statistics, providing comprehensive data for cloud analysis over an extended period. Notably, it stands as the only cloud remote sensing dataset available in Spain, making it an invaluable resource for regional climate studies. The ACTRIS-CCRES Granada site is uniquely positioned as one of the few locations dedicated to cloud studies in a warm region that is frequently affected by severe weather conditions \cite{XXX}. This dataset contributes significantly to filling the gap in cloud data for this climate variability hotspot, enhancing our understanding of cloud dynamics and aiding in the improvement of predictive models and climate studies in these critical areas.
@@ -38,34 +38,37 @@ It is worthy to note that this dataset represents a robust database for cloud st
 \subsection{Instrument and products}
 
 Overall, instrument datasets were processed by Cloudnetpy \citep{Illingworth2007}, which sampled data on a common grid with a time resolution of 30,s and height bins based on the cloud radar range resolution, which varies according to the radar chirp table configuration. This table provides the range resolution at different levels, the maximum unambiguous velocity, and the maximum range reached by the radar. These three variables are interdependent and can be strategically adjusted to meet specific objectives. 
-In our case, this table was modified several times throughout the analyzed period. In addition, range resolution of temperature and humidity profiles given by the microwave radiometer also changed with time. It heigh resolution can also be settled to reach specific objectives. Consequently, to ensure consistency in the vertical resolution of the data, a regridding process was implemented to facilitate monthly statistical analysis when needed. The regridding involved interpolating measurements onto a height grid with a 30\,m resolution and was applied to every inter-annual profiling.
-
-Additionally, CloudnetPy performs corrections for reflectivity gas and liquid attenuation, error estimation, and quality flag assignment. Specifically, liquid attenuation corrections on radar reflectivity are crucial during raining events, as rain droplets can attenuate a significant fraction of the radar signal \cite{XXX}. These corrections significantly impact hydrometeor classification macrophysics and microphysical retrievals.
+In our case, this table was modified several times throughout the analyzed period. In addition, range resolution of temperature and humidity profiles given by the microwave radiometer also changed with time. Consequently, to ensure consistency in the vertical resolution of the data, a regridding process was implemented to facilitate monthly statistical analysis when needed. The regridding involved interpolating measurements onto a height grid with a 30\,m resolution and was applied to every inter-annual profiling. 
+Additionally, CloudnetPy performs corrections for reflectivity gas and liquid attenuation, error estimation, and quality flag assignment. Specifically, liquid attenuation corrections on radar reflectivity are crucial during raining events, as rain droplets can attenuate a significant fraction of the radar signal \cite{XXX}. 
+%These corrections significantly impact hydrometeor classification macrophysics and microphysical retrievals.
 Table \ref{tab:info_instrument} provides a summary of the cited instruments, detailing their operational frequencies or wavelengths, the types of measurements they perform, their products, their measurement ranges, data collection intervals, and relevant references for a detailed description. The unique variables not processed by Cloudnetpy were 
-humidity ($q$) and temperature (T) profiles, given by the microwave radiometer. Also, specially important high level data such as liquid water content (IWC), ice water content (IWC), droplet effective radius and ice effective radius is described in table XXX. For each product in this table, the necessary input data and methods used for their computation are specified alongside their associated uncertainty percentages and the studies from which these products are sourced.
+humidity ($q$) and temperature (T) profiles, given by the microwave radiometer. Also, specially important high level data such as liquid water content (IWC), ice water content (IWC), droplet effective radius and ice effective radius is described in table \ref{tab:microphys}. For each product in this table, the necessary input data and methods used for their computation are specified alongside their associated uncertainty percentages and the studies from which these products are sourced.
 
 \begin{table}[H]
 \caption{This is a table with some data.}
 \begin{tabular}{@{}lllllll@{}}
 \toprule
 \textbf{Instrument}                                                         & \textbf{Bands / wavelenghts}                                                                     & \textbf{Measured}                                                                   & \textbf{Products}                                          & \textbf{Range}                                                                           & \textbf{Time}                                                                           & \textbf{References}                         \\ \midrule
-\begin{tabular}[c]{@{}l@{}}94 GHz Cloud \\ Doppler Radar\end{tabular}       & 94 GHz (W-band)                                                                                  & \begin{tabular}[c]{@{}l@{}}Doppler velocity \\ spectrum (DVS)\end{tabular}          &  $\nu_{D}$ , Z, S$_{w}$ & [13,51]\,m\tablefootnote{It depends on the chirp type} & [1.1, 3.6]\,s\tablefootnote{It also depends on the chirp type}  & Kuchler, 2017                               \\
+\begin{tabular}[c]{@{}l@{}}94 GHz Cloud \\ Doppler Radar\end{tabular}       & 94 GHz (W-band)                                                                                  & \begin{tabular}[c]{@{}l@{}}Doppler velocity \\ spectrum (DVS)\end{tabular}          &  $\nu_{D}$ , Z, S$_{w}$ & [13,51]\,m\tablefootnote{This range vary with the height, and depends on the chirp table configuration} & [1.1, 3.6]\,s\tablefootnote{It also depends on the chirp type}  & \cite{nilskuchlerWBandRadarRadiometer2017}                               \\
                                                                             &                                                                                                  &                                                                                     & q and T                                                    & [10, 300]\,m\tablefootnote{Humidity and temperature profiles has a range varying from 10 to 150\,m in the first 4.4 km and from 50 to 300m between 4.4 and 10 km}       & [2, 2.5]\,min                                                                             &                                             \\
-\multirow{-2}{*}{\begin{tabular}[c]{@{}l@{}}MWR RPG \\ HATPRO\end{tabular}} & \multirow{-2}{*}{\begin{tabular}[c]{@{}l@{}}22-31 GHz (K-bad)\\ 51-58 GHz (V-band)\end{tabular}} & \multirow{-2}{*}{\begin{tabular}[c]{@{}l@{}}Brightness \\ Temperature\end{tabular}} & LWP                                                        & -                                                                                        & 2 s                                                                                     & \multirow{-2}{*}{Navas-Guzmán et al., 2014} \\
-\begin{tabular}[c]{@{}l@{}}CHM15k \\ Nimbus \\ Ceilometer\end{tabular}      & 1064 nm                                                                                          &                                                                                     & $\beta$                              & 15 m                                                                                     & 15 s                                                                                    & Cazorla, et al., 2017                       \\ \bottomrule
+\multirow{-2}{*}{\begin{tabular}[c]{@{}l@{}}MWR RPG \\ HATPRO\end{tabular}} & \multirow{-2}{*}{\begin{tabular}[c]{@{}l@{}}22-31 GHz (K-bad)\\ 51-58 GHz (V-band)\end{tabular}} & \multirow{-2}{*}{\begin{tabular}[c]{@{}l@{}}Brightness \\ Temperature\end{tabular}} & LWP                                                        & -                                                                                        & 2 s                                                                                     & \multirow{-2}{*}{\cite{francisconavas-guzmanTroposphericWaterVapour2014}} \\
+\begin{tabular}[c]{@{}l@{}}CHM15k \\ Nimbus \\ Ceilometer\end{tabular}      & 1064 nm                                                                                          &                                                                                     & $\beta$                              & 15 m                                                                                     & 15 s                                                                                    & \cite{a.cazorlaNearrealtimeProcessingCeilometer2017}                      \\ \bottomrule
 \end{tabular}
 \label{tab:info_instrument}
 \end{table}
 
 
+\begin{itemize}
+    \item Assuming that the cloud parcel is lifting adiabatically from its base, their liquid water content can be from its base to the top can be derived in function of the temperature and pressure as decribed by the equation.
+    ...
+    This equation was applied for liquid pixels between the cloud base and top, where T and P was assumed from the model was interpolated in the same pixels.
+    \item 
+\end{itemize}
 
 
-%ASJDIJASIDJAS
 
-
-
-
-
+For the Liquid Water Content (LWC), cloud base and top identification are derived from radar reflectivity (Z) and lidar backscatter (β). Adiabatic LWC calculations utilize temperature and pressure data from the European Centre for Medium-Range Weather Forecasts (ECMWF), denoted as 
+T and P. Additionally, microwave radiometer (MWR) or cloud droplet radiometer (CDR) liquid water path (LWP) data are used to scale the LWC, with a relative uncertainty of 15\% (Frisch et al., 1998). The Ice Water Content (IWC) is estimated using radar reflectivity (Z) and ECMWF temperature profiles, with a relative uncertainty ranging from 30\% to 40\% (Hogan et al.; Delanoë et al.). The Droplet Effective Radius (r_liq) is calculated from reflectivity (Z), droplet number concentration (N), and the standard deviation of a lognormal particle size distribution (PSD), maintaining a relative uncertainty of 15\% (Frisch et al.). Lastly, the Ice Effective Radius (r_ice) is determined from reflectivity (Z) and ECMWF temperature profiles, but with a higher relative uncertainty of 50\% (Griesche et al.). This comprehensive approach integrates multiple data sources and methodologies to ensure accurate cloud property retrievals, as supported by the referenced studies.
 
 
 
@@ -80,10 +83,11 @@ humidity ($q$) and temperature (T) profiles, given by the microwave radiometer. 
 \multirow{3}{*}{Liquid water content (LWC)} & Z and $\beta$: cloub base and top identification & \multirow{3}{*}{15\%}          & \multirow{3}{*}{Frisch et al. (1998)}                                              \\
                                             & T$_{ECMWF}$, P$_{ECMWF}$: adiabatic LWC          &                                &                                                                                    \\
                                             & MWR or CDR LWP to scale LWC                      &                                &                                                                                    \\
-Ice water content (IWC)                     & Z and T$_{ECMWF}$ profiles                        & 30-40\%                        & \begin{tabular}[c]{@{}l@{}}Hogan et al. (2006) \\ Delanoë et al. 2007\end{tabular} \\
-Droplet effetive radius ($r_{liq}$)       & Z, and N and $\sigma$ of lognormal PSD           & 15\%                           & Frisch et al. (2002)                                                               \\
-Ice effective radius ($r_{ice}$)          & Z and T$_{ECMWF}$                                & 50\%                        & Griesche et al.(2020) \\ \bottomrule
+Ice water content (IWC)                     & Z and T$_{ECMWF}$ profiles                        & 30-40\%                        & \begin{tabular}[c]{@{}l@{}} \cite{robinj.hoganRetrievalIceWater2006} \\ \cite{juliendelanoeCharacterizationIceCloud2007}\end{tabular} \\
+Droplet effetive radius ($r_{liq}$)       & Z, and N and $\sigma$ of lognormal PSD           & 15\%                           & \cite{s.frischRetrievalStratusCloud2002}                                                               \\
+Ice effective radius ($r_{ice}$)          & Z and T$_{ECMWF}$                                & 50\%                        & \cite{hannesgriescheApplicationShipborneRemote2020} \\ \bottomrule
 \end{tabular}
+\label{tab:microphys}
 \end{table}
 %Typical variables of each instruments in table \ref{tab:instrument_info} in Granada station is shown in Figure \ref{fig:product_vs_intrument}. The corresponding instrument is depicted on the right side.
 %

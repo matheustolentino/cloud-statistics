@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2022/dev/Debian) (preloaded format=pdflatex 2024.3.15)  28 MAY 2024 21:11
+This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2022/dev/Debian) (preloaded format=pdflatex 2024.3.15)  3 JUN 2024 19:15
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -3329,7 +3329,7 @@ File: pgflibraryarrows.meta.code.tex 2021/05/15 v3.1.9a (3.1.9a)
 \pgfarrowlinewidth=\dimen321
 )
 LaTeX Font Info:    Trying to load font information for T1+ptm on input line 13
-3.
+2.
  (/usr/share/texlive/texmf-dist/tex/latex/psnfss/t1ptm.fd
 File: t1ptm.fd 2001/06/04 font definitions for T1/ptm.
 )
@@ -3344,24 +3344,24 @@ LaTeX Warning: Label `fig:data_availability' multiply defined.
 )
 \openout1 = `template.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 133.
-LaTeX Font Info:    ... okay on input line 133.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 133.
-LaTeX Font Info:    ... okay on input line 133.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 133.
-LaTeX Font Info:    ... okay on input line 133.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 133.
-LaTeX Font Info:    ... okay on input line 133.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 133.
-LaTeX Font Info:    ... okay on input line 133.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 133.
-LaTeX Font Info:    ... okay on input line 133.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 133.
-LaTeX Font Info:    ... okay on input line 133.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 133.
-LaTeX Font Info:    ... okay on input line 133.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 133.
-LaTeX Font Info:    ... okay on input line 133.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 132.
+LaTeX Font Info:    ... okay on input line 132.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 132.
+LaTeX Font Info:    ... okay on input line 132.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 132.
+LaTeX Font Info:    ... okay on input line 132.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 132.
+LaTeX Font Info:    ... okay on input line 132.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 132.
+LaTeX Font Info:    ... okay on input line 132.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 132.
+LaTeX Font Info:    ... okay on input line 132.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 132.
+LaTeX Font Info:    ... okay on input line 132.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 132.
+LaTeX Font Info:    ... okay on input line 132.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 132.
+LaTeX Font Info:    ... okay on input line 132.
  (/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
 \scratchcounter=\count358
@@ -3390,7 +3390,7 @@ Package caption Info: listings package is loaded.
 Package caption Info: rotating package is loaded.
 Package caption Info: End \AtBeginDocument code.
 \c@lstlisting=\count364
-Package hyperref Info: Link coloring OFF on input line 133.
+Package hyperref Info: Link coloring OFF on input line 132.
 
 (/usr/share/texlive/texmf-dist/tex/latex/hyperref/nameref.sty
 Package: nameref 2021-04-02 v2.47 Cross-referencing by name of section
@@ -3403,34 +3403,34 @@ Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
 )
 \c@section@level=\count365
 )
-LaTeX Info: Redefining \ref on input line 133.
-LaTeX Info: Redefining \pageref on input line 133.
-LaTeX Info: Redefining \nameref on input line 133.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 176
+LaTeX Info: Redefining \ref on input line 132.
+LaTeX Info: Redefining \pageref on input line 132.
+LaTeX Info: Redefining \nameref on input line 132.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 175
 .
 
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 176
+LaTeX Font Info:    Trying to load font information for U+msb on input line 175
 .
 
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
 
-Package xcolor Warning: Incompatible color definition on input line 176.
+Package xcolor Warning: Incompatible color definition on input line 175.
 
 
-Package xcolor Warning: Incompatible color definition on input line 178.
+Package xcolor Warning: Incompatible color definition on input line 177.
 
 LaTeX Font Info:    Trying to load font information for T1+phv on input line 17
-9.
+8.
 (/usr/share/texlive/texmf-dist/tex/latex/psnfss/t1phv.fd
 File: t1phv.fd 2020/03/25 scalable font definitions for T1/phv.
 )
 LaTeX Font Info:    Font shape `T1/phv/m/n' will be
-(Font)              scaled to size 8.54997pt on input line 179.
+(Font)              scaled to size 8.54997pt on input line 178.
  [1
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] (./mat-methods/methods.tex
@@ -3439,75 +3439,75 @@ LaTeX Font Info:    Font shape `T1/phv/m/n' will be
 Package natbib Warning: Citation `Illingworth2007' on page 2 undefined on input
  line 3.
 
-<../../phd_clouds/figures/new_method_monthly_cloud_occurence.png, id=19, 1234.3
-716pt x 412.1799pt>
-File: ../../phd_clouds/figures/new_method_monthly_cloud_occurence.png Graphic f
-ile (type png)
-<use ../../phd_clouds/figures/new_method_monthly_cloud_occurence.png>
-Package pdftex.def Info: ../../phd_clouds/figures/new_method_monthly_cloud_occu
-rence.png  used on input line 7.
-(pdftex.def)             Requested size: 402.89255pt x 134.53549pt.
+<../../phd_clouds/figures/new_method_separated_monthly_data_occurence.png, id=1
+9, 766.062pt x 410.9754pt>
+File: ../../phd_clouds/figures/new_method_separated_monthly_data_occurence.png 
+Graphic file (type png)
+<use ../../phd_clouds/figures/new_method_separated_monthly_data_occurence.png>
+Package pdftex.def Info: ../../phd_clouds/figures/new_method_separated_monthly_
+data_occurence.png  used on input line 7.
+(pdftex.def)             Requested size: 402.89255pt x 216.14784pt.
 
 Package natbib Warning: Citation `XXX' on page 2 undefined on input line 16.
 
-[2 <../../phd_clouds/figures/new_method_monthly_cloud_occurence.png>]
+[2 <../../phd_clouds/figures/new_method_separated_monthly_data_occurence.png>]
 
 Package natbib Warning: Citation `Illingworth2007' on page 3 undefined on input
  line 40.
 
 
-Package natbib Warning: Citation `XXX' on page 3 undefined on input line 43.
+Package natbib Warning: Citation `XXX' on page 3 undefined on input line 42.
 
 
-Overfull \hbox (28.83194pt too wide) in paragraph at lines 49--58
+Overfull \hbox (45.21144pt too wide) in paragraph at lines 49--58
 []$[]$
  []
 
 [3]
 
 Package natbib Warning: Citation `Hogan2004' on page 4 undefined on input line 
-103.
+99.
 
 [4]
 
 Package natbib Warning: Citation `Pirloaga2022' on page 5 undefined on input li
-ne 111.
+ne 107.
 
 
 Package natbib Warning: Citation `Nomokonova2019' on page 5 undefined on input 
-line 111.
+line 107.
 
 
 Package natbib Warning: Citation `Pirloaga2022' on page 5 undefined on input li
-ne 111.
+ne 107.
 
 
 Package natbib Warning: Citation `Nomokonova2019' on page 5 undefined on input 
-line 111.
+line 107.
 
 
-Overfull \hbox (1.33136pt too wide) in paragraph at lines 164--164
+Overfull \hbox (1.33136pt too wide) in paragraph at lines 160--160
  [][]\T1/ptm/b/n/9 Precipitable 
  []
 
 
-Overfull \hbox (1.33136pt too wide) in paragraph at lines 169--169
+Overfull \hbox (1.33136pt too wide) in paragraph at lines 165--165
  [][]\T1/ptm/b/n/9 Precipitable 
  []
 
 
-Overfull \hbox (1.33136pt too wide) in paragraph at lines 175--175
+Overfull \hbox (1.33136pt too wide) in paragraph at lines 171--171
  [][]\T1/ptm/b/n/9 Precipitable 
  []
 
 [5]
-<../../phd_clouds/figures/20210409_cloud_classification.png, id=62, 1087.6635pt
+<../../phd_clouds/figures/20210409_cloud_classification.png, id=75, 1087.6635pt
  x 555.5154pt>
 File: ../../phd_clouds/figures/20210409_cloud_classification.png Graphic file (
 type png)
 <use ../../phd_clouds/figures/20210409_cloud_classification.png>
 Package pdftex.def Info: ../../phd_clouds/figures/20210409_cloud_classification
-.png  used on input line 207.
+.png  used on input line 203.
 (pdftex.def)             Requested size: 503.61377pt x 257.21004pt.
  [6]) (./template.bbl [7 <../../phd_clouds/figures/20210409_cloud_classificatio
 n.png>]) [8]
@@ -3520,10 +3520,10 @@ LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 30876 strings out of 478287
- 540602 string characters out of 5849289
- 867042 words of memory out of 5000000
- 48494 multiletter control sequences out of 15000+600000
+ 30896 strings out of 478287
+ 541590 string characters out of 5849289
+ 868657 words of memory out of 5000000
+ 48509 multiletter control sequences out of 15000+600000
  510830 words of font info for 87 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  84i,16n,89p,2898b,833s stack positions out of 5000i,500n,10000p,200000b,80000s
@@ -3537,10 +3537,10 @@ sfonts/cm/cmsy9.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/helvetic/uhv
 r8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/s
 hare/texlive/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/share/texlive/te
 xmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on template.pdf (8 pages, 965528 bytes).
+Output written on template.pdf (8 pages, 786897 bytes).
 PDF statistics:
- 139 PDF objects out of 1000 (max. 8388607)
- 103 compressed objects within 2 object streams
- 31 named destinations out of 1000 (max. 500000)
+ 159 PDF objects out of 1000 (max. 8388607)
+ 123 compressed objects within 2 object streams
+ 36 named destinations out of 1000 (max. 500000)
  23 words of extra memory for PDF output out of 10000 (max. 10000000)
 
