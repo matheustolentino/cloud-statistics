@@ -42,7 +42,7 @@ In our case, this table was modified several times throughout the analyzed perio
 Additionally, CloudnetPy performs corrections for reflectivity gas and liquid attenuation, error estimation, and quality flag assignment. Specifically, liquid attenuation corrections on radar reflectivity are crucial during raining events, as rain droplets can attenuate a significant fraction of the radar signal \cite{XXX}. 
 %These corrections significantly impact hydrometeor classification macrophysics and microphysical retrievals.
 Table \ref{tab:info_instrument} provides a summary of the cited instruments, detailing their operational frequencies or wavelengths, the types of measurements they perform, their products, their measurement ranges, data collection intervals, and relevant references for a detailed description. The unique variables not processed by Cloudnetpy were 
-humidity ($q$) and temperature (T) profiles, given by the microwave radiometer. Also, specially important high level data such as liquid water content (IWC), ice water content (IWC), droplet effective radius and ice effective radius is described in table \ref{tab:microphys}. For each product in this table, the necessary input data and methods used for their computation are specified alongside their associated uncertainty percentages and the studies from which these products are sourced.
+humidity ($q$) and temperature (T) profiles, given by the microwave radiometer. 
 
 \begin{table}[H]
 \caption{This is a table with some data.}
@@ -58,20 +58,16 @@ humidity ($q$) and temperature (T) profiles, given by the microwave radiometer. 
 \end{table}
 
 
-\begin{itemize}
-    \item Assuming that the cloud parcel is lifting adiabatically from its base, their liquid water content can be from its base to the top can be derived in function of the temperature and pressure as decribed by the equation.
-    ...
-    This equation was applied for liquid pixels between the cloud base and top, where T and P was assumed from the model was interpolated in the same pixels.
-    \item 
-\end{itemize}
+Also, specially important high level data such as liquid water content (IWC), ice water content (IWC), droplet effective radius and ice effective radius is described in table \ref{tab:microphys}. For each product in this table, the necessary input data and methods used for their computation are specified alongside their associated uncertainty percentages and the studies from which these products are sourced. In general, spherical particles are assumed for both water droplets and ice particles. For droplets, a log-normal distribution is presumed, whereas empirical relations are utilized for ice particles.
 
-
-
-For the Liquid Water Content (LWC), cloud base and top identification are derived from radar reflectivity (Z) and lidar backscatter (β). Adiabatic LWC calculations utilize temperature and pressure data from the European Centre for Medium-Range Weather Forecasts (ECMWF), denoted as 
-T and P. Additionally, microwave radiometer (MWR) or cloud droplet radiometer (CDR) liquid water path (LWP) data are used to scale the LWC, with a relative uncertainty of 15\% (Frisch et al., 1998). The Ice Water Content (IWC) is estimated using radar reflectivity (Z) and ECMWF temperature profiles, with a relative uncertainty ranging from 30\% to 40\% (Hogan et al.; Delanoë et al.). The Droplet Effective Radius (r_liq) is calculated from reflectivity (Z), droplet number concentration (N), and the standard deviation of a lognormal particle size distribution (PSD), maintaining a relative uncertainty of 15\% (Frisch et al.). Lastly, the Ice Effective Radius (r_ice) is determined from reflectivity (Z) and ECMWF temperature profiles, but with a higher relative uncertainty of 50\% (Griesche et al.). This comprehensive approach integrates multiple data sources and methodologies to ensure accurate cloud property retrievals, as supported by the referenced studies.
-
-
-
+%\begin{itemize}
+%	 \item LWC assumes a log-normal distribution for warm cloud droplets and an adiabatic lifting. Its relation depends on the atmospheric temperature (T) and presion (P), and have a relative error (unccertanty??) of 15\% \cite{a.s.frischCloudRadarMicrowave1998}. At our station, T and P used by LWC retrieval are given by European Centre for Medium-Range Weather Forecasts (ECMWF), and its equation is applied only into liquid pixels inside cloud boudaries determined by doppler radar reflectivity (Z), and ceilometer-lidar attenuated backscatter coefficient. Additionally, LWC are scaled to match with the same LWP derived from the microwave radiometer.
+%	 \item IWC retrieval used an empirical equation determined by \cite{robinj.hoganRetrievalIceWater2006}, which depends on the radar reflectivity and temperature, called Z-IWC-T relation. Its retrieval have the largest relative uncertainties between other microphysical variables. For the W-band, its relative error is +55\%-35\% and +90\%-47\% for T $\epsilon$ [-20$^{\circ}$C, -10$^{\circ}$C] and T < -40$^{\circ}$C, respectively. Besides the fact temperature are an important parameter for IWC error estimation, \cite{pablosaavedragarfiasAsymmetriesCloudMicrophysical2023} showed that the reflectivity factor error its main source of uncertainty. Typical reflectivity error of 3\% can generate an error 12\% in the IWP. Note that IWP are the IWC integrated in the atmospheric column, thus errors for IWC can be relatively large. Moreover, this relation is applied only into ice pixel inside cloud boundaries.
+%	 \item $r_{liq}$ is obtained assuming a log-normal size distribution for warm cloud droplets, and its relation are senseless of droplets number concentration and the logarithmic spread of the distribution \citep{s.frischRetrievalStratusCloud2002}. Thus, its main source of uncertainty is also due to the reflectivity factor uncertainty. Thus, an error analysis revealed a relative error of 15\% for $r_{liq}$ retrieval using this method. This relation is also applied at liquid pixels only.
+%	 \item $r_{ice}$ was obtained second \cite{juliendelanoeCharacterizationIceCloud2007}, assuming empirical relations of IWC and the visible extinction coefficient ($\alpha$) derived from \cite{robinj.hoganRetrievalIceWater2006}. This method is called Z-T relation, because $r_{ice}$ depends on both T and Z. Later,  \cite{hannesgriescheApplicationShipborneRemote2020} observed an average relative uncertainty of 50\% on $r_{ice}$ retrievals, showing how difficult is to retrieve this parameter. Since the IWC case, these method is also applied only at cloud ice pixels.
+%	 \item In generall, spherical particles was assumed for both water droplets and ice particles. For droplets, a lognormal distribution was assumed, while empirical relations was obtained for ice particles.
+%	  
+%\end{itemize}
 
 % Please add the following required packages to your document preamble:
 % \usepackage{booktabs}
@@ -98,6 +94,12 @@ Ice effective radius ($r_{ice}$)          & Z and T$_{ECMWF}$                   
 %      \caption{....}
 %      \label{fig:product_vs_intrument}
 %\end{figure}
+
+The Liquid Water Content (LWC) retrieval assumes a log-normal distribution for warm cloud droplets lifting adiabatically from its base. Its relation dependent on atmospheric temperature (T) and pressure (P). This method incurs a relative uncertainty of 15\% \cite{a.s.frischCloudRadarMicrowave1998}. At our station, the T and P values utilized by the LWC retrieval are provided by the European Centre for Medium-Range Weather Forecasts (ECMWF). The retrieval equation is applied exclusively to liquid pixels within cloud boundaries, which are determined by Doppler radar reflectivity (Z) and ceilometer-lidar attenuated backscatter coefficient. The liquid pixels, as the pixels with ice and aerosols are given by the cloudnet target classification product, discussed in section \ref{sec:XXX}.
+
+Additionally, LWC values are scaled to align with the Liquid Water Path (LWP) derived from the microwave radiometer. The liquid cloud droplet effective radius ($r_{liq}$) is retrieved by assuming a log-normal size distribution for warm cloud droplets. This method is insensitive to droplet number concentration and the logarithmic spread of the distribution \citep{s.frischRetrievalStratusCloud2002}. Consequently, the primary source of uncertainty is the reflectivity factor error, resulting in a relative error of 15\% for $r_{liq}$ retrievals. This relationship is applied exclusively to liquid pixels.
+
+The Ice Water Content (IWC) retrieval employs an empirical equation as determined by \cite{robinj.hoganRetrievalIceWater2006}, known as the Z-IWC-T relation, which depends on radar reflectivity and temperature. Among various microphysical variables, IWC retrievals have the largest relative uncertainties. For the W-band, the relative error is +55\% to -35\% for temperatures (T) within the range of -20$^{\circ}$C to -10$^{\circ}$C, and +90\% to -47\% for T < -40$^{\circ}$C. While temperature is a significant parameter in IWC error estimation, \cite{pablosaavedragarfiasAsymmetriesCloudMicrophysical2023} demonstrated that the primary source of uncertainty is the reflectivity factor error. A typical reflectivity error of 3\% can result in a 12\% error in the Integrated Water Path (IWP), which is the integration of IWC over the atmospheric column. Therefore, errors in IWC can be relatively large. The Z-IWC-T relation is applied only to ice pixels within cloud boundaries. The ice cloud particle effective radius ($r_{ice}$) is obtained following \cite{juliendelanoeCharacterizationIceCloud2007}, who assumed the same empirical relation for IWC and the visible extinction coefficient ($\alpha$) derived by \cite{robinj.hoganRetrievalIceWater2006}. This approach, termed the Z-T relation, depends on both T and Z. \cite{hannesgriescheApplicationShipborneRemote2020} observed an average relative uncertainty of 50\% in $r_{ice}$ retrievals, highlighting the challenges in accurately retrieving this parameter. Similar to the IWC case, this method is applied only to ice pixels within cloud boundaries.
 
 \subsubsection{Cloudnet particle classification scheme}
 

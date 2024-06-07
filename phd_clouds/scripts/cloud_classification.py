@@ -1,4 +1,4 @@
-from phd_clouds.constants import CLEAR_SKY, CLOUD_LIQUID, DRIZZLE_OR_RAIN, DRIZZLE_OR_RAIN_LIQUID_DROPLETS, ICE_PARTICLES, ICE_WITH_SUP_WATER, MELTING_ICE, MELTING_ICE_LIQUID_DROPLETS, AERO_NO_CLOUD, INSECT_NO_CLOUD, AERO_WITH_INSECT_NO_CLOUD, CLASSIFICATION_TICK_LABELS
+from phd_clouds.constants import CLEAR_SKY, CLOUD_LIQUID, DRIZZLE_OR_RAIN, DRIZZLE_OR_RAIN_LIQUID_DROPLETS, ICE_PARTICLES, ICE_WITH_SUP_WATER, MELTING_ICE, MELTING_ICE_LIQUID_DROPLETS, AERO_NO_CLOUD, INSECT_NO_CLOUD, AERO_WITH_INSECT_NO_CLOUD, CLASSIFICATION_TICK_LABELS, GRANADA_ALTITUDE
 from phd_clouds.constants import TARG_BET_HYDRO
 from phd_clouds.clouds import CloudProcess
 import xarray as xr
@@ -8,18 +8,12 @@ import matplotlib.pyplot as plt
 from pdb import set_trace
 import os
 from collections import Counter
-
 from scipy import ndimage
 import numpy as np
 import pandas as pd
 import matplotlib.dates as mdates
 import matplotlib
-from IPython import get_ipython
-ipython = get_ipython()
-
-# if ipython is not None:
-#     # ipython.run_line_magic('matplotlib', 'inline')
-#     ipython.run_line_magic('matplotlib', 'notebook')
+plot_inline = False
 
 fontsize = 14
 # Set the font to Times New Roman using LaTeX
@@ -28,8 +22,6 @@ plt.rcParams['font.serif'] = ['Times New Roman'] + plt.rcParams['font.serif']
 
 # Set the fontsize for all elements in the plot
 plt.rcParams['font.size'] = fontsize
-
-plt.close('all')
 
 PATH_FIG          = '../figures/'
 PATH_FIG_TEST     = '../../tests/figures/'
@@ -102,7 +94,7 @@ product_2 = 'categorize'
 process_all  = False
 save_files = False
 
-make_plot = False
+make_plot = True
 show_figure = False
 
 filter_abl_ice_clouds = True
@@ -113,18 +105,20 @@ else:
     path_save = "/media/matheustolen/Seagate Basic/cloudnet/cloud_classification_without_filtering_ice_ABL"
     print("*****************Warning**********************\nNot filtering ice clouds in the ABL")
 
-if ipython is not None and show_figure:
+if plot_inline and show_figure:
+    from IPython import get_ipython
+    ipython = get_ipython()
     ipython.run_line_magic('matplotlib', 'notebook')
 else:
+    plt.close('all')
     matplotlib.use('TkAgg')
 
 case_to_only_save = False
 if not process_all:
-    plt.ion()
     path_to_data = "../../tests/data" # Path to save cloudnet downloaded files
 
-    date_ini = "2019-11-18"
-    date_end = "2019-11-18"
+    date_ini = "2023-05-06"
+    date_end = "2023-05-06"
     date_end_new = date_end.replace("-", "")
 
     download_cloudnet_products(date_ini, date_end, path_to_data, product=product_1, site=site)
@@ -562,6 +556,34 @@ for idx_file, file in enumerate(filenames):
         if show_figure:
             plt.show()
 
+        # Plotting ds_cloud
+        fig = plt.figure(figsize=(13, 5))
+        gs = fig.add_gridspec(1, 2, width_ratios=[1, .02], wspace=0.05)
+
+        ax = fig.add_subplot(gs[0, 0])
+        pc0 = ax.pcolormesh(ds_cloud['time'], ds_cloud['height']/1e3, ds_cloud['cloud_classification'].T, cmap=cloud_cmap, vmin=0, vmax=len(cloud_category))
+
+        sc1 = ax.scatter(cloud_props['time'], cloud_props['cloud_base']/1e3, s=10, color='r', label='Cloud base')
+        sc2 = ax.scatter(cloud_props['time'], cloud_props['cloud_top']/1e3, s=10, color='k', label='Cloud top')
+
+        ax.set_ylabel('Height (km) a.m.s.l')
+        ax.set_xlabel('Time (UTC)')
+        ax.grid()
+        # ax.legend()
+
+        ax.set_xlim(data.time.values[0], data.time.values[-1])
+        ax.set_ylim([0, data.height[-1]/1e3])
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+
+        cax_scat = fig.add_subplot(gs[0, 1])
+        cbar_scat = plt.colorbar(pc0, cax=cax_scat, ticks=[], orientation='vertical')
+
+        for idx, (color, name) in enumerate(zip(cloud_cmap.colors, cloud_category)):
+            rect = plt.Rectangle((0, idx), 1, 1, color=color)
+            cbar_scat.ax.add_patch(rect)
+            cbar_scat.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=14)
+        fig.savefig(PATH_FIG + f"{date_str}_cloud_classification_new_method.png", dpi=300, bbox_inches='tight')
+        plt.show()
     
     # # Coarsen der and ier
     # target_height = np.arange(0, 14000+100, 100)

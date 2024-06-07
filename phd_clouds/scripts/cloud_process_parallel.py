@@ -30,6 +30,7 @@ from matplotlib import cm
 from matplotlib.patches import Patch
 from phd_clouds.mwr_class import Mwr
 from sklearn.cluster import DBSCAN
+from phd_clouds.constants import GRANADA_ALTITUDE # in meters
 # from cloudnetpy_qc import quality
 #-------------------------------------------------------------------------------------------------------
 from cloudnetpy.products import generate_lwc
@@ -1358,6 +1359,17 @@ def process_cloud_data(date: datetime.datetime,
     # ------------------------------------------------------------------------------------------------
     # CLOUD filters for calculations of cloud properties
     # ------------------------------------------------------------------------------------------------
+    array_cloud = np.zeros((df_classification.index.shape[0], df_classification.columns.shape[0]))
+    cloud_int= {
+        "No Cloud": 0,
+        "Liquid": 1,
+        "Pre_liquid": 2,
+        "Ice": 3,
+        "Mixed_phase": 4,
+        "Pre_mixed_phase": 5
+    }
+    all_cloud_base   = pd.DataFrame(index=number_of_layers.index, columns=number_of_layers.columns)
+    all_cloud_top    = pd.DataFrame(index=number_of_layers.index, columns=number_of_layers.columns)
     total_cloud_mask = np.full(df_classification.shape, False)
     for i, cloud in enumerate(CLOUD_TYPES):
         classification_filter = CloudProcess(df_classification.copy(),
@@ -1379,9 +1391,14 @@ def process_cloud_data(date: datetime.datetime,
                                                         height_cloud_mean,
                                                         geometric_cloud_thickness,
                                                         cloud)
-
+        
         number_of_layers.loc[classification_filter.time_cbt, cloud] = sublist_lengths(classification_filter.cloud_base)
         total_cloud_mask = np.logical_or(total_cloud_mask, classification_filter.cloud_mask().to_numpy()) # summing all cloud masks
+        array_cloud[classification_filter.cloud_mask().to_numpy()] = cloud_int[cloud]
+        
+        mask_cloud_base = number_of_layers.loc[classification_filter.time_cbt, cloud] == 1
+        all_cloud_base.loc[classification_filter.time_cbt[mask_cloud_base], cloud] = height_cloud_base.loc[classification_filter.time_cbt[mask_cloud_base], cloud].astype(float)
+        all_cloud_top.loc[classification_filter.time_cbt[mask_cloud_base], cloud] = height_cloud_top.loc[classification_filter.time_cbt[mask_cloud_base], cloud].astype(float)
         # ------------------------------------------------------------------------------------------------
         # All plots should be done here
         # ------------------------------------------------------------------------------------------------
@@ -1443,6 +1460,46 @@ def process_cloud_data(date: datetime.datetime,
             #                           classification_filter,
             #                           cloud,
             #                           CLASSIFICATION_TICK_LABELS)
+    ds_cloud = xr.Dataset(data_vars={'cloud_classification': (['time', 'height'], array_cloud)},
+                        coords={'time': time, 'height': height})
+    
+
+    real_single_layer_mask = all_cloud_base.count(axis=1) == 1
+    all_cloud_base = all_cloud_base[real_single_layer_mask]
+    all_cloud_top = all_cloud_top[real_single_layer_mask]
+    cloud_category    = ["No Cloud or Removed for Class.", "Liquid", "Pre_liquid", "Ice", "Mixed_phase", "Pre_mixed_phase"]
+    list_cloud_colors = ["#FFFFFF", "#007CFF", "blue", "cyan", "yellow", "orange"]
+    cloud_cmap = plt.cm.colors.ListedColormap(list_cloud_colors)
+
+    fig = plt.figure(figsize=(13, 5))
+    gs = fig.add_gridspec(1, 2, width_ratios=[1, .02], wspace=0.05)
+    ax = fig.add_subplot(gs[0, 0])
+    pc0 = ax.pcolormesh(ds_cloud['time'], 
+                        (ds_cloud['height']+GRANADA_ALTITUDE)/1e3, 
+                        ds_cloud['cloud_classification'].T, 
+                        cmap=cloud_cmap, vmin=0, vmax=len(cloud_category))
+    for cloud in all_cloud_base.columns:
+        ax.scatter(all_cloud_base.index, (all_cloud_base[cloud]+GRANADA_ALTITUDE)/1e3, color='black', s=5)
+        ax.scatter(all_cloud_top.index, (all_cloud_top[cloud]+GRANADA_ALTITUDE)/1e3, color='red', s=5)
+
+    ax.set_ylabel('Height (km) a.m.s.l')
+    ax.set_xlabel('Time (UTC)')
+    ax.set_title('Other algorithms - No Rain shown')
+    ax.grid()
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+    ax.set_xlim([time[0], time[-1]])
+    ax.set_ylim([0, (ds_cloud['height'][-1] + GRANADA_ALTITUDE)/1e3])
+
+    cax_scat = fig.add_subplot(gs[0, 1])
+    cbar_scat = plt.colorbar(pc0, cax=cax_scat, ticks=[], orientation='vertical')
+
+    for idx, (color, name) in enumerate(zip(cloud_cmap.colors, cloud_category)):
+        rect = plt.Rectangle((0, idx), 1, 1, color=color)
+        cbar_scat.ax.add_patch(rect)
+        cbar_scat.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=14)
+    fig.savefig(PATH_FIG + date.strftime('%Y%m%d') + "_cloud_classification_old_method.png", dpi=300, bbox_inches='tight')
+    plt.show()
+    breakpoint()
     #------------------------------------------------------------------------------------------------
     # Analisis hydrometeors
     #------------------------------------------------------------------------------------------------
@@ -2191,8 +2248,8 @@ database_intersection  = common_prefix_of_filenames(paths, extension)
 start_date = min(database_intersection) # first date of database
 end_date   = max(database_intersection) # last date of database
 
-start_date = datetime.datetime(2021, 1, 10)
-end_date   = datetime.datetime(2021, 1, 10, 23, 59, 59)
+start_date = datetime.datetime(2023, 5, 6)
+end_date   = datetime.datetime(2023, 5, 6, 23, 59, 59)
 
 # start_date = datetime.datetime(2018, 6, 1)
 # end_date   = datetime.datetime(2018, 11, 1)
