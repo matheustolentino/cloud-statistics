@@ -201,12 +201,12 @@ if use_old_method:
     # fig.savefig(PATH_FIG + 'cloud_freq_methods_comparison_correlation_coefficient.png', dpi=300, bbox_inches='tight')
     plt.show()
 
-    clouds_to_analyse_old_method = ['Liquid', 'Mixed_phase', 'Ice', 'Pre_liquid', 'Pre_mixed_phase']
-    new_list_color               = ["#FFFFFF", "#007CFF", "blue", "cyan", "yellow", "orange"]
+    clouds_to_analyse_old_method =  ["Liquid", "Pre_liquid", "Ice", "Mixed_phase", "Pre_mixed_phase"]
+    new_list_color               = ["#007CFF", "blue", "cyan", "yellow", "orange"]
     monthly_old_method_cloud_occurence = old_method_cloud_ava[clouds_to_analyse_old_method].groupby('time.month').mean(dim='time')
 
     fig = plt.figure(figsize=(14, 10))
-    gs = fig.add_gridspec(2, 1, height_ratios=[1, 1], hspace=0.2)
+    gs = fig.add_gridspec(2, 1, height_ratios=[1, 1], hspace=0.25)
     ax = fig.add_subplot(gs[0, 0])
     for i, var in enumerate(list_var_names[:-1]):
         # ax.plot(monthly_single_layer_frequency['month'], monthly_single_layer_frequency[var]*100, '--o', label=var.replace('_', '-').capitalize(),
@@ -219,17 +219,20 @@ if use_old_method:
     ax.set_xlabel('Month')
     # ax.set_title('Single Layer Cloud Frequency')
     ax.grid()
-    ax.xaxis.set_tick_params(labelbottom=False)
+    # ax.xaxis.set_tick_params(labelbottom=False)
     ax.set_xticks(monthly_cloud_occurence['month'])
-    # ax.set_xticklabels(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], rotation=30)
+    ax.set_xticklabels(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], rotation=30)
     ax.legend()
     
     ax2 = fig.add_subplot(gs[1, 0])
-    for var in clouds_to_analyse_old_method:
-        ax2.plot(monthly_old_method_cloud_occurence['month'], monthly_old_method_cloud_occurence[var]*100,
-                 color=new_list_color[clouds_to_analyse_old_method.index(var)], label=var.replace('_', '-').capitalize())
+    for i, var in enumerate(clouds_to_analyse_old_method):
+        ax2.scatter(monthly_old_method_cloud_occurence['month'], monthly_old_method_cloud_occurence[var]*100, label=var.replace('_', '-').capitalize(),
+            color=new_list_color[clouds_to_analyse_old_method.index(var)], s=150, alpha=0.6, edgecolors='black', linewidth=1.5)
+        ax2.plot(monthly_old_method_cloud_occurence['month'], monthly_old_method_cloud_occurence[var]*100, '-',
+                color=new_list_color[clouds_to_analyse_old_method.index(var)], linewidth=1.5, alpha=0.6)
     ax2.set_ylabel('Cloud Occurence (%)')
     ax2.set_xlabel('Month')
+    ax2.legend()
     ax2.set_xticks(monthly_old_method_cloud_occurence['month'])
     ax2.set_xticklabels(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], rotation=30)
     ax2.grid()
