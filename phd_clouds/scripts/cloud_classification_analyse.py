@@ -822,6 +822,8 @@ else:
             ax.set_xlabel('Seasons')
             ax.grid()
             ax.set_ylim([0, 13])
+            quartiles = df.groupby(['season', 'cloud_type'])[y].quantile([0.25, 0.5, 0.75]).unstack()
+            # print(f"Season: {df.season.unique()}, {y}: {quartiles}")
     fig.savefig(PATH_FIG + 'new_method_cloud_prop_violin_season.png', dpi=300, bbox_inches='tight')
     plt.show()
 
