@@ -3,64 +3,51 @@ Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
 The top-level auxiliary file: template.aux
 The style file: copernicus.bst
 Database file #1: ./MyZoteroLibrary.bib
-Warning--I didn't find a database entry for "Illingworth2007"
-Warning--I didn't find a database entry for "XXX"
-Warning--I didn't find a database entry for "Hogan2004"
-Warning--I didn't find a database entry for "Pirloaga2022"
 Warning--I didn't find a database entry for "Nomokonova2019"
-Warning--empty journal in a.cazorlaNearrealtimeProcessingCeilometer2017
-Warning--empty year in a.cazorlaNearrealtimeProcessingCeilometer2017
-Warning--empty journal in francisconavas-guzmanTroposphericWaterVapour2014
-Warning--empty year in francisconavas-guzmanTroposphericWaterVapour2014
-Warning--empty journal in hannesgriescheApplicationShipborneRemote2020
-Warning--empty year in hannesgriescheApplicationShipborneRemote2020
-Warning--empty journal in juliendelanoeCharacterizationIceCloud2007
-Warning--empty year in juliendelanoeCharacterizationIceCloud2007
-Warning--empty journal in nilskuchlerWBandRadarRadiometer2017
-Warning--empty year in nilskuchlerWBandRadarRadiometer2017
-Warning--empty journal in robinj.hoganRetrievalIceWater2006
-Warning--empty year in robinj.hoganRetrievalIceWater2006
-Warning--empty journal in s.frischRetrievalStratusCloud2002
-Warning--empty year in s.frischRetrievalStratusCloud2002
-You've used 7 entries,
+Warning--I didn't find a database entry for "XXX"
+Warning--empty journal in alexandrerios-entenzaMoistureRecyclingIberian2014
+Warning--empty year in alexandrerios-entenzaMoistureRecyclingIberian2014
+Warning--empty journal in shahiAssessmentSpatiotemporalVariability2022
+Warning--empty year in shahiAssessmentSpatiotemporalVariability2022
+You've used 2 entries,
             2932 wiz_defined-function locations,
-            1064 strings with 12835 characters,
-and the built_in function-call counts, 13408 in all, are:
-= -- 1310
-> -- 966
+            1026 strings with 9780 characters,
+and the built_in function-call counts, 2845 in all, are:
+= -- 311
+> -- 141
 < -- 0
-+ -- 376
-- -- 316
-* -- 1014
-:= -- 1471
-add.period$ -- 7
-call.type$ -- 7
-change.case$ -- 119
-chr.to.int$ -- 8
-cite$ -- 35
-duplicate$ -- 1069
-empty$ -- 477
-format.name$ -- 336
-if$ -- 2557
++ -- 61
+- -- 46
+* -- 196
+:= -- 287
+add.period$ -- 2
+call.type$ -- 2
+change.case$ -- 19
+chr.to.int$ -- 3
+cite$ -- 10
+duplicate$ -- 262
+empty$ -- 118
+format.name$ -- 51
+if$ -- 544
 int.to.chr$ -- 1
 int.to.str$ -- 1
-missing$ -- 154
-newline$ -- 30
-num.names$ -- 28
-pop$ -- 632
+missing$ -- 29
+newline$ -- 15
+num.names$ -- 8
+pop$ -- 154
 preamble$ -- 1
-purify$ -- 119
+purify$ -- 19
 quote$ -- 0
-skip$ -- 726
+skip$ -- 146
 stack$ -- 0
-substring$ -- 452
-swap$ -- 999
+substring$ -- 116
+swap$ -- 240
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 63
-warning$ -- 14
-while$ -- 42
+type$ -- 18
+warning$ -- 4
+while$ -- 12
 width$ -- 0
-write$ -- 78
-(There were 19 warnings)
+write$ -- 28
+(There were 6 warnings)

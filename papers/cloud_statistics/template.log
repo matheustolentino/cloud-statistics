@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2022/dev/Debian) (preloaded format=pdflatex 2024.3.15)  6 JUN 2024 17:07
+This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2022/dev/Debian) (preloaded format=pdflatex 2024.3.15)  14 JUN 2024 16:50
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -3008,6 +3008,10 @@ Package: etoolbox 2020/10/05 v2.5k e-TeX tools for LaTeX (JAW)
 (/usr/share/texlive/texmf-dist/tex/generic/alphalph/alphalph.sty
 Package: alphalph 2019/12/09 v2.6 Convert numbers to letters (HO)
 )
+(/usr/share/texlive/texmf-dist/tex/latex/pgfplots/pgfplots.sty
+(/usr/share/texlive/texmf-dist/tex/generic/pgfplots/pgfplots.revision.tex)
+Package: pgfplots 2021/05/15 v1.18.1 Data Visualization (1.18.1)
+
 (/usr/share/texlive/texmf-dist/tex/latex/pgf/frontendlayer/tikz.sty
 (/usr/share/texlive/texmf-dist/tex/latex/pgf/basiclayer/pgf.sty
 (/usr/share/texlive/texmf-dist/tex/latex/pgf/utilities/pgfrcs.sty
@@ -3294,6 +3298,113 @@ File: pgfmodulematrix.code.tex 2021/05/15 v3.1.9a (3.1.9a)
 zlibrarytopaths.code.tex
 File: tikzlibrarytopaths.code.tex 2021/05/15 v3.1.9a (3.1.9a)
 )))
+(/usr/share/texlive/texmf-dist/tex/generic/pgfplots/pgfplots.code.tex
+(/usr/share/texlive/texmf-dist/tex/generic/pgfplots/pgfplotscore.code.tex
+\t@pgfplots@toka=\toks52
+\t@pgfplots@tokb=\toks53
+\t@pgfplots@tokc=\toks54
+\pgfplots@tmpa=\dimen318
+\c@pgfplots@coordindex=\count358
+\c@pgfplots@scanlineindex=\count359
+
+(/usr/share/texlive/texmf-dist/tex/generic/pgfplots/sys/pgfplotssysgeneric.code
+.tex))
+(/usr/share/texlive/texmf-dist/tex/generic/pgfplots/libs/pgfplotslibrary.code.t
+ex)
+(/usr/share/texlive/texmf-dist/tex/generic/pgfplots/oldpgfcompatib/pgfplotsoldp
+gfsupp_loader.code.tex
+(/usr/share/texlive/texmf-dist/tex/generic/pgf/libraries/pgflibraryfpu.code.tex
+))
+(/usr/share/texlive/texmf-dist/tex/generic/pgfplots/util/pgfplotsutil.code.tex
+(/usr/share/texlive/texmf-dist/tex/generic/pgfplots/liststructure/pgfplotslists
+tructure.code.tex)
+(/usr/share/texlive/texmf-dist/tex/generic/pgfplots/liststructure/pgfplotslists
+tructureext.code.tex)
+(/usr/share/texlive/texmf-dist/tex/generic/pgfplots/liststructure/pgfplotsarray
+.code.tex
+\c@pgfplotsarray@tmp=\count360
+)
+(/usr/share/texlive/texmf-dist/tex/generic/pgfplots/liststructure/pgfplotsmatri
+x.code.tex)
+(/usr/share/texlive/texmf-dist/tex/generic/pgfplots/numtable/pgfplotstableshare
+d.code.tex
+\c@pgfplotstable@counta=\count361
+\t@pgfplotstable@a=\toks55
+)
+(/usr/share/texlive/texmf-dist/tex/generic/pgfplots/liststructure/pgfplotsdeque
+.code.tex)
+(/usr/share/texlive/texmf-dist/tex/generic/pgfplots/util/pgfplotsbinary.code.te
+x
+(/usr/share/texlive/texmf-dist/tex/generic/pgfplots/util/pgfplotsbinary.data.co
+de.tex))
+(/usr/share/texlive/texmf-dist/tex/generic/pgfplots/util/pgfplotsutil.verb.code
+.tex)
+(/usr/share/texlive/texmf-dist/tex/generic/pgfplots/libs/pgflibrarypgfplots.sur
+fshading.code.tex
+\c@pgfplotslibrarysurf@no=\count362
+
+(/usr/share/texlive/texmf-dist/tex/generic/pgfplots/sys/pgflibrarypgfplots.surf
+shading.pgfsys-pdftex.def)))
+(/usr/share/texlive/texmf-dist/tex/generic/pgfplots/util/pgfplotscolormap.code.
+tex
+(/usr/share/texlive/texmf-dist/tex/generic/pgfplots/util/pgfplotscolor.code.tex
+))
+(/usr/share/texlive/texmf-dist/tex/generic/pgfplots/pgfplotsstackedplots.code.t
+ex)
+(/usr/share/texlive/texmf-dist/tex/generic/pgfplots/pgfplotsplothandlers.code.t
+ex
+(/usr/share/texlive/texmf-dist/tex/generic/pgfplots/pgfplotsmeshplothandler.cod
+e.tex
+(/usr/share/texlive/texmf-dist/tex/generic/pgfplots/pgfplotsmeshplotimage.code.
+tex)))
+(/usr/share/texlive/texmf-dist/tex/generic/pgfplots/pgfplots.scaling.code.tex)
+(/usr/share/texlive/texmf-dist/tex/generic/pgfplots/pgfplotscoordprocessing.cod
+e.tex)
+(/usr/share/texlive/texmf-dist/tex/generic/pgfplots/pgfplots.errorbars.code.tex
+) (/usr/share/texlive/texmf-dist/tex/generic/pgfplots/pgfplots.markers.code.tex
+) (/usr/share/texlive/texmf-dist/tex/generic/pgfplots/pgfplotsticks.code.tex)
+(/usr/share/texlive/texmf-dist/tex/generic/pgfplots/pgfplots.paths.code.tex)
+(/usr/share/texlive/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tik
+zlibrarydecorations.code.tex
+(/usr/share/texlive/texmf-dist/tex/generic/pgf/modules/pgfmoduledecorations.cod
+e.tex
+\pgfdecoratedcompleteddistance=\dimen319
+\pgfdecoratedremainingdistance=\dimen320
+\pgfdecoratedinputsegmentcompleteddistance=\dimen321
+\pgfdecoratedinputsegmentremainingdistance=\dimen322
+\pgf@decorate@distancetomove=\dimen323
+\pgf@decorate@repeatstate=\count363
+\pgfdecorationsegmentamplitude=\dimen324
+\pgfdecorationsegmentlength=\dimen325
+)
+\tikz@lib@dec@box=\box77
+)
+(/usr/share/texlive/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tik
+zlibrarydecorations.pathmorphing.code.tex
+(/usr/share/texlive/texmf-dist/tex/generic/pgf/libraries/decorations/pgflibrary
+decorations.pathmorphing.code.tex))
+(/usr/share/texlive/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tik
+zlibrarydecorations.pathreplacing.code.tex
+(/usr/share/texlive/texmf-dist/tex/generic/pgf/libraries/decorations/pgflibrary
+decorations.pathreplacing.code.tex))
+(/usr/share/texlive/texmf-dist/tex/generic/pgfplots/libs/tikzlibrarypgfplots.co
+ntourlua.code.tex)
+\pgfplots@numplots=\count364
+\pgfplots@xmin@reg=\dimen326
+\pgfplots@xmax@reg=\dimen327
+\pgfplots@ymin@reg=\dimen328
+\pgfplots@ymax@reg=\dimen329
+\pgfplots@zmin@reg=\dimen330
+\pgfplots@zmax@reg=\dimen331
+)
+(/usr/share/texlive/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tik
+zlibraryplotmarks.code.tex
+File: tikzlibraryplotmarks.code.tex 2021/05/15 v3.1.9a (3.1.9a)
+
+(/usr/share/texlive/texmf-dist/tex/generic/pgf/libraries/pgflibraryplotmarks.co
+de.tex
+File: pgflibraryplotmarks.code.tex 2021/05/15 v3.1.9a (3.1.9a)
+)))
 (/usr/share/texlive/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tik
 zlibraryshapes.geometric.code.tex
 File: tikzlibraryshapes.geometric.code.tex 2021/05/15 v3.1.9a (3.1.9a)
@@ -3313,8 +3424,8 @@ File: tikzlibraryfit.code.tex 2021/05/15 v3.1.9a (3.1.9a)
 (/usr/share/texlive/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tik
 zlibrarybackgrounds.code.tex
 File: tikzlibrarybackgrounds.code.tex 2021/05/15 v3.1.9a (3.1.9a)
-\pgf@layerbox@background=\box77
-\pgf@layerboxsaved@background=\box78
+\pgf@layerbox@background=\box78
+\pgf@layerboxsaved@background=\box79
 )
 (/usr/share/texlive/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tik
 zlibrarymatrix.code.tex
@@ -3323,13 +3434,13 @@ File: tikzlibrarymatrix.code.tex 2021/05/15 v3.1.9a (3.1.9a)
 (/usr/share/texlive/texmf-dist/tex/generic/pgf/libraries/pgflibraryarrows.meta.
 code.tex
 File: pgflibraryarrows.meta.code.tex 2021/05/15 v3.1.9a (3.1.9a)
-\pgfarrowinset=\dimen318
-\pgfarrowlength=\dimen319
-\pgfarrowwidth=\dimen320
-\pgfarrowlinewidth=\dimen321
+\pgfarrowinset=\dimen332
+\pgfarrowlength=\dimen333
+\pgfarrowwidth=\dimen334
+\pgfarrowlinewidth=\dimen335
 )
 LaTeX Font Info:    Trying to load font information for T1+ptm on input line 13
-2.
+3.
  (/usr/share/texlive/texmf-dist/tex/latex/psnfss/t1ptm.fd
 File: t1ptm.fd 2001/06/04 font definitions for T1/ptm.
 )
@@ -3339,42 +3450,45 @@ LaTeX Warning: Unused global option(s):
 
 (./template.aux
 
-LaTeX Warning: Label `fig:data_availability' multiply defined.
+LaTeX Warning: Label `sec:daily_cycle' multiply defined.
+
+
+LaTeX Warning: Label `fig:LWC_pre_mixed' multiply defined.
 
 )
 \openout1 = `template.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 132.
-LaTeX Font Info:    ... okay on input line 132.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 132.
-LaTeX Font Info:    ... okay on input line 132.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 132.
-LaTeX Font Info:    ... okay on input line 132.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 132.
-LaTeX Font Info:    ... okay on input line 132.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 132.
-LaTeX Font Info:    ... okay on input line 132.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 132.
-LaTeX Font Info:    ... okay on input line 132.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 132.
-LaTeX Font Info:    ... okay on input line 132.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 132.
-LaTeX Font Info:    ... okay on input line 132.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 132.
-LaTeX Font Info:    ... okay on input line 132.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 133.
+LaTeX Font Info:    ... okay on input line 133.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 133.
+LaTeX Font Info:    ... okay on input line 133.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 133.
+LaTeX Font Info:    ... okay on input line 133.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 133.
+LaTeX Font Info:    ... okay on input line 133.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 133.
+LaTeX Font Info:    ... okay on input line 133.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 133.
+LaTeX Font Info:    ... okay on input line 133.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 133.
+LaTeX Font Info:    ... okay on input line 133.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 133.
+LaTeX Font Info:    ... okay on input line 133.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 133.
+LaTeX Font Info:    ... okay on input line 133.
  (/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count358
-\scratchdimen=\dimen322
-\scratchbox=\box79
-\nofMPsegments=\count359
-\nofMParguments=\count360
-\everyMPshowfont=\toks52
-\MPscratchCnt=\count361
-\MPscratchDim=\dimen323
-\MPnumerator=\count362
-\makeMPintoPDFobject=\count363
-\everyMPtoPDFconversion=\toks53
+\scratchcounter=\count365
+\scratchdimen=\dimen336
+\scratchbox=\box80
+\nofMPsegments=\count366
+\nofMParguments=\count367
+\everyMPshowfont=\toks56
+\MPscratchCnt=\count368
+\MPscratchDim=\dimen337
+\MPnumerator=\count369
+\makeMPintoPDFobject=\count370
+\everyMPtoPDFconversion=\toks57
 ) (/usr/share/texlive/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
 Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
@@ -3389,8 +3503,8 @@ Package caption Info: hyperref package is loaded.
 Package caption Info: listings package is loaded.
 Package caption Info: rotating package is loaded.
 Package caption Info: End \AtBeginDocument code.
-\c@lstlisting=\count364
-Package hyperref Info: Link coloring OFF on input line 132.
+\c@lstlisting=\count371
+Package hyperref Info: Link coloring OFF on input line 133.
 
 (/usr/share/texlive/texmf-dist/tex/latex/hyperref/nameref.sty
 Package: nameref 2021-04-02 v2.47 Cross-referencing by name of section
@@ -3401,131 +3515,289 @@ Package: refcount 2019/12/15 v3.6 Data extraction from label references (HO)
 (/usr/share/texlive/texmf-dist/tex/generic/gettitlestring/gettitlestring.sty
 Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
 )
-\c@section@level=\count365
+\c@section@level=\count372
 )
-LaTeX Info: Redefining \ref on input line 132.
-LaTeX Info: Redefining \pageref on input line 132.
-LaTeX Info: Redefining \nameref on input line 132.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 175
-.
+LaTeX Info: Redefining \ref on input line 133.
+LaTeX Info: Redefining \pageref on input line 133.
+LaTeX Info: Redefining \nameref on input line 133.
 
+
+Package pgfplots Warning: running in backwards compatibility mode (unsuitable t
+ick labels; missing features). Consider writing \pgfplotsset{compat=1.18} into 
+your preamble.
+ on input line 133.
+
+LaTeX Font Info:    Trying to load font information for U+msa on input line 176
+.
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 175
+LaTeX Font Info:    Trying to load font information for U+msb on input line 176
 .
 
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
 
-Package xcolor Warning: Incompatible color definition on input line 175.
+Package xcolor Warning: Incompatible color definition on input line 176.
 
 
-Package xcolor Warning: Incompatible color definition on input line 177.
+Package xcolor Warning: Incompatible color definition on input line 178.
 
 LaTeX Font Info:    Trying to load font information for T1+phv on input line 17
-8.
+9.
 (/usr/share/texlive/texmf-dist/tex/latex/psnfss/t1phv.fd
 File: t1phv.fd 2020/03/25 scalable font definitions for T1/phv.
 )
 LaTeX Font Info:    Font shape `T1/phv/m/n' will be
-(Font)              scaled to size 8.54997pt on input line 178.
+(Font)              scaled to size 8.54997pt on input line 179.
  [1
 
-{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] (./mat-methods/methods.tex
+{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] (./results/results.tex
+<../../phd_clouds/figures/20230506_cloud_classification_new_method.png, id=19, 
+1005.7575pt x 306.9066pt>
+File: ../../phd_clouds/figures/20230506_cloud_classification_new_method.png Gra
+phic file (type png)
+<use ../../phd_clouds/figures/20230506_cloud_classification_new_method.png>
+Package pdftex.def Info: ../../phd_clouds/figures/20230506_cloud_classification
+_new_method.png  used on input line 42.
+(pdftex.def)             Requested size: 241.73245pt x 73.7621pt.
+<../../phd_clouds/figures/20230506_cloud_classification_old_method.png, id=21, 
+1020.9342pt x 349.305pt>
+File: ../../phd_clouds/figures/20230506_cloud_classification_old_method.png Gra
+phic file (type png)
+<use ../../phd_clouds/figures/20230506_cloud_classification_old_method.png>
+Package pdftex.def Info: ../../phd_clouds/figures/20230506_cloud_classification
+_old_method.png  used on input line 49.
+(pdftex.def)             Requested size: 241.73245pt x 82.70496pt.
+<../../phd_clouds/figures/IWP_by_D.png, id=24, 1079.7138pt x 447.5922pt>
+File: ../../phd_clouds/figures/IWP_by_D.png Graphic file (type png)
+<use ../../phd_clouds/figures/IWP_by_D.png>
+Package pdftex.def Info: ../../phd_clouds/figures/IWP_by_D.png  used on input l
+ine 63.
+(pdftex.def)             Requested size: 503.61377pt x 208.7702pt.
+ [2 <../../phd_clouds/figures/20230506_cloud_classification_new_method.png> <..
+/../phd_clouds/figures/20230506_cloud_classification_old_method.png>]
+LaTeX Font Info:    Trying to load font information for T1+pcr on input line 68
+.
 
-
-Package natbib Warning: Citation `Illingworth2007' on page 2 undefined on input
- line 3.
-
-<../../phd_clouds/figures/new_method_separated_monthly_data_occurence.png, id=1
-9, 766.062pt x 410.9754pt>
-File: ../../phd_clouds/figures/new_method_separated_monthly_data_occurence.png 
-Graphic file (type png)
-<use ../../phd_clouds/figures/new_method_separated_monthly_data_occurence.png>
-Package pdftex.def Info: ../../phd_clouds/figures/new_method_separated_monthly_
-data_occurence.png  used on input line 7.
-(pdftex.def)             Requested size: 402.89255pt x 216.14784pt.
-
-Package natbib Warning: Citation `XXX' on page 2 undefined on input line 16.
-
-[2 <../../phd_clouds/figures/new_method_separated_monthly_data_occurence.png>]
-
-Package natbib Warning: Citation `Illingworth2007' on page 3 undefined on input
- line 40.
-
-
-Package natbib Warning: Citation `XXX' on page 3 undefined on input line 42.
-
-
-Overfull \hbox (45.21144pt too wide) in paragraph at lines 49--58
-[]$[]$
+(/usr/share/texlive/texmf-dist/tex/latex/psnfss/t1pcr.fd
+File: t1pcr.fd 2001/06/04 font definitions for T1/pcr.
+)
+Overfull \hbox (7.34337pt too wide) in paragraph at lines 68--69
+\T1/ptm/m/n/10 Ad-di-tion-ally, some neg-li-gi-ble neg-a-tive cor-re-la-tions w
+ere ob-served, such as be-tween \T1/pcr/m/n/10 Ice \T1/ptm/m/n/10 and \T1/pcr/m
+/n/10 Mixed-Phase-Precipitable
  []
 
+<../../phd_clouds/figures/cloud_freq_methods_comparison_correlation_coefficient
+.png, id=38, 1067.6688pt x 542.5068pt>
+File: ../../phd_clouds/figures/cloud_freq_methods_comparison_correlation_coeffi
+cient.png Graphic file (type png)
+<use ../../phd_clouds/figures/cloud_freq_methods_comparison_correlation_coeffic
+ient.png>
+Package pdftex.def Info: ../../phd_clouds/figures/cloud_freq_methods_comparison
+_correlation_coefficient.png  used on input line 72.
+(pdftex.def)             Requested size: 402.89255pt x 204.71436pt.
+[3 <../../phd_clouds/figures/IWP_by_D.png>]
+<../../phd_clouds/figures/hourly_seasonly_single_layer_frequency.png, id=46, 87
+4.2261pt x 486.1362pt>
+File: ../../phd_clouds/figures/hourly_seasonly_single_layer_frequency.png Graph
+ic file (type png)
+<use ../../phd_clouds/figures/hourly_seasonly_single_layer_frequency.png>
+Package pdftex.def Info: ../../phd_clouds/figures/hourly_seasonly_single_layer_
+frequency.png  used on input line 87.
+(pdftex.def)             Requested size: 503.61377pt x 280.0454pt.
+ [4 <../../phd_clouds/figures/cloud_freq_methods_comparison_correlation_coeffic
+ient.png>]
 
-Package caption Warning: \label without proper reference on input line 86.
-See the caption package documentation for explanation.
-
-
-LaTeX Warning: Reference `tab:microphys' on page 3 undefined on input line 61.
-
-[3]
-
-Package natbib Warning: Citation `a.s.frischCloudRadarMicrowave1998' on page 4 
-undefined on input line 98.
-
-
-Package natbib Warning: Citation `pablosaavedragarfiasAsymmetriesCloudMicrophys
-ical2023' on page 4 undefined on input line 101.
-
-[4]
-
-Package natbib Warning: Citation `Hogan2004' on page 5 undefined on input line 
-112.
-
-
-Package natbib Warning: Citation `Pirloaga2022' on page 5 undefined on input li
-ne 120.
+LaTeX Warning: Reference `sec:classification_algorithm' on page 5 undefined on 
+input line 107.
 
 
 Package natbib Warning: Citation `Nomokonova2019' on page 5 undefined on input 
-line 120.
+line 107.
 
+[5 <../../phd_clouds/figures/hourly_seasonly_single_layer_frequency.png>]
+<../../phd_clouds/figures/new_method_monthly_single_layer_frequency.png, id=68,
+ 748.2354pt x 343.5234pt>
+File: ../../phd_clouds/figures/new_method_monthly_single_layer_frequency.png Gr
+aphic file (type png)
+<use ../../phd_clouds/figures/new_method_monthly_single_layer_frequency.png>
+Package pdftex.def Info: ../../phd_clouds/figures/new_method_monthly_single_lay
+er_frequency.png  used on input line 111.
+(pdftex.def)             Requested size: 402.89255pt x 184.9757pt.
 
-Package natbib Warning: Citation `Pirloaga2022' on page 5 undefined on input li
-ne 120.
+[6 <../../phd_clouds/figures/new_method_monthly_single_layer_frequency.png>]
+<../../phd_clouds/figures/new_method_cloud_prop_violin_season.png, id=81, 1343.
+0175pt x 1076.5821pt>
+File: ../../phd_clouds/figures/new_method_cloud_prop_violin_season.png Graphic 
+file (type png)
+<use ../../phd_clouds/figures/new_method_cloud_prop_violin_season.png>
+Package pdftex.def Info: ../../phd_clouds/figures/new_method_cloud_prop_violin_
+season.png  used on input line 137.
+(pdftex.def)             Requested size: 503.61377pt x 403.70087pt.
 
+[7] [8 <../../phd_clouds/figures/new_method_cloud_prop_violin_season.png>]
+<../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Liquid.png, id=96,
+ 1188.3597pt x 528.7755pt>
+File: ../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Liquid.png Gr
+aphic file (type png)
+<use ../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Liquid.png>
+Package pdftex.def Info: ../../phd_clouds/figures/grouped_by_month_evolution_fo
+r_lwc_Liquid.png  used on input line 155.
+(pdftex.def)             Requested size: 453.24931pt x 201.67908pt.
 
-Package natbib Warning: Citation `Nomokonova2019' on page 5 undefined on input 
-line 120.
+[9]
+<../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Liquid-Precipitabl
+e.png, id=107, 1188.3597pt x 528.7755pt>
+File: ../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Liquid-Precip
+itable.png Graphic file (type png)
+<use ../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Liquid-Precipi
+table.png>
+Package pdftex.def Info: ../../phd_clouds/figures/grouped_by_month_evolution_fo
+r_lwc_Liquid-Precipitable.png  used on input line 168.
+(pdftex.def)             Requested size: 453.24931pt x 201.67908pt.
+ [10 <../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Liquid.png>]
+<../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Mixed-Phase.png, i
+d=119, 1188.3597pt x 528.7755pt>
+File: ../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Mixed-Phase.p
+ng Graphic file (type png)
+<use ../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Mixed-Phase.pn
+g>
+Package pdftex.def Info: ../../phd_clouds/figures/grouped_by_month_evolution_fo
+r_lwc_Mixed-Phase.png  used on input line 177.
+(pdftex.def)             Requested size: 453.24931pt x 201.67908pt.
+ [11 <../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Liquid-Precip
+itable.png>]
+<../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Mixed-Phase-Precip
+itable.png, id=129, 1188.3597pt x 528.7755pt>
+File: ../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Mixed-Phase-P
+recipitable.png Graphic file (type png)
+<use ../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Mixed-Phase-Pr
+ecipitable.png>
+Package pdftex.def Info: ../../phd_clouds/figures/grouped_by_month_evolution_fo
+r_lwc_Mixed-Phase-Precipitable.png  used on input line 188.
+(pdftex.def)             Requested size: 453.24931pt x 201.67908pt.
+ [12 <../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Mixed-Phase.p
+ng>]
+<../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Ice-Precipitable.p
+ng, id=137, 1188.3597pt x 528.7755pt>
+File: ../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Ice-Precipita
+ble.png Graphic file (type png)
+<use ../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Ice-Precipitab
+le.png>
+Package pdftex.def Info: ../../phd_clouds/figures/grouped_by_month_evolution_fo
+r_lwc_Ice-Precipitable.png  used on input line 231.
+(pdftex.def)             Requested size: 453.24931pt x 201.67908pt.
+ [13 <../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Mixed-Phase-P
+recipitable.png>] [14 <../../phd_clouds/figures/grouped_by_month_evolution_for_
+lwc_Ice-Precipitable.png>]
+<../../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Ice.png, id=154, 1
+188.3597pt x 528.7755pt>
+File: ../../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Ice.png Graph
+ic file (type png)
+<use ../../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Ice.png>
+Package pdftex.def Info: ../../phd_clouds/figures/grouped_by_month_evolution_fo
+r_iwc_Ice.png  used on input line 246.
+(pdftex.def)             Requested size: 453.24931pt x 201.67908pt.
+ [15 <../../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Ice.png>]
+<../../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Mixed-Phase.png, i
+d=165, 1188.3597pt x 528.7755pt>
+File: ../../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Mixed-Phase.p
+ng Graphic file (type png)
+<use ../../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Mixed-Phase.pn
+g>
+Package pdftex.def Info: ../../phd_clouds/figures/grouped_by_month_evolution_fo
+r_iwc_Mixed-Phase.png  used on input line 257.
+(pdftex.def)             Requested size: 453.24931pt x 201.67908pt.
+<../../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Mixed-Phase-Precip
+itable.png, id=169, 1188.3597pt x 528.7755pt>
+File: ../../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Mixed-Phase-P
+recipitable.png Graphic file (type png)
+<use ../../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Mixed-Phase-Pr
+ecipitable.png>
+Package pdftex.def Info: ../../phd_clouds/figures/grouped_by_month_evolution_fo
+r_iwc_Mixed-Phase-Precipitable.png  used on input line 266.
+(pdftex.def)             Requested size: 453.24931pt x 201.67908pt.
+ [16 <../../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Mixed-Phase.p
+ng>]
 
-[5]
-Overfull \hbox (1.33136pt too wide) in paragraph at lines 173--173
- [][]\T1/ptm/b/n/9 Precipitable 
- []
+Package natbib Warning: Citation `XXX' on page 17 undefined on input line 284.
 
-
-Overfull \hbox (1.33136pt too wide) in paragraph at lines 178--178
- [][]\T1/ptm/b/n/9 Precipitable 
- []
-
-
-Overfull \hbox (1.33136pt too wide) in paragraph at lines 184--184
- [][]\T1/ptm/b/n/9 Precipitable 
- []
-
-[6]
-<../../phd_clouds/figures/20210409_cloud_classification.png, id=87, 1087.6635pt
- x 555.5154pt>
-File: ../../phd_clouds/figures/20210409_cloud_classification.png Graphic file (
-type png)
-<use ../../phd_clouds/figures/20210409_cloud_classification.png>
-Package pdftex.def Info: ../../phd_clouds/figures/20210409_cloud_classification
-.png  used on input line 216.
-(pdftex.def)             Requested size: 503.61377pt x 257.21004pt.
- [7]) (./template.bbl [8 <../../phd_clouds/figures/20210409_cloud_classificatio
-n.png>]) [9]
+<../../phd_clouds/figures/grouped_by_month_evolution_for_der_Liquid.png, id=180
+, 1180.41pt x 528.7755pt>
+File: ../../phd_clouds/figures/grouped_by_month_evolution_for_der_Liquid.png Gr
+aphic file (type png)
+<use ../../phd_clouds/figures/grouped_by_month_evolution_for_der_Liquid.png>
+Package pdftex.def Info: ../../phd_clouds/figures/grouped_by_month_evolution_fo
+r_der_Liquid.png  used on input line 290.
+(pdftex.def)             Requested size: 453.24931pt x 203.03458pt.
+[17 <../../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Mixed-Phase-Pr
+ecipitable.png>]
+<../../phd_clouds/figures/grouped_by_month_evolution_for_der_Pre_liquid.png, id
+=189, 1107.1764pt x 645.1302pt>
+File: ../../phd_clouds/figures/grouped_by_month_evolution_for_der_Pre_liquid.pn
+g Graphic file (type png)
+<use ../../phd_clouds/figures/grouped_by_month_evolution_for_der_Pre_liquid.png
+>
+Package pdftex.def Info: ../../phd_clouds/figures/grouped_by_month_evolution_fo
+r_der_Pre_liquid.png  used on input line 300.
+(pdftex.def)             Requested size: 453.24931pt x 264.1015pt.
+ [18 <../../phd_clouds/figures/grouped_by_month_evolution_for_der_Liquid.png>]
+<../../phd_clouds/figures/grouped_by_month_evolution_for_der_Mixed_phase.png, i
+d=203, 1124.0394pt x 645.1302pt>
+File: ../../phd_clouds/figures/grouped_by_month_evolution_for_der_Mixed_phase.p
+ng Graphic file (type png)
+<use ../../phd_clouds/figures/grouped_by_month_evolution_for_der_Mixed_phase.pn
+g>
+Package pdftex.def Info: ../../phd_clouds/figures/grouped_by_month_evolution_fo
+r_der_Mixed_phase.png  used on input line 310.
+(pdftex.def)             Requested size: 453.24931pt x 260.13441pt.
+ [19 <../../phd_clouds/figures/grouped_by_month_evolution_for_der_Pre_liquid.pn
+g>]
+<../../phd_clouds/figures/grouped_by_month_evolution_for_der_Pre_mixed_phase.pn
+g, id=214, 1107.1764pt x 645.1302pt>
+File: ../../phd_clouds/figures/grouped_by_month_evolution_for_der_Pre_mixed_pha
+se.png Graphic file (type png)
+<use ../../phd_clouds/figures/grouped_by_month_evolution_for_der_Pre_mixed_phas
+e.png>
+Package pdftex.def Info: ../../phd_clouds/figures/grouped_by_month_evolution_fo
+r_der_Pre_mixed_phase.png  used on input line 319.
+(pdftex.def)             Requested size: 453.24931pt x 264.1015pt.
+ [20 <../../phd_clouds/figures/grouped_by_month_evolution_for_der_Mixed_phase.p
+ng>] [21 <../../phd_clouds/figures/grouped_by_month_evolution_for_der_Pre_mixed
+_phase.png>]
+<../../phd_clouds/figures/grouped_by_month_evolution_for_ier_Ice.png, id=230, 1
+175.8329pt x 528.7755pt>
+File: ../../phd_clouds/figures/grouped_by_month_evolution_for_ier_Ice.png Graph
+ic file (type png)
+<use ../../phd_clouds/figures/grouped_by_month_evolution_for_ier_Ice.png>
+Package pdftex.def Info: ../../phd_clouds/figures/grouped_by_month_evolution_fo
+r_ier_Ice.png  used on input line 334.
+(pdftex.def)             Requested size: 453.24931pt x 203.82529pt.
+<../../phd_clouds/figures/grouped_by_month_evolution_for_ier_Mixed_phase.png, i
+d=232, 1107.1764pt x 645.1302pt>
+File: ../../phd_clouds/figures/grouped_by_month_evolution_for_ier_Mixed_phase.p
+ng Graphic file (type png)
+<use ../../phd_clouds/figures/grouped_by_month_evolution_for_ier_Mixed_phase.pn
+g>
+Package pdftex.def Info: ../../phd_clouds/figures/grouped_by_month_evolution_fo
+r_ier_Mixed_phase.png  used on input line 344.
+(pdftex.def)             Requested size: 453.24931pt x 264.1015pt.
+ [22 <../../phd_clouds/figures/grouped_by_month_evolution_for_ier_Ice.png>]
+<../../phd_clouds/figures/grouped_by_month_evolution_for_ier_Pre_mixed_phase.pn
+g, id=241, 1107.1764pt x 645.1302pt>
+File: ../../phd_clouds/figures/grouped_by_month_evolution_for_ier_Pre_mixed_pha
+se.png Graphic file (type png)
+<use ../../phd_clouds/figures/grouped_by_month_evolution_for_ier_Pre_mixed_phas
+e.png>
+Package pdftex.def Info: ../../phd_clouds/figures/grouped_by_month_evolution_fo
+r_ier_Pre_mixed_phase.png  used on input line 353.
+(pdftex.def)             Requested size: 453.24931pt x 264.1015pt.
+ [23 <../../phd_clouds/figures/grouped_by_month_evolution_for_ier_Mixed_phase.p
+ng>]) (./template.bbl [24 <../../phd_clouds/figures/grouped_by_month_evolution_
+for_ier_Pre_mixed_phase.png>]) [25]
 
 Package natbib Warning: There were undefined citations.
 
@@ -3538,27 +3810,30 @@ LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 30898 strings out of 478287
- 541611 string characters out of 5849289
- 868743 words of memory out of 5000000
- 48510 multiletter control sequences out of 15000+600000
- 510830 words of font info for 87 fonts, out of 8000000 for 9000
+ 40930 strings out of 478287
+ 891942 string characters out of 5849289
+ 1321752 words of memory out of 5000000
+ 58358 multiletter control sequences out of 15000+600000
+ 508729 words of font info for 87 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 84i,16n,89p,2898b,833s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 99i,8n,103p,2898b,609s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/share/texlive/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr/share/texliv
 e/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/texlive/texm
-f-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/share/texlive/texmf-dist/
-fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/share/texlive/texmf-dist/fonts/ty
-pe1/public/amsfonts/cm/cmsy10.pfb></usr/share/texlive/texmf-dist/fonts/type1/pu
-blic/amsfonts/cm/cmsy7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/am
-sfonts/cm/cmsy9.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/helvetic/uhv
-r8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/s
-hare/texlive/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/share/texlive/te
-xmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on template.pdf (9 pages, 789793 bytes).
+f-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/share/texlive/texmf-dist/
+fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/share/texlive/texmf-dist/fonts/t
+ype1/public/amsfonts/cm/cmmi9.pfb></usr/share/texlive/texmf-dist/fonts/type1/pu
+blic/amsfonts/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/am
+sfonts/cm/cmr7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/c
+m/cmsy10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy
+7.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb></usr/s
+hare/texlive/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb></usr/share/texlive
+/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/share/texlive/texmf-dist/fon
+ts/type1/urw/times/utmr8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/ti
+mes/utmri8a.pfb>
+Output written on template.pdf (25 pages, 10916538 bytes).
 PDF statistics:
- 174 PDF objects out of 1000 (max. 8388607)
- 137 compressed objects within 2 object streams
- 37 named destinations out of 1000 (max. 500000)
- 23 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 336 PDF objects out of 1000 (max. 8388607)
+ 236 compressed objects within 3 object streams
+ 63 named destinations out of 1000 (max. 500000)
+ 123 words of extra memory for PDF output out of 10000 (max. 10000000)
 

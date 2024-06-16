@@ -45,9 +45,9 @@ def plot_microphysics_evolution(sliced_microphys, sliced_integrated=None, cloud_
     sliced_microphys = sliced_microphys.where(ds_cloud_type[cloud_type].astype(bool))
     if sliced_integrated is not None:
         sliced_integrated = sliced_integrated.where(ds_cloud_type[cloud_type].astype(bool)).compute()
-        number_profiles = sliced_integrated.groupby("time.month").count()
+        number_profiles = sliced_integrated.groupby("time.month").count(dim='time')
     else:
-        number_profiles = sliced_microphys.groupby("time.month").count()
+        number_profiles = sliced_microphys.max(dim="height").groupby("time.month").count()
     
     mean_by_month    = sliced_microphys.groupby('time.month').mean(dim='time', skipna=True).compute()
     # std_by_month     = sliced_microphys.groupby('time.month').std(dim='time', skipna=True).compute()
@@ -57,10 +57,13 @@ def plot_microphysics_evolution(sliced_microphys, sliced_integrated=None, cloud_
     list_seasons =list(mean_by_season.season.values)
     if var_short_name == 'lwc' or var_short_name == 'iwc':
         clevels = [100, 500]
+        zlim = [0, 12000]
     elif var_short_name == 'der':
         clevels = [20, 30]
+        zlim = [0, 12000]
     elif var_short_name == 'ier':
         clevels = [30, 70]
+        zlim = [0, 13000]
     
     fig = plt.figure(figsize=(18, 9))
     gs = fig.add_gridspec(2, 3, width_ratios=[1., 5, .15], height_ratios=[3, 1.2], hspace=0.1, wspace=0.05)
@@ -79,7 +82,7 @@ def plot_microphysics_evolution(sliced_microphys, sliced_integrated=None, cloud_
     ax.yaxis.set_tick_params(labelleft=False)
     ax.xaxis.set_visible(False)
     # ax.set_xticks(np.arange(1, 13))
-    ax.set_ylim([0, 12000])
+    ax.set_ylim(zlim)
 
     cax = fig.add_subplot(gs[0, 2])
     # cbar1 = plt.colorbar(mesh, cax=cax, orientation='vertical', label=f"{sliced_microphys.attrs['units']}")
@@ -100,8 +103,9 @@ def plot_microphysics_evolution(sliced_microphys, sliced_integrated=None, cloud_
     ax2.grid(True)
     ax2.legend()
 
-    ax3 = fig.add_subplot(gs[1, 1])  # Share the x-axis with ax1
-    for month in mean_by_month.month.values:
+    ax3 = fig.add_subplot(gs[1, 1], sharex=ax)
+    unique_months = np.unique(mean_by_month.month.values)
+    for month in unique_months:
 
         if var_short_name == 'lwc' or var_short_name == 'iwc':
             monthly_integrated = sliced_integrated.sel(time=sliced_integrated['time.month'] == month)
@@ -110,13 +114,26 @@ def plot_microphysics_evolution(sliced_microphys, sliced_integrated=None, cloud_
             ax3.boxplot(monthly_integrated, positions=[month], showfliers=False, showmeans=True, patch_artist=True, widths=0.8,
                             meanprops=dict(marker='*', markerfacecolor='black', markeredgecolor='black'),
                             medianprops=dict(color='red', linewidth=1.5), boxprops=dict(facecolor='lightblue', color='black'))
-            
         else:
+            # monthly_microphys = sliced_microphys.sel(time=sliced_microphys['time.month'] == month)
+            # # removing NaNs from monthly data
+            # monthly_microphys = monthly_microphys.dropna(dim='time', how='all').values.ravel()
+            # ax3.violinplot(monthly_microphys, positions=[month], showmeans=True, 
+            #                showmedians=True, showextrema=False, widths=0.8)
+            # breakpoint()
             monthly_microphys = sliced_microphys.sel(time=sliced_microphys['time.month'] == month)
             # removing NaNs from monthly data
             monthly_microphys = monthly_microphys.dropna(dim='time', how='all').values.ravel()
-            ax3.violinplot(monthly_microphys, positions=[month], showmeans=True, 
-                           showmedians=True, showextrema=False, widths=0.8)
+            monthly_microphys = monthly_microphys[~np.isnan(monthly_microphys)]
+            ax3.violinplot(monthly_microphys, positions=[month], showmeans=False, 
+                            showmedians=True, showextrema=False, widths=0.8)
+            # ax3.set_ylabel(f"{chunked_microphys.attrs['long_name']} ({chunked_microphys.attrs['units']})")
+            # ax3.set_xlabel("Months")
+            # ax3.set_xticks(np.arange(1, 13))
+            # ax3.set_xticklabels(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
+            # ax3.grid(True, axis='y')
+            # plt.show()
+
     if var_short_name == 'lwc' or var_short_name == 'iwc':
         ax3.set_ylabel(f"{sliced_integrated.attrs['long_name']} ({sliced_integrated.attrs['units']})")
     else:
@@ -126,7 +143,7 @@ def plot_microphysics_evolution(sliced_microphys, sliced_integrated=None, cloud_
     ax3.set_xticklabels(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
     # ax3.set_ylim([-.02, 0.10])
     ax3.grid(True, axis='y')
-
+    
     ax3_right = ax3.twinx()
     ax3_right.plot(number_profiles.month, number_profiles.values, '--', linewidth=1, color='blue')  # Set zorder to 0
     ax3_right.set_ylabel(r"N$_{Profiles}$", color="blue")
@@ -137,7 +154,8 @@ def plot_microphysics_evolution(sliced_microphys, sliced_integrated=None, cloud_
     ax3_right.spines['top'].set_visible(False)  # Remove the top spine
     ax3_right.spines['right'].set_color('blue')  # Set the color of the right spine to blue
 
-    # fig.savefig(f"{PATH_FIG}grouped_by_month_evolution_for_{get_var}_mixed_phase.png", dpi=300, bbox_inches='tight')
+    fig.savefig(f"{PATH_FIG}grouped_by_month_evolution_for_{get_var}_{cloud_type}.png", dpi=300, bbox_inches='tight')
+    plt.show()
     return fig
 
 # Function to group by height bins and compute mean within each bin
@@ -150,7 +168,7 @@ def open_dataset(file_path):
 filepath_cloud_occurence = "/media/matheustolen/Seagate Basic/cloudnet/cloud_classification/cloud_occurence" # Path to save the cloud classification files
 filepath_cloud_cloud_type = "/media/matheustolen/Seagate Basic/cloudnet/cloud_classification/cloud_type" # Path to save the cloud classification files
 filepath_microphys        = "/home/matheustolen/Documentos/matheus_doctorado/output_retrievals" # Path to save the cloud classification files
-get_var = "iwc"
+get_var = "ier"
 
 if get_var == "lwc":
       endswith = "lwc-scaled-adiabatic.nc"
@@ -245,79 +263,76 @@ if get_var == "lwc" or get_var == "iwc":
 chunked_microphys_single_layer = chunked_microphys.where(condition_layer)
 chunked_microphys_cloud_type = chunked_microphys_single_layer.where(ds_cloud_type[cloud_type_to_analise].astype(bool))
 
-
 # fig_microphy = plot_microphysics_evolution(chunked_microphys_single_layer, 
 #                                             chunked_integrated_single_layer, 
 #                                             cloud_type='Mixed-Phase', 
 #                                             var_short_name=get_var)
 
 
-ds_microphys = chunked_microphys_cloud_type.groupby('time.month').mean(dim='time', skipna=True).compute()
-ds_microphys_season = chunked_microphys_cloud_type.groupby('time.season').mean(dim='time', skipna=True).compute()
-# ds_microphys = chunked_microphys_cloud_type.resample(time='·M').mean(dim='time', skipna=True).compute()
+# ds_microphys = chunked_microphys_cloud_type.groupby('time.month').mean(dim='time', skipna=True).compute()
+# ds_microphys_season = chunked_microphys_cloud_type.groupby('time.season').mean(dim='time', skipna=True).compute()
+# # ds_microphys = chunked_microphys_cloud_type.resample(time='·M').mean(dim='time', skipna=True).compute()
 
-fig = plt.figure(figsize=(12, 6))
-gs = fig.add_gridspec(1, 2, width_ratios=[1.5, 5], hspace=0.1, wspace=0.1)
-ax = fig.add_subplot(gs[0, 1])
-# Plot the mean profile of the microphysics variable
-# mesh = ax.pcolormesh(ds_microphys.time, ds_microphys.height, 
-#               ds_microphys.T.values, shading='nearest', 
-#               cmap='jet', norm = mpl.colors.LogNorm(vmin=0.001, vmax=0.1))
-# mesh = ax.pcolormesh(ds_microphys.month, ds_microphys.height,
-#                 ds_microphys.values.T, shading='nearest', 
-#                 cmap='coolwarm')
-mesh = ax.contourf(ds_microphys.month, ds_microphys.height,
-                ds_microphys.values.T, levels=10, cmap=sns.color_palette("coolwarm", as_cmap=True))
+# fig = plt.figure(figsize=(12, 6))
+# gs = fig.add_gridspec(1, 2, width_ratios=[1.5, 5], hspace=0.1, wspace=0.1)
+# ax = fig.add_subplot(gs[0, 1])
+# # Plot the mean profile of the microphysics variable
+# # mesh = ax.pcolormesh(ds_microphys.time, ds_microphys.height, 
+# #               ds_microphys.T.values, shading='nearest', 
+# #               cmap='jet', norm = mpl.colors.LogNorm(vmin=0.001, vmax=0.1))
+# # mesh = ax.pcolormesh(ds_microphys.month, ds_microphys.height,
+# #                 ds_microphys.values.T, shading='nearest', 
+# #                 cmap='coolwarm')
+# mesh = ax.contourf(ds_microphys.month, ds_microphys.height,
+#                 ds_microphys.values.T, levels=10, cmap=sns.color_palette("coolwarm", as_cmap=True))
 
-countour = ax.contour(ds_microphys.month, ds_microphys.height,
-                ds_microphys.values.T, levels=[100], colors='black')
-ax.set_xlabel('Time')
-ax.set_title(f'Mean {ds_microphys.attrs["long_name"]} for Mixed-Phase Clouds')
-ax.yaxis.set_tick_params(labelleft=False)
-# ax.set_ylim([0, 4000])
-ax.grid(True)
+# countour = ax.contour(ds_microphys.month, ds_microphys.height,
+#                 ds_microphys.values.T, levels=[100], colors='black')
+# ax.set_xlabel('Time')
+# ax.set_title(f'Mean {ds_microphys.attrs["long_name"]} for Mixed-Phase Clouds')
+# ax.yaxis.set_tick_params(labelleft=False)
+# # ax.set_ylim([0, 4000])
+# ax.grid(True)
 
-ax.clabel(countour, inline=True, fontsize=10)
+# ax.clabel(countour, inline=True, fontsize=10)
 
-cbar = fig.colorbar(mesh, ax=ax, label=r"mg m$^{-3}$", aspect=10)
-# cbar = fig.colorbar(mesh, ax=ax, label=f"{ds_microphys.attrs['units']}", aspect=10)
-# cbar.set_ticks(np.linspace(0, 0.1, 11))
+# cbar = fig.colorbar(mesh, ax=ax, label=r"mg m$^{-3}$", aspect=10)
+# # cbar = fig.colorbar(mesh, ax=ax, label=f"{ds_microphys.attrs['units']}", aspect=10)
+# # cbar.set_ticks(np.linspace(0, 0.1, 11))
 
-list_seasons =list(ds_microphys_season.season.values)
+# list_seasons =list(ds_microphys_season.season.values)
 
-ax2 = fig.add_subplot(gs[0, 0], sharey=ax)
-max_value = np.nanmax(ds_microphys_season)
-for season in list_seasons:
-    mean_profile = ds_microphys_season.sel(season=season)
-    # std_profile = std_by_season.sel(season=season)
-    ax2.plot(mean_profile, mean_profile.height, label=f"{season}")
-    # ax2.fill_betweenx(mean_profile.height, mean_profile - std_profile, mean_profile + std_profile, alpha=0.3)
-ax2.set_xlabel(f"{ds_microphys_season.attrs['long_name']} ({ds_microphys_season.attrs['units']})")
-ax2.set_ylabel("Height (m)")
-# ax2.set_xlim([0, max_value + .1])
-# ax2.set_ylim([0, np.max(mean_by_month.height.values)])
-ax2.grid(True)
-ax2.legend()
+# ax2 = fig.add_subplot(gs[0, 0], sharey=ax)
+# max_value = np.nanmax(ds_microphys_season)
+# for season in list_seasons:
+#     mean_profile = ds_microphys_season.sel(season=season)
+#     # std_profile = std_by_season.sel(season=season)
+#     ax2.plot(mean_profile, mean_profile.height, label=f"{season}")
+#     # ax2.fill_betweenx(mean_profile.height, mean_profile - std_profile, mean_profile + std_profile, alpha=0.3)
+# ax2.set_xlabel(f"{ds_microphys_season.attrs['long_name']} ({ds_microphys_season.attrs['units']})")
+# ax2.set_ylabel("Height (m)")
+# # ax2.set_xlim([0, max_value + .1])
+# # ax2.set_ylim([0, np.max(mean_by_month.height.values)])
+# ax2.grid(True)
+# ax2.legend()
 
-plt.show()
-
-# unique_months = np.unique(chunked_microphys_cloud_type['time.month'].values)
-# fig, ax = plt.subplots(figsize=(12, 6))
-# for month in unique_months:
-#     monthly_microphys = chunked_microphys_cloud_type.sel(time=chunked_microphys_cloud_type['time.month'] == month)
-#     # removing NaNs from monthly data
-#     monthly_microphys = monthly_microphys.dropna(dim='time', how='all').values.ravel()
-#     monthly_microphys = monthly_microphys[~np.isnan(monthly_microphys)]
-#     ax.violinplot(monthly_microphys, positions=[month], showmeans=False, 
-#                     showmedians=True, showextrema=False, widths=0.8)
-# ax.set_ylabel(f"{chunked_microphys.attrs['long_name']} ({chunked_microphys.attrs['units']})")
-# ax.set_xlabel("Months")
-# ax.set_xticks(np.arange(1, 13))
-# ax.set_xticklabels(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
-# ax.grid(True, axis='y')
 # plt.show()
 
-
+unique_months = np.unique(chunked_microphys_cloud_type['time.month'].values)
+fig, ax = plt.subplots(figsize=(12, 6))
+for month in unique_months:
+    monthly_microphys = chunked_microphys_cloud_type.sel(time=chunked_microphys_cloud_type['time.month'] == month)
+    # removing NaNs from monthly data
+    monthly_microphys = monthly_microphys.dropna(dim='time', how='all').values.ravel()
+    monthly_microphys = monthly_microphys[~np.isnan(monthly_microphys)]
+    ax.violinplot(monthly_microphys, positions=[month], showmeans=False, 
+                    showmedians=True, showextrema=False, widths=0.8)
+ax.set_ylabel(f"{chunked_microphys.attrs['long_name']} ({chunked_microphys.attrs['units']})")
+ax.set_xlabel("Months")
+ax.set_xticks(np.arange(1, 13))
+ax.set_xticklabels(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
+ax.grid(True, axis='y')
+plt.show()
 
 # sliced_microphys = chunked_microphys_cloud_type.sel(time=slice('2023-01-01', '2023-12-31'))
 # sliced_integrated = chunked_integrated_single_layer.sel(time=slice('2023-01-01', '2023-12-31')).compute()
@@ -326,28 +341,22 @@ plt.show()
 # # get axis
 # ax = fig_microphy.get_axes()
 
+list_figs = []
+if get_var == "lwc" or get_var == "der":
+    clouds_to_analyse = ['Liquid', 'Liquid-Precipitable', 'Mixed-Phase', 'Mixed-Phase-Precipitable', 'Ice-Precipitable']
+elif get_var == "iwc" or get_var == "ier":
+    clouds_to_analyse = ['Ice', 'Ice-Precipitable', 'Mixed-Phase', 'Mixed-Phase-Precipitable']
 
-
-
-
-
-
-# list_figs = []
-# if get_var == "lwc" or get_var == "der":
-#     clouds_to_analyse = ['Liquid', 'Liquid-Precipitable', 'Mixed-Phase', 'Mixed-Phase-Precipitable', 'Ice-Precipitable']
-# elif get_var == "iwc" or get_var == "ier":
-#     clouds_to_analyse = ['Ice', 'Ice-Precipitable', 'Mixed-Phase', 'Mixed-Phase-Precipitable']
-
-# for cloud in clouds_to_analyse:
-#     if get_var == "lwc" or get_var == "iwc":
-#         fig_microphy = plot_microphysics_evolution(chunked_microphys_single_layer, 
-#                                                chunked_integrated_single_layer, 
-#                                                cloud_type=cloud, 
-#                                                var_short_name=get_var)
-#     else:
-#         fig_microphy = plot_microphysics_evolution(chunked_microphys_single_layer, 
-#                                                cloud_type=cloud, 
-#                                                var_short_name=get_var)
+for cloud in clouds_to_analyse:
+    if get_var == "lwc" or get_var == "iwc":
+        fig_microphy = plot_microphysics_evolution(chunked_microphys_single_layer, 
+                                               chunked_integrated_single_layer, 
+                                               cloud_type=cloud, 
+                                               var_short_name=get_var)
+    else:
+        fig_microphy = plot_microphysics_evolution(chunked_microphys_single_layer, 
+                                               cloud_type=cloud, 
+                                               var_short_name=get_var)
     
 #     list_figs.append(fig_microphy)
 #     # fig_microphy.savefig(f"{PATH_FIG}grouped_by_month_evolution_for_{get_var}_{cloud}.png", dpi=300, bbox_inches='tight')

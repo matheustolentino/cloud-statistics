@@ -41,7 +41,7 @@ def calculate_skewness(group):
 
 
 load_data = True # Set to True if you want to load the data from the netCDF files
-use_old_method = True # Set to True if you want to use the old method of cloud classification
+use_old_method = False # Set to True if you want to use the old method of cloud classification
 
 if use_old_method:
     filepath_cloud_occurence = "/media/matheustolen/Seagate Basic/cloudnet/cloud_classification_without_filtering_ice_ABL/cloud_occurence" # Path to save the cloud classification files
@@ -427,7 +427,6 @@ else:
     fig.savefig(PATH_FIG + 'new_method_monthly_single_layer_frequency.png', dpi=300, bbox_inches='tight')
     plt.show()
 
-
     # heat = sns.heatmap(pearson_corr,
     #                    mask=mask,
     #                    annot=True,
@@ -514,7 +513,7 @@ else:
                 color=list_cloud_colors[list_var_names.index(var)+1], markersize=6,
                 marker='o', markeredgecolor='black')
             ax.fill_between(cloud_base_type['hour'], cloud_base_type-std_cloud_base_type, cloud_base_type+std_cloud_base_type, color=list_cloud_colors[list_var_names.index(var)+1], alpha=0.3)
-        ax.set_ylabel(f"{'cloud_thickness'}, m")
+        ax.set_ylabel(f"{'cloud_base'}, m")
         if i ==2 or i == 3:
             ax.set_xlabel('Hourly Daytime UTC')
         else:
@@ -775,43 +774,56 @@ else:
     fig.savefig(PATH_FIG + 'new_method_cloud_base_height_violin_season.png', dpi=300, bbox_inches='tight')
     plt.show()
 
-    # list_var_names = list(ds_cloud_type.data_vars)
-    # split_pairs_var_names = [list_var_names[i:i+2] for i in range(0, len(list_var_names)-2, 2)]
 
 
-    # dataframes = []
-    # for pair_var_names in split_pairs_var_names:
-    #     pair_single_layer  = ds_cloud_type[pair_var_names].where(ds_cloud_occurence['single_layer'], other=0)
-    #     pair_single_layer = pair_single_layer.assign_coords(cloud_type=pair_var_names)
-    #     pair_cloud_thickness = ds_cloud_prop.where(ds_cloud_occurence['single_layer'], other=np.nan)
-    #     mask_pair_var = pair_single_layer[pair_var_names[0]].astype(bool) | pair_single_layer[pair_var_names[1]].astype(bool)
-    #     pair_single_layer  = pair_single_layer[pair_var_names].sel(time=mask_pair_var.values)
-    #     pair_single_layer = pair_single_layer.merge(pair_cloud_thickness.sel(time=mask_pair_var.values))
-    #     # instead of ones in pair_var_name columns, put the name of pair_var_name
+    list_var_names = list(ds_cloud_type.data_vars)
+    split_pairs_var_names = [list_var_names[i:i+2] for i in range(0, len(list_var_names)-2, 2)]
 
-    #     dataframes.append(pair_single_layer.to_dataframe().reset_index().drop(columns=['time', 'month', 'year', pair_var_names[0], pair_var_names[1]]))
+    dic = {}
+    dic["Ice"] = ["Ice", "Ice-Precipitable"]
+    dic["Liquid"] = ["Liquid", "Liquid-Precipitable"]
+    dic["Mixed"] = ["Mixed-Phase", "Mixed-Phase-Precipitable"]
 
-
-    # fig = plt.figure(figsize=(15, 10))
-    # gs = fig.add_gridspec(len(dataframes)//2, 2, height_ratios=[1]*(len(dataframes)//2), hspace=0.4)
-    # for df in dataframes:
-    #     # Make a slipted violin plot for each dataframe
-    #     ax = fig.add_subplot(gs[dataframes.index(df)//2, dataframes.index(df)%2])
-    #     sns.violinplot(data = df,
-    #                     x='season',
-    #                     y='cloud_base',
-    #                     hue='cloud_type',
-    #                     ax=ax,
-    #                     split=True,
-    #                     palette='muted',
-    #                     inner="quart")
-    #     ax.set_ylabel('Cloud Occurence (%)')
-    #     ax.set_xlabel('Month')
-    #     ax.grid()
-    # # fig.savefig(PATH_FIG + 'new_method_cloud_occurence_violin_season.png', dpi=300, bbox_inches='tight')
-    # plt.show()
-
+    dataframes = []
+    for pair_var_names in split_pairs_var_names:
+        pair_single_layer   = ds_cloud_type[pair_var_names].where(ds_cloud_occurence['single_layer'], other=0)
+        mask_pair_var       = pair_single_layer[pair_var_names[0]].astype(bool) | pair_single_layer[pair_var_names[1]].astype(bool)
+        sliced_cloud_type  = pair_single_layer.sel(time=mask_pair_var.values)
         
+        sliced_cloud_type['cloud_type'] = xr.DataArray(np.where(sliced_cloud_type[pair_var_names[0]] == 1,
+                                                    pair_var_names[0],
+                                                    pair_var_names[1]), dims= "time")
+
+        single_layer_cloud_prop = ds_cloud_prop.where(ds_cloud_occurence['single_layer'], other=np.nan)
+        sliced_cloud_prop = single_layer_cloud_prop.sel(time=mask_pair_var.values)/1000
+        df = sliced_cloud_type.merge(sliced_cloud_prop).to_dataframe().reset_index().drop(columns=['time', 'month', 'year', pair_var_names[0], pair_var_names[1]])
+
+        dataframes.append(df)
+    
+    ys = ['cloud_base', 'cloud_top', 'cloud_thickness']
+    fig = plt.figure(figsize=(22, 20))
+    gs  = fig.add_gridspec(len(dataframes), len(ys), height_ratios=[1]*len(dataframes), hspace=0.15, wspace=0.2)
+    for i, df in enumerate(dataframes):
+        for j, y in enumerate(ys):
+            # Make a slipted violin plot for each dataframe
+            ax = fig.add_subplot(gs[j, i])
+            sns.violinplot(data = df,
+                            x='season',
+                            y=y,
+                            hue='cloud_type',   
+                            ax=ax,
+                            split=True,
+                            palette='Set2',
+                            inner="quart",
+                            order=['spring', 'summer', 'fall', 'winter'],
+                            scale='count',
+                            )  # Specify the order of x-axis categories
+            ax.set_ylabel(f'{y}')
+            ax.set_xlabel('Seasons')
+            ax.grid()
+            ax.set_ylim([0, 13])
+    fig.savefig(PATH_FIG + 'new_method_cloud_prop_violin_season.png', dpi=300, bbox_inches='tight')
+    plt.show()
 
     # # Create a dataframe for liquid and liquid preicipitable
     # df_cloud_type_single_layer = ds_cloud_type_single_layer.to_dataframe().reset_index().melt(id_vars=['time'],
