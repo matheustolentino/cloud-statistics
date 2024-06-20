@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2022/dev/Debian) (preloaded format=pdflatex 2024.3.15)  14 JUN 2024 16:50
+This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2022/dev/Debian) (preloaded format=pdflatex 2024.3.15)  20 JUN 2024 21:29
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -3450,9 +3450,6 @@ LaTeX Warning: Unused global option(s):
 
 (./template.aux
 
-LaTeX Warning: Label `sec:daily_cycle' multiply defined.
-
-
 LaTeX Warning: Label `fig:LWC_pre_mixed' multiply defined.
 
 )
@@ -3541,263 +3538,343 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 
 Package xcolor Warning: Incompatible color definition on input line 176.
 
-
-Package xcolor Warning: Incompatible color definition on input line 178.
-
-LaTeX Font Info:    Trying to load font information for T1+phv on input line 17
-9.
+LaTeX Font Info:    Trying to load font information for T1+phv on input line 18
+5.
 (/usr/share/texlive/texmf-dist/tex/latex/psnfss/t1phv.fd
 File: t1phv.fd 2020/03/25 scalable font definitions for T1/phv.
 )
 LaTeX Font Info:    Font shape `T1/phv/m/n' will be
-(Font)              scaled to size 8.54997pt on input line 179.
- [1
+(Font)              scaled to size 8.54997pt on input line 185.
 
-{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}] (./results/results.tex
-<../../phd_clouds/figures/20230506_cloud_classification_new_method.png, id=19, 
-1005.7575pt x 306.9066pt>
-File: ../../phd_clouds/figures/20230506_cloud_classification_new_method.png Gra
-phic file (type png)
-<use ../../phd_clouds/figures/20230506_cloud_classification_new_method.png>
-Package pdftex.def Info: ../../phd_clouds/figures/20230506_cloud_classification
-_new_method.png  used on input line 42.
-(pdftex.def)             Requested size: 241.73245pt x 73.7621pt.
-<../../phd_clouds/figures/20230506_cloud_classification_old_method.png, id=21, 
-1020.9342pt x 349.305pt>
-File: ../../phd_clouds/figures/20230506_cloud_classification_old_method.png Gra
-phic file (type png)
-<use ../../phd_clouds/figures/20230506_cloud_classification_old_method.png>
-Package pdftex.def Info: ../../phd_clouds/figures/20230506_cloud_classification
-_old_method.png  used on input line 49.
-(pdftex.def)             Requested size: 241.73245pt x 82.70496pt.
-<../../phd_clouds/figures/IWP_by_D.png, id=24, 1079.7138pt x 447.5922pt>
-File: ../../phd_clouds/figures/IWP_by_D.png Graphic file (type png)
-<use ../../phd_clouds/figures/IWP_by_D.png>
-Package pdftex.def Info: ../../phd_clouds/figures/IWP_by_D.png  used on input l
-ine 63.
-(pdftex.def)             Requested size: 503.61377pt x 208.7702pt.
- [2 <../../phd_clouds/figures/20230506_cloud_classification_new_method.png> <..
-/../phd_clouds/figures/20230506_cloud_classification_old_method.png>]
-LaTeX Font Info:    Trying to load font information for T1+pcr on input line 68
-.
+(./results/results.tex [1
 
-(/usr/share/texlive/texmf-dist/tex/latex/psnfss/t1pcr.fd
-File: t1pcr.fd 2001/06/04 font definitions for T1/pcr.
-)
-Overfull \hbox (7.34337pt too wide) in paragraph at lines 68--69
-\T1/ptm/m/n/10 Ad-di-tion-ally, some neg-li-gi-ble neg-a-tive cor-re-la-tions w
-ere ob-served, such as be-tween \T1/pcr/m/n/10 Ice \T1/ptm/m/n/10 and \T1/pcr/m
-/n/10 Mixed-Phase-Precipitable
- []
-
-<../../phd_clouds/figures/cloud_freq_methods_comparison_correlation_coefficient
-.png, id=38, 1067.6688pt x 542.5068pt>
-File: ../../phd_clouds/figures/cloud_freq_methods_comparison_correlation_coeffi
-cient.png Graphic file (type png)
-<use ../../phd_clouds/figures/cloud_freq_methods_comparison_correlation_coeffic
-ient.png>
-Package pdftex.def Info: ../../phd_clouds/figures/cloud_freq_methods_comparison
-_correlation_coefficient.png  used on input line 72.
-(pdftex.def)             Requested size: 402.89255pt x 204.71436pt.
-[3 <../../phd_clouds/figures/IWP_by_D.png>]
-<../../phd_clouds/figures/hourly_seasonly_single_layer_frequency.png, id=46, 87
-4.2261pt x 486.1362pt>
-File: ../../phd_clouds/figures/hourly_seasonly_single_layer_frequency.png Graph
-ic file (type png)
-<use ../../phd_clouds/figures/hourly_seasonly_single_layer_frequency.png>
-Package pdftex.def Info: ../../phd_clouds/figures/hourly_seasonly_single_layer_
-frequency.png  used on input line 87.
-(pdftex.def)             Requested size: 503.61377pt x 280.0454pt.
- [4 <../../phd_clouds/figures/cloud_freq_methods_comparison_correlation_coeffic
-ient.png>]
-
-LaTeX Warning: Reference `sec:classification_algorithm' on page 5 undefined on 
-input line 107.
-
-
-Package natbib Warning: Citation `Nomokonova2019' on page 5 undefined on input 
-line 107.
-
-[5 <../../phd_clouds/figures/hourly_seasonly_single_layer_frequency.png>]
-<../../phd_clouds/figures/new_method_monthly_single_layer_frequency.png, id=68,
+{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}]
+<../../phd_clouds/figures/new_method_monthly_cloud_occurence.png, id=24, 757.38
+96pt x 371.7087pt>
+File: ../../phd_clouds/figures/new_method_monthly_cloud_occurence.png Graphic f
+ile (type png)
+<use ../../phd_clouds/figures/new_method_monthly_cloud_occurence.png>
+Package pdftex.def Info: ../../phd_clouds/figures/new_method_monthly_cloud_occu
+rence.png  used on input line 45.
+(pdftex.def)             Requested size: 241.73245pt x 118.63725pt.
+<../../phd_clouds/figures/new_method_monthly_single_layer_frequency.png, id=26,
  748.2354pt x 343.5234pt>
 File: ../../phd_clouds/figures/new_method_monthly_single_layer_frequency.png Gr
 aphic file (type png)
 <use ../../phd_clouds/figures/new_method_monthly_single_layer_frequency.png>
 Package pdftex.def Info: ../../phd_clouds/figures/new_method_monthly_single_lay
-er_frequency.png  used on input line 111.
-(pdftex.def)             Requested size: 402.89255pt x 184.9757pt.
+er_frequency.png  used on input line 51.
+(pdftex.def)             Requested size: 241.73245pt x 110.98332pt.
 
-[6 <../../phd_clouds/figures/new_method_monthly_single_layer_frequency.png>]
-<../../phd_clouds/figures/new_method_cloud_prop_violin_season.png, id=81, 1343.
-0175pt x 1076.5821pt>
+[2 <../../phd_clouds/figures/new_method_monthly_cloud_occurence.png> <../../phd
+_clouds/figures/new_method_monthly_single_layer_frequency.png>]
+<../../phd_clouds/figures/hourly_seasonly_single_layer_frequency.png, id=42, 87
+4.2261pt x 486.1362pt>
+File: ../../phd_clouds/figures/hourly_seasonly_single_layer_frequency.png Graph
+ic file (type png)
+<use ../../phd_clouds/figures/hourly_seasonly_single_layer_frequency.png>
+Package pdftex.def Info: ../../phd_clouds/figures/hourly_seasonly_single_layer_
+frequency.png  used on input line 67.
+(pdftex.def)             Requested size: 453.24931pt x 252.03566pt.
+ [3 <../../phd_clouds/figures/hourly_seasonly_single_layer_frequency.png>]
+<../../phd_clouds/figures/new_method_cloud_prop_violin_season.png, id=58, 1343.
+0175pt x 973.9587pt>
 File: ../../phd_clouds/figures/new_method_cloud_prop_violin_season.png Graphic 
 file (type png)
 <use ../../phd_clouds/figures/new_method_cloud_prop_violin_season.png>
 Package pdftex.def Info: ../../phd_clouds/figures/new_method_cloud_prop_violin_
-season.png  used on input line 137.
-(pdftex.def)             Requested size: 503.61377pt x 403.70087pt.
+season.png  used on input line 92.
+(pdftex.def)             Requested size: 503.61377pt x 365.21875pt.
 
-[7] [8 <../../phd_clouds/figures/new_method_cloud_prop_violin_season.png>]
-<../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Liquid.png, id=96,
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+LaTeX Warning: Reference `fig:fig:LWC_liq' on page 4 undefined on input line 14
+8.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.148 ... Additionally, the number of profiles (N_
+                                                  profiles) varies throughou...
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.149 
+      
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+
+Overfull \hbox (147.28883pt too wide) in paragraph at lines 148--149
+\T1/ptm/m/n/10 pro-files (N$[]\OML/cmm/m/it/10 rofiles\OT1/cmr/m/n/10 )\OML/cmm
+/m/it/10 variesthroughouttheyear; peakinginAprilandDecember; whichcorrespondsto
+increasedobservationfrequencyduringthesemonths:$ 
+ []
+
+[4]
+
+! LaTeX Error: Unicode character ‚Åª (U+207B)
+               not set up for use with LaTeX.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.152 ...WC values ranging from 100 to 500 mg m‚Åª
+                                                  ¬≥ during peak months.
+You may provide a definition with
+\DeclareUnicodeCharacter 
+
+[5 <../../phd_clouds/figures/new_method_cloud_prop_violin_season.png>]
+<../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Liquid.png, id=75,
  1188.3597pt x 528.7755pt>
 File: ../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Liquid.png Gr
 aphic file (type png)
 <use ../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Liquid.png>
 Package pdftex.def Info: ../../phd_clouds/figures/grouped_by_month_evolution_fo
-r_lwc_Liquid.png  used on input line 155.
+r_lwc_Liquid.png  used on input line 159.
 (pdftex.def)             Requested size: 453.24931pt x 201.67908pt.
-
-[9]
+ [6 <../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Liquid.png>]
 <../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Liquid-Precipitabl
-e.png, id=107, 1188.3597pt x 528.7755pt>
+e.png, id=85, 1188.3597pt x 528.7755pt>
 File: ../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Liquid-Precip
 itable.png Graphic file (type png)
 <use ../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Liquid-Precipi
 table.png>
 Package pdftex.def Info: ../../phd_clouds/figures/grouped_by_month_evolution_fo
-r_lwc_Liquid-Precipitable.png  used on input line 168.
+r_lwc_Liquid-Precipitable.png  used on input line 172.
 (pdftex.def)             Requested size: 453.24931pt x 201.67908pt.
- [10 <../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Liquid.png>]
 <../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Mixed-Phase.png, i
-d=119, 1188.3597pt x 528.7755pt>
+d=91, 1188.3597pt x 528.7755pt>
 File: ../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Mixed-Phase.p
 ng Graphic file (type png)
 <use ../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Mixed-Phase.pn
 g>
 Package pdftex.def Info: ../../phd_clouds/figures/grouped_by_month_evolution_fo
-r_lwc_Mixed-Phase.png  used on input line 177.
+r_lwc_Mixed-Phase.png  used on input line 181.
 (pdftex.def)             Requested size: 453.24931pt x 201.67908pt.
- [11 <../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Liquid-Precip
-itable.png>]
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[7 <../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Liquid-Precipit
+able.png>]
 <../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Mixed-Phase-Precip
-itable.png, id=129, 1188.3597pt x 528.7755pt>
+itable.png, id=103, 1188.3597pt x 528.7755pt>
 File: ../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Mixed-Phase-P
 recipitable.png Graphic file (type png)
 <use ../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Mixed-Phase-Pr
 ecipitable.png>
 Package pdftex.def Info: ../../phd_clouds/figures/grouped_by_month_evolution_fo
-r_lwc_Mixed-Phase-Precipitable.png  used on input line 188.
+r_lwc_Mixed-Phase-Precipitable.png  used on input line 192.
 (pdftex.def)             Requested size: 453.24931pt x 201.67908pt.
- [12 <../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Mixed-Phase.p
-ng>]
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
 <../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Ice-Precipitable.p
-ng, id=137, 1188.3597pt x 528.7755pt>
+ng, id=105, 1188.3597pt x 528.7755pt>
 File: ../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Ice-Precipita
 ble.png Graphic file (type png)
 <use ../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Ice-Precipitab
 le.png>
 Package pdftex.def Info: ../../phd_clouds/figures/grouped_by_month_evolution_fo
-r_lwc_Ice-Precipitable.png  used on input line 231.
+r_lwc_Ice-Precipitable.png  used on input line 235.
 (pdftex.def)             Requested size: 453.24931pt x 201.67908pt.
- [13 <../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Mixed-Phase-P
-recipitable.png>] [14 <../../phd_clouds/figures/grouped_by_month_evolution_for_
-lwc_Ice-Precipitable.png>]
-<../../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Ice.png, id=154, 1
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[8 <../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Mixed-Phase.png
+>] [9 <../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_Mixed-Phase-
+Precipitable.png> <../../phd_clouds/figures/grouped_by_month_evolution_for_lwc_
+Ice-Precipitable.png>]
+<../../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Ice.png, id=123, 1
 188.3597pt x 528.7755pt>
 File: ../../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Ice.png Graph
 ic file (type png)
 <use ../../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Ice.png>
 Package pdftex.def Info: ../../phd_clouds/figures/grouped_by_month_evolution_fo
-r_iwc_Ice.png  used on input line 246.
+r_iwc_Ice.png  used on input line 250.
 (pdftex.def)             Requested size: 453.24931pt x 201.67908pt.
- [15 <../../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Ice.png>]
+ [10 <../../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Ice.png>]
 <../../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Mixed-Phase.png, i
-d=165, 1188.3597pt x 528.7755pt>
+d=131, 1188.3597pt x 528.7755pt>
 File: ../../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Mixed-Phase.p
 ng Graphic file (type png)
 <use ../../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Mixed-Phase.pn
 g>
 Package pdftex.def Info: ../../phd_clouds/figures/grouped_by_month_evolution_fo
-r_iwc_Mixed-Phase.png  used on input line 257.
+r_iwc_Mixed-Phase.png  used on input line 261.
 (pdftex.def)             Requested size: 453.24931pt x 201.67908pt.
 <../../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Mixed-Phase-Precip
-itable.png, id=169, 1188.3597pt x 528.7755pt>
+itable.png, id=135, 1188.3597pt x 528.7755pt>
 File: ../../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Mixed-Phase-P
 recipitable.png Graphic file (type png)
 <use ../../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Mixed-Phase-Pr
 ecipitable.png>
 Package pdftex.def Info: ../../phd_clouds/figures/grouped_by_month_evolution_fo
-r_iwc_Mixed-Phase-Precipitable.png  used on input line 266.
+r_iwc_Mixed-Phase-Precipitable.png  used on input line 270.
 (pdftex.def)             Requested size: 453.24931pt x 201.67908pt.
- [16 <../../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Mixed-Phase.p
-ng>]
 
-Package natbib Warning: Citation `XXX' on page 17 undefined on input line 284.
 
-<../../phd_clouds/figures/grouped_by_month_evolution_for_der_Liquid.png, id=180
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+Package natbib Warning: Citation `XXX' on page 11 undefined on input line 288.
+
+[11 <../../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Mixed-Phase.pn
+g>]
+<../../phd_clouds/figures/grouped_by_month_evolution_for_der_Liquid.png, id=146
 , 1180.41pt x 528.7755pt>
 File: ../../phd_clouds/figures/grouped_by_month_evolution_for_der_Liquid.png Gr
 aphic file (type png)
 <use ../../phd_clouds/figures/grouped_by_month_evolution_for_der_Liquid.png>
 Package pdftex.def Info: ../../phd_clouds/figures/grouped_by_month_evolution_fo
-r_der_Liquid.png  used on input line 290.
+r_der_Liquid.png  used on input line 294.
 (pdftex.def)             Requested size: 453.24931pt x 203.03458pt.
-[17 <../../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Mixed-Phase-Pr
-ecipitable.png>]
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
 <../../phd_clouds/figures/grouped_by_month_evolution_for_der_Pre_liquid.png, id
-=189, 1107.1764pt x 645.1302pt>
+=148, 1107.1764pt x 645.1302pt>
 File: ../../phd_clouds/figures/grouped_by_month_evolution_for_der_Pre_liquid.pn
 g Graphic file (type png)
 <use ../../phd_clouds/figures/grouped_by_month_evolution_for_der_Pre_liquid.png
 >
 Package pdftex.def Info: ../../phd_clouds/figures/grouped_by_month_evolution_fo
-r_der_Pre_liquid.png  used on input line 300.
+r_der_Pre_liquid.png  used on input line 304.
 (pdftex.def)             Requested size: 453.24931pt x 264.1015pt.
- [18 <../../phd_clouds/figures/grouped_by_month_evolution_for_der_Liquid.png>]
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[12 <../../phd_clouds/figures/grouped_by_month_evolution_for_iwc_Mixed-Phase-Pr
+ecipitable.png>]
 <../../phd_clouds/figures/grouped_by_month_evolution_for_der_Mixed_phase.png, i
-d=203, 1124.0394pt x 645.1302pt>
+d=162, 1124.0394pt x 645.1302pt>
 File: ../../phd_clouds/figures/grouped_by_month_evolution_for_der_Mixed_phase.p
 ng Graphic file (type png)
 <use ../../phd_clouds/figures/grouped_by_month_evolution_for_der_Mixed_phase.pn
 g>
 Package pdftex.def Info: ../../phd_clouds/figures/grouped_by_month_evolution_fo
-r_der_Mixed_phase.png  used on input line 310.
+r_der_Mixed_phase.png  used on input line 314.
 (pdftex.def)             Requested size: 453.24931pt x 260.13441pt.
- [19 <../../phd_clouds/figures/grouped_by_month_evolution_for_der_Pre_liquid.pn
-g>]
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[13 <../../phd_clouds/figures/grouped_by_month_evolution_for_der_Liquid.png>]
 <../../phd_clouds/figures/grouped_by_month_evolution_for_der_Pre_mixed_phase.pn
-g, id=214, 1107.1764pt x 645.1302pt>
+g, id=177, 1107.1764pt x 645.1302pt>
 File: ../../phd_clouds/figures/grouped_by_month_evolution_for_der_Pre_mixed_pha
 se.png Graphic file (type png)
 <use ../../phd_clouds/figures/grouped_by_month_evolution_for_der_Pre_mixed_phas
 e.png>
 Package pdftex.def Info: ../../phd_clouds/figures/grouped_by_month_evolution_fo
-r_der_Pre_mixed_phase.png  used on input line 319.
+r_der_Pre_mixed_phase.png  used on input line 323.
 (pdftex.def)             Requested size: 453.24931pt x 264.1015pt.
- [20 <../../phd_clouds/figures/grouped_by_month_evolution_for_der_Mixed_phase.p
-ng>] [21 <../../phd_clouds/figures/grouped_by_month_evolution_for_der_Pre_mixed
-_phase.png>]
-<../../phd_clouds/figures/grouped_by_month_evolution_for_ier_Ice.png, id=230, 1
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[14 <../../phd_clouds/figures/grouped_by_month_evolution_for_der_Pre_liquid.png
+>]
+<../../phd_clouds/figures/grouped_by_month_evolution_for_ier_Ice.png, id=187, 1
 175.8329pt x 528.7755pt>
 File: ../../phd_clouds/figures/grouped_by_month_evolution_for_ier_Ice.png Graph
 ic file (type png)
 <use ../../phd_clouds/figures/grouped_by_month_evolution_for_ier_Ice.png>
 Package pdftex.def Info: ../../phd_clouds/figures/grouped_by_month_evolution_fo
-r_ier_Ice.png  used on input line 334.
+r_ier_Ice.png  used on input line 338.
 (pdftex.def)             Requested size: 453.24931pt x 203.82529pt.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
 <../../phd_clouds/figures/grouped_by_month_evolution_for_ier_Mixed_phase.png, i
-d=232, 1107.1764pt x 645.1302pt>
+d=189, 1107.1764pt x 645.1302pt>
 File: ../../phd_clouds/figures/grouped_by_month_evolution_for_ier_Mixed_phase.p
 ng Graphic file (type png)
 <use ../../phd_clouds/figures/grouped_by_month_evolution_for_ier_Mixed_phase.pn
 g>
 Package pdftex.def Info: ../../phd_clouds/figures/grouped_by_month_evolution_fo
-r_ier_Mixed_phase.png  used on input line 344.
+r_ier_Mixed_phase.png  used on input line 348.
 (pdftex.def)             Requested size: 453.24931pt x 264.1015pt.
- [22 <../../phd_clouds/figures/grouped_by_month_evolution_for_ier_Ice.png>]
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[15 <../../phd_clouds/figures/grouped_by_month_evolution_for_der_Mixed_phase.pn
+g>]
 <../../phd_clouds/figures/grouped_by_month_evolution_for_ier_Pre_mixed_phase.pn
-g, id=241, 1107.1764pt x 645.1302pt>
+g, id=198, 1107.1764pt x 645.1302pt>
 File: ../../phd_clouds/figures/grouped_by_month_evolution_for_ier_Pre_mixed_pha
 se.png Graphic file (type png)
 <use ../../phd_clouds/figures/grouped_by_month_evolution_for_ier_Pre_mixed_phas
 e.png>
 Package pdftex.def Info: ../../phd_clouds/figures/grouped_by_month_evolution_fo
-r_ier_Pre_mixed_phase.png  used on input line 353.
+r_ier_Pre_mixed_phase.png  used on input line 357.
 (pdftex.def)             Requested size: 453.24931pt x 264.1015pt.
- [23 <../../phd_clouds/figures/grouped_by_month_evolution_for_ier_Mixed_phase.p
-ng>]) (./template.bbl [24 <../../phd_clouds/figures/grouped_by_month_evolution_
-for_ier_Pre_mixed_phase.png>]) [25]
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+) (./appendix/appendice.tex
+
+Package natbib Warning: Citation `Nomokonova2019' on page 16 undefined on input
+ line 3.
+
+
+Package natbib Warning: Citation `Pirloaga2022' on page 16 undefined on input l
+ine 3.
+
+
+Package natbib Warning: Citation `Nomokonova2019' on page 16 undefined on input
+ line 3.
+
+[16 <../../phd_clouds/figures/grouped_by_month_evolution_for_der_Pre_mixed_phas
+e.png>] [17 <../../phd_clouds/figures/grouped_by_month_evolution_for_ier_Ice.pn
+g>]
+<../../phd_clouds/figures/scheme_dilatation.png, id=220, 1061.9675pt x 597.2312
+5pt>
+File: ../../phd_clouds/figures/scheme_dilatation.png Graphic file (type png)
+<use ../../phd_clouds/figures/scheme_dilatation.png>
+Package pdftex.def Info: ../../phd_clouds/figures/scheme_dilatation.png  used o
+n input line 11.
+(pdftex.def)             Requested size: 453.24931pt x 254.89981pt.
+ [18 <../../phd_clouds/figures/grouped_by_month_evolution_for_ier_Mixed_phase.p
+ng>]
+Overfull \vbox (2.22758pt too high) has occurred while \output is active []
+
+
+[19 <../../phd_clouds/figures/grouped_by_month_evolution_for_ier_Pre_mixed_phas
+e.png> <../../phd_clouds/figures/scheme_dilatation.png>]) (./template.bbl
+[20]
+Underfull \hbox (badness 10000) in paragraph at lines 52--56
+[]\T1/ptm/m/n/9 F. J. Bello-Mill·n, Juli·n Pala-cios, Paloma Gutierrez-Castillo
+, and Luis Par-ras: Sim-u-la-tions of a Tor-nadic Su-per-cell
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 52--56
+\T1/ptm/m/n/9 Event in the South of Spain: Sen-si-tiv-ity to Ini-tial and Bound
+-ary Con-di-tions and Mi-cro-physics Pa-ram-e-ter-i-za-tions,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 58--61
+[]\T1/ptm/m/n/9 Ferreira, R. N.: Cut-Off Lows and Ex-treme Pre-cip-i-ta-tion in
+ East-ern Spain: Cur-rent and Fu-ture Cli-mate, 12, 835,
+ []
+
+[21]) [22]
+
+Class copernicus Warning: No section Abstract; proceeding without it.
+
 
 Package natbib Warning: There were undefined citations.
 
@@ -3810,13 +3887,13 @@ LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 40930 strings out of 478287
- 891942 string characters out of 5849289
- 1321752 words of memory out of 5000000
- 58358 multiletter control sequences out of 15000+600000
- 508729 words of font info for 87 fonts, out of 8000000 for 9000
+ 40936 strings out of 478287
+ 892527 string characters out of 5849289
+ 1319752 words of memory out of 5000000
+ 58357 multiletter control sequences out of 15000+600000
+ 510830 words of font info for 87 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 99i,8n,103p,2898b,609s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 99i,8n,103p,2880b,609s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/share/texlive/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr/share/texliv
 e/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/texlive/texm
 f-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/share/texlive/texmf-dist/
@@ -3824,16 +3901,14 @@ fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/share/texlive/texmf-dist/fonts/t
 ype1/public/amsfonts/cm/cmmi9.pfb></usr/share/texlive/texmf-dist/fonts/type1/pu
 blic/amsfonts/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/am
 sfonts/cm/cmr7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/c
-m/cmsy10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy
-7.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb></usr/s
-hare/texlive/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb></usr/share/texlive
-/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/share/texlive/texmf-dist/fon
-ts/type1/urw/times/utmr8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/ti
-mes/utmri8a.pfb>
-Output written on template.pdf (25 pages, 10916538 bytes).
+m/cmsy7.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb>
+</usr/share/texlive/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/share/tex
+live/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/share/texlive/texmf-dist
+/fonts/type1/urw/times/utmri8a.pfb>
+Output written on template.pdf (22 pages, 9633649 bytes).
 PDF statistics:
- 336 PDF objects out of 1000 (max. 8388607)
- 236 compressed objects within 3 object streams
- 63 named destinations out of 1000 (max. 500000)
- 123 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 345 PDF objects out of 1000 (max. 8388607)
+ 256 compressed objects within 3 object streams
+ 72 named destinations out of 1000 (max. 500000)
+ 113 words of extra memory for PDF output out of 10000 (max. 10000000)
 

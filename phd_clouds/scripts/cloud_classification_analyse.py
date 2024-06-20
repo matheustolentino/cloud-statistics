@@ -12,11 +12,11 @@ import seaborn as sns
 import statsmodels.api as sm
 from IPython import get_ipython
 import seaborn as sns
-ipython = get_ipython()
-if ipython is not None:
-    ipython.run_line_magic('matplotlib', 'inline')
+import matplotlib as mpl
+# ipython = get_ipython()
+# if ipython is not None:
+#     ipython.run_line_magic('matplotlib', 'inline')
     
-# matplotlib.use('TkAgg')
 PATH_FIG          = '../figures/'
 fontsize = 14
 # Set the font to Times New Roman using LaTeX
@@ -28,6 +28,7 @@ plt.rcParams['font.size'] = fontsize
 
 # plt.ion()
 plt.close('all')
+mpl.use('TkAgg')
 
 # Define a function to calculate skewness
 def calculate_skewness(group):
@@ -367,6 +368,21 @@ else:
     ax2.set_xticklabels(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], rotation=30)
     ax2.legend()
     fig1.savefig(PATH_FIG + 'new_method_monthly_cloud_occurence.png', dpi=300, bbox_inches='tight')
+    plt.show()
+
+
+    fig2 = plt.figure(figsize=(12, 6))
+    ax2 = fig2.add_subplot(111)
+    for var in monthly_cloud_occurence.data_vars:
+        if var != 'time':
+            ax2.plot(monthly_cloud_occurence['month'], monthly_cloud_occurence[var]*100, '-s', label=var.replace('_', '-').capitalize())  
+    ax2.set_ylabel('Frequency of occurence (%)')
+    ax2.set_xlabel('Month')
+    ax2.grid()
+    ax2.set_xticks(monthly_cloud_occurence['month'])
+    ax2.set_xticklabels(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], rotation=30)
+    ax2.legend()
+    fig2.savefig(PATH_FIG + 'new_method_monthly_cloud_occurence.png', dpi=300, bbox_inches='tight')
     plt.show()
 
     # color_data_ava = sns.color_palette("deep", len(unique_years)+1).as_hex() + ["#FFFFFF"]
@@ -801,7 +817,8 @@ else:
         dataframes.append(df)
     
     ys = ['cloud_base', 'cloud_top', 'cloud_thickness']
-    fig = plt.figure(figsize=(22, 20))
+    colors_violin = ['Blues', 'Greys', 'YlOrBr']
+    fig = plt.figure(figsize=(22, 18))
     gs  = fig.add_gridspec(len(dataframes), len(ys), height_ratios=[1]*len(dataframes), hspace=0.15, wspace=0.2)
     for i, df in enumerate(dataframes):
         for j, y in enumerate(ys):
@@ -813,15 +830,19 @@ else:
                             hue='cloud_type',   
                             ax=ax,
                             split=True,
-                            palette='Set2',
+                            palette=colors_violin[i],
                             inner="quart",
                             order=['spring', 'summer', 'fall', 'winter'],
                             scale='count',
+                            gap=.4,
                             )  # Specify the order of x-axis categories
             ax.set_ylabel(f'{y}')
             ax.set_xlabel('Seasons')
             ax.grid()
-            ax.set_ylim([0, 13])
+            if y == 'cloud_thickness':
+                ax.set_ylim([0, 10])
+            else:
+                ax.set_ylim([0, 13])
             quartiles = df.groupby(['season', 'cloud_type'])[y].quantile([0.25, 0.5, 0.75]).unstack()
             # print(f"Season: {df.season.unique()}, {y}: {quartiles}")
     fig.savefig(PATH_FIG + 'new_method_cloud_prop_violin_season.png', dpi=300, bbox_inches='tight')

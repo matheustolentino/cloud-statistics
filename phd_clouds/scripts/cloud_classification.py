@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.dates as mdates
 import matplotlib
+import matplotlib.colors as colors
 plot_inline = False
 
 fontsize = 14
@@ -91,7 +92,7 @@ site= 'granada'
 product_1 = 'classification'
 product_2 = 'categorize'
 
-process_all  = False
+process_all = False
 save_files = False
 
 make_plot = True
@@ -117,8 +118,8 @@ case_to_only_save = False
 if not process_all:
     path_to_data = "../../tests/data" # Path to save cloudnet downloaded files
 
-    date_ini = "2023-05-06"
-    date_end = "2023-05-06"
+    date_ini = "2019-06-14"
+    date_end = "2019-06-14"
     date_end_new = date_end.replace("-", "")
 
     download_cloudnet_products(date_ini, date_end, path_to_data, product=product_1, site=site)
@@ -240,12 +241,24 @@ for idx_file, file in enumerate(filenames):
         hydro_inside_cloud = hydro_cloud[mask_withou_rain]
         n_pixels_inside_cloud = len(indx_inside_cloud[cloud_number])
 
-        if n_pixels_inside_cloud == 0:  # Only rain
+        if n_pixels_inside_cloud == 0 or n_pixels_inside_cloud < cloud_min_pixels:  # Only rain
             ds_classification[cloud_number] = "Noise"
             idx_noise = np.unique(indx[:, 0])
             time_idx_noise[idx_noise] = 1
             cloud_type["Noise"][idx_noise] = 1
+        
+        # if n_pixels_inside_cloud > cloud_min_pixels:
+        #     valid_clouds.append(cloud_number)
+        #     time_idx_valid_clouds.append(np.unique(indx_inside_cloud[cloud_number][:, 0]))
+        # else:
+        #     ds_classification[cloud_number] = "Noise"
+        #     idx_noise = np.unique(indx_inside_cloud[cloud_number][:, 0])
+        #     time_idx_noise[idx_noise]      = 1
+        #     cloud_type["Noise"][idx_noise] = 1
+        
         else:
+            valid_clouds.append(cloud_number)
+            time_idx_valid_clouds.append(np.unique(indx_inside_cloud[cloud_number][:, 0]))
             hydromet_freq = {}
             for hydromet_name, hydromet_val in HYDROMET_VALUES.items():
                 count = np.count_nonzero(hydro_inside_cloud == hydromet_val)
@@ -294,14 +307,7 @@ for idx_file, file in enumerate(filenames):
                 ds_classification[cloud_number] = "Mixed-Phase"
                 cloud_type["Mixed-Phase"][np.unique(indx_inside_cloud[cloud_number][:, 0])] = 1
 
-            if n_pixels_inside_cloud > cloud_min_pixels:
-                valid_clouds.append(cloud_number)
-                time_idx_valid_clouds.append(np.unique(indx_inside_cloud[cloud_number][:, 0]))
-            else:
-                ds_classification[cloud_number] = "Noise"
-                idx_noise = np.unique(indx_inside_cloud[cloud_number][:, 0])
-                time_idx_noise[idx_noise]      = 1
-                cloud_type["Noise"][idx_noise] = 1
+
 
     # Print number of valid clouds
     # print(f"Valid clouds: {cloud_composition.keys()}")
@@ -558,7 +564,7 @@ for idx_file, file in enumerate(filenames):
 
         # Plotting ds_cloud
         fig = plt.figure(figsize=(13, 5))
-        gs = fig.add_gridspec(1, 2, width_ratios=[1, .02], wspace=0.05)
+        gs = fig.add_gridspec(1, 2, width_ratios=[1, 0.2], hspace=0.05, wspace=0.05)
 
         ax = fig.add_subplot(gs[0, 0])
         pc0 = ax.pcolormesh(ds_cloud['time'], ds_cloud['height']/1e3, ds_cloud['cloud_classification'].T, cmap=cloud_cmap, vmin=0, vmax=len(cloud_category))
@@ -583,6 +589,80 @@ for idx_file, file in enumerate(filenames):
             cbar_scat.ax.add_patch(rect)
             cbar_scat.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=14)
         fig.savefig(PATH_FIG + f"{date_str}_cloud_classification_new_method.png", dpi=300, bbox_inches='tight')
+        plt.show()
+
+                
+        # cloudnet_misclassification    
+        # Plotting ds_cloud
+    
+        fig = plt.figure(figsize=(17, 7))
+        gs = fig.add_gridspec(2, 5, width_ratios=[1, .02, .5, 1, 0.02], hspace=0.08, wspace=0.05)
+         
+        ax = fig.add_subplot(gs[0, 0])
+        pc0 = ax.pcolormesh(cloud_classification['time'], cloud_classification['height']/1e3, cloud_classification.T, cmap=manual_cmap, vmin=0, vmax=ncolors)
+        countour = ax.contour(categorize['model_time'], categorize['model_height'][:]/1e3,
+                                categorize['temperature'][:].T - 273.15,
+                                levels=[-40, -25, -10, 0, 5], colors='black', linewidths=0.5)
+        countour.clabel(inline=True, fmt='%2.1f'+r'$^{\circ}$C', fontsize=12)
+        ax.set_ylabel('Height (km)')
+        ax.grid()
+        ax.xaxis.set_tick_params(labelbottom=False)
+        ax.set_ylim([0, 12])
+
+        cax = fig.add_subplot(gs[0, 1])
+        cbar = plt.colorbar(pc, cax=cax, ticks=[], orientation='vertical')
+
+        for idx, (color, name) in enumerate(zip(manual_cmap.colors, color_names)):
+            rect = plt.Rectangle((0, idx), 1, 1, color=color)
+            cbar.ax.add_patch(rect)
+            cbar.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=14)
+
+        ax1 = fig.add_subplot(gs[1, 0], sharex=ax)
+        pc1 = ax1.pcolormesh(ds_cloud['time'], ds_cloud['height']/1e3, ds_cloud['cloud_classification'].T, cmap=cloud_cmap, vmin=0, vmax=len(cloud_category))
+
+        sc1 = ax1.scatter(cloud_props['time'], cloud_props['cloud_base']/1e3, s=10, color='r', label='Cloud base')
+        sc2 = ax1.scatter(cloud_props['time'], cloud_props['cloud_top']/1e3, s=10, color='k', label='Cloud top')
+
+        ax1.set_ylabel('Height (km)')
+        ax1.set_xlabel('Time (UTC)')
+        ax1.grid()
+        # ax1.legend()
+
+        ax1.set_xlim(data.time.values[0], data.time.values[-1])
+        ax1.set_ylim([0, data.height[-1]/1e3])
+        ax1.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+
+        cax_scat = fig.add_subplot(gs[1, 1])
+        cbar_scat = plt.colorbar(pc1, cax=cax_scat, ticks=[], orientation='vertical')
+
+        for idx, (color, name) in enumerate(zip(cloud_cmap.colors, cloud_category)):
+            rect = plt.Rectangle((0, idx), 1, 1, color=color)
+            cbar_scat.ax.add_patch(rect)
+            cbar_scat.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=14)
+        
+        ax2 = fig.add_subplot(gs[0, 3], sharex=ax, sharey=ax)  
+        pc2 = ax2.pcolormesh(categorize['time'], categorize['height']/1e3, categorize['Z'].T, cmap='viridis', vmin=-40, vmax=15)
+        ax2.yaxis.set_tick_params(labelleft=False)
+        ax2.xaxis.set_tick_params(labelbottom=False)
+        ax2.grid()
+
+
+        cax2 = fig.add_subplot(gs[0, 4])
+        cbar2 = plt.colorbar(pc2, cax=cax2, orientation='vertical', label='Reflectivity (dBZ)')
+
+        ax3 = fig.add_subplot(gs[1, 3], sharex=ax, sharey=ax)
+        pc3 = ax3.pcolormesh(categorize['time'], categorize['height']/1e3, categorize['beta'].T, cmap='jet',
+                             norm=colors.LogNorm(vmin=1e-7, vmax=1e-4))
+        
+        ax3.yaxis.set_tick_params(labelleft=False)
+        ax3.set_xlabel('Time (UTC)')
+        ax3.grid()
+
+        cax3 = fig.add_subplot(gs[1, 4])
+        cbar3 = plt.colorbar(pc3, cax=cax3, orientation='vertical',
+                              label = r"$\beta$ (m$^{-1}$ sr$^{-1}$)")
+        
+        fig.savefig(PATH_FIG + f"{date_str}_cloudnet_misclassification.png", dpi=300, bbox_inches='tight')
         plt.show()
     
     # # Coarsen der and ier
