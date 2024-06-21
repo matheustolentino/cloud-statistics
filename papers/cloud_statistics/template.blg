@@ -4,83 +4,88 @@ The top-level auxiliary file: template.aux
 The style file: copernicus.bst
 Database file #1: ../My_Library.bib
 Warning--I didn't find a database entry for "Illingworth2007"
-Warning--I didn't find a database entry for "XXX"
-Warning--I didn't find a database entry for "Hogan2004"
 Warning--I didn't find a database entry for "Nomokonova2019"
 Warning--I didn't find a database entry for "Pirloaga2022"
+Warning--to sort, need author or key in intergovernmentalpanelonclimatechangeipccEarthEnergyBudget2023
+Warning--empty author in intergovernmentalpanelonclimatechangeipccEarthEnergyBudget2023
+Warning--empty year in intergovernmentalpanelonclimatechangeipccEarthEnergyBudget2023
 Warning--empty journal in a.cazorlaNearrealtimeProcessingCeilometer2017
 Warning--empty year in a.cazorlaNearrealtimeProcessingCeilometer2017
 Warning--empty journal in a.s.frischCloudRadarMicrowave1998
 Warning--empty year in a.s.frischCloudRadarMicrowave1998
-Warning--empty journal in alexandrerios-entenzaMoistureRecyclingIberian2014
-Warning--empty year in alexandrerios-entenzaMoistureRecyclingIberian2014
+Warning--empty journal in buhlMeasuringIceLiquidwater2016
+Warning--empty year in buhlMeasuringIceLiquidwater2016
+Warning--empty journal in casquero-veraNewParticleFormation2020a
+Warning--empty year in casquero-veraNewParticleFormation2020a
 Warning--empty journal in f.j.bello-millanSimulationsTornadicSupercell2024
 Warning--empty year in f.j.bello-millanSimulationsTornadicSupercell2024
-Warning--empty journal in ferreiraCutOffLowsExtreme2021
-Warning--empty year in ferreiraCutOffLowsExtreme2021
 Warning--empty journal in francisconavas-guzmanTroposphericWaterVapour2014
 Warning--empty year in francisconavas-guzmanTroposphericWaterVapour2014
 Warning--empty journal in hannesgriescheApplicationShipborneRemote2020
 Warning--empty year in hannesgriescheApplicationShipborneRemote2020
+Warning--empty journal in hoganFacilitatingCloudRadar
+Warning--empty year in hoganFacilitatingCloudRadar
+Warning--empty journal in j.a.ContinuousEvaluationCloud2007
+Warning--empty year in j.a.ContinuousEvaluationCloud2007
 Warning--empty journal in juliendelanoeCharacterizationIceCloud2007
 Warning--empty year in juliendelanoeCharacterizationIceCloud2007
+Warning--empty journal in marinouGeometricalMicrophysicalProperties2021
+Warning--empty year in marinouGeometricalMicrophysicalProperties2021
 Warning--empty journal in nilskuchlerWBandRadarRadiometer2017
 Warning--empty year in nilskuchlerWBandRadarRadiometer2017
 Warning--empty journal in pablosaavedragarfiasAsymmetriesCloudMicrophysical2023
 Warning--empty year in pablosaavedragarfiasAsymmetriesCloudMicrophysical2023
-Warning--empty journal in porcuStudyCutoffLow2007
-Warning--empty year in porcuStudyCutoffLow2007
+Warning--empty journal in peggyachtertPropertiesArcticLiquid2020
+Warning--empty year in peggyachtertPropertiesArcticLiquid2020
 Warning--empty journal in robinj.hoganRetrievalIceWater2006
 Warning--empty year in robinj.hoganRetrievalIceWater2006
 Warning--empty journal in razvanpirloagaGroundBasedMeasurementsCloud2022
 Warning--empty year in razvanpirloagaGroundBasedMeasurementsCloud2022
 Warning--empty journal in s.frischRetrievalStratusCloud2002
 Warning--empty year in s.frischRetrievalStratusCloud2002
-Warning--empty journal in shahiAssessmentSpatiotemporalVariability2022
-Warning--empty year in shahiAssessmentSpatiotemporalVariability2022
 Warning--empty journal in stefankneifelMultiyearCloudPrecipitation2021
 Warning--empty year in stefankneifelMultiyearCloudPrecipitation2021
 Warning--empty journal in tatiananomokonovaStatisticsCloudsTheir2019
 Warning--empty year in tatiananomokonovaStatisticsCloudsTheir2019
-You've used 17 entries,
+You've used 20 entries,
             2932 wiz_defined-function locations,
-            1134 strings with 17270 characters,
-and the built_in function-call counts, 25887 in all, are:
-= -- 2529
-> -- 1750
-< -- 1
-+ -- 687
-- -- 568
-* -- 1967
-:= -- 2842
-add.period$ -- 17
-call.type$ -- 17
-change.case$ -- 223
-chr.to.int$ -- 18
-cite$ -- 85
-duplicate$ -- 2120
-empty$ -- 1005
-format.name$ -- 616
-if$ -- 4943
+            1148 strings with 19274 characters,
+and the built_in function-call counts, 32544 in all, are:
+= -- 3063
+> -- 2364
+< -- 2
++ -- 910
+- -- 770
+* -- 2536
+:= -- 3639
+add.period$ -- 20
+call.type$ -- 20
+change.case$ -- 296
+chr.to.int$ -- 21
+cite$ -- 103
+duplicate$ -- 2555
+empty$ -- 1241
+format.name$ -- 828
+if$ -- 6214
 int.to.chr$ -- 1
 int.to.str$ -- 1
-missing$ -- 302
-newline$ -- 60
-num.names$ -- 68
-pop$ -- 1240
+missing$ -- 388
+newline$ -- 69
+num.names$ -- 77
+pop$ -- 1519
 preamble$ -- 1
-purify$ -- 223
+purify$ -- 296
 quote$ -- 0
-skip$ -- 1368
+skip$ -- 1720
 stack$ -- 0
-substring$ -- 870
-swap$ -- 1911
-text.length$ -- 0
+substring$ -- 1057
+swap$ -- 2305
+text.length$ -- 1
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 153
-warning$ -- 34
-while$ -- 92
+type$ -- 180
+warning$ -- 41
+while$ -- 103
 width$ -- 0
-write$ -- 175
-(There were 39 warnings)
+write$ -- 203
+(There were 44 warnings)

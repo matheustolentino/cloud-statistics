@@ -1,4 +1,4 @@
-\begin{thebibliography}{17}
+\begin{thebibliography}{20}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \providecommand{\urlprefix}{}
@@ -6,6 +6,14 @@
   \providecommand{\doi}[1]{https://doi.org/\discretionary{}{}{}#1}\else
   \providecommand{\doi}{https://doi.org/\discretionary{}{}{}\begingroup
   \urlstyle{rm}\Url}\fi
+
+\bibitem[{int()}]{intergovernmentalpanelonclimatechangeipccEarthEnergyBudget2023}
+The {{Earth}}’s {{Energy Budget}}, {{Climate Feedbacks}} and {{Climate
+  Sensitivity}}, in: Climate {{Change}} 2021 – {{The Physical Science
+  Basis}}: {{Working Group I Contribution}} to the {{Sixth Assessment Report}}
+  of the {{Intergovernmental Panel}} on {{Climate Change}}, edited by
+  {Intergovernmental Panel on Climate Change (IPCC)}, pp. 923--1054, Cambridge
+  University Press, ISBN 978-1-00-915788-9, \doi{10.1017/9781009157896.009}.
 
 \bibitem[{{A. Cazorla} et~al.(){A. Cazorla}, Cazorla, {Juan Andrés
   Casquero-Vera}, Casquero-Vera, {Roberto Román}, Román, {Juan Luís
@@ -35,16 +43,20 @@
   Radiometer Measurements of Stratus Cloud Liquid Water Profiles, 103,
   23\,195--23\,197, \doi{10.1029/98jd01827}.
 
-\bibitem[{{Alexandre Rios-Entenza} et~al.(){Alexandre Rios-Entenza},
-  Rios-Entenza, {Pedro M. M. Soares}, Soares, {Ricardo M. Trigo}, Trigo, {Rita
-  M. Cardoso}, Cardoso, {Gonzalo Miguez‐Macho}, and
-  Miguez-Macho}]{alexandrerios-entenzaMoistureRecyclingIberian2014}
-{Alexandre Rios-Entenza}, Rios-Entenza, A., {Pedro M. M. Soares}, Soares, P.
-  M.~M., {Ricardo M. Trigo}, Trigo, R.~M., {Rita M. Cardoso}, Cardoso, R.~M.,
-  {Gonzalo Miguez‐Macho}, and Miguez-Macho, G.: Moisture Recycling in the
-  {{Iberian Peninsula}} from a Regional Climate Simulation: {{Spatiotemporal}}
-  Analysis and Impact on the Precipitation Regime, 119, 5895--5912,
-  \doi{10.1002/2013jd021274}.
+\bibitem[{Bühl et~al.()Bühl, Seifert, Myagkov, and
+  Ansmann}]{buhlMeasuringIceLiquidwater2016}
+Bühl, J., Seifert, P., Myagkov, A., and Ansmann, A.: Measuring Ice- and
+  Liquid-Water Properties in Mixed-Phase Cloud Layers at the {{Leipzig
+  Cloudnet}} Station, 16, 10\,609--10\,620, \doi{10.5194/acp-16-10609-2016}.
+
+\bibitem[{Casquero-Vera et~al.()Casquero-Vera, Lyamani, Dada, Hakala, Paasonen,
+  Román, Fraile, Petäjä, Olmo-Reyes, and
+  Alados-Arboledas}]{casquero-veraNewParticleFormation2020a}
+Casquero-Vera, J.~A., Lyamani, H., Dada, L., Hakala, S., Paasonen, P., Román,
+  R., Fraile, R., Petäjä, T., Olmo-Reyes, F.~J., and Alados-Arboledas, L.:
+  New Particle Formation at Urban and High-Altitude Remote Sites in the
+  South-Eastern {{Iberian Peninsula}}, 20, 14\,253--14\,271,
+  \doi{10.5194/acp-20-14253-2020}.
 
 \bibitem[{{F. J. Bello-Millán} et~al.(){F. J. Bello-Millán}, {Julián
   Palacios}, {Paloma Gutierrez-Castillo}, and {Luis
@@ -53,11 +65,6 @@
   {Luis Parras}: Simulations of a Tornadic Supercell Event in the South of
   {{Spain}}: {{Sensitivity}} to Initial and Boundary Conditions and
   Microphysics Parameterizations, \doi{10.1016/j.atmosres.2024.107262}.
-
-\bibitem[{Ferreira()}]{ferreiraCutOffLowsExtreme2021}
-Ferreira, R.~N.: Cut-{{Off Lows}} and {{Extreme Precipitation}} in {{Eastern
-  Spain}}: {{Current}} and {{Future Climate}}, 12, 835,
-  \doi{10.3390/atmos12070835}.
 
 \bibitem[{{Francisco Navas-Guzmán} et~al.(){Francisco Navas-Guzmán},
   Navas-Guzmán, {J. Fernández‐Gálvez}, Fernández-Gálvez, {Jesús
@@ -87,6 +94,27 @@ Ferreira, R.~N.: Cut-{{Off Lows}} and {{Extreme Precipitation}} in {{Eastern
   Clouds during {{Polarstern}} Cruise {{PS106}}, 13, 5335--5358,
   \doi{10.5194/amt-2019-434}.
 
+\bibitem[{Hogan and O’Connor()}]{hoganFacilitatingCloudRadar}
+Hogan, R.~J. and O’Connor, E.~J.: Facilitating Cloud Radar and Lidar
+  Algorithms: The {{Cloudnet Instrument Synergy}}/{{Target Categorization}}
+  Product.
+
+\bibitem[{{J. A.} et~al.(){J. A.}, {Illingworth}, {J. R.}, {Hogan}, {’.
+  E.J.o}, {Connor}, {D.}, {Bouniol}, {E. M.}, {Brooks}, {J.}, {Delanoë}, {P.
+  D.}, {Donovan}, {D. J.}, {Eastment}, {N.}, {Gaussiat}, {F. J.W.}, {Goddard},
+  {M.}, {Haeffelin}, {H.}, {Klein Baltink}, {A. O.}, {Krasnov}, {Pelon},
+  {J.-M.}, {Piriou}, {A.}, {Protat}, {J. H.W.}, {Russchenberg}, {Seifert}, {M.
+  A.}, {Tompkins}, {G.-J.}, {V. Zadelhoff}, {F.}, {Vinit}, {U.}, {Willén}, {R.
+  D.}, and {Wilson}}]{j.a.ContinuousEvaluationCloud2007}
+{J. A.}, {Illingworth}, {J. R.}, {Hogan}, {’. E.J.o}, {Connor}, {D.},
+  {Bouniol}, {E. M.}, {Brooks}, {J.}, {Delanoë}, {P. D.}, {Donovan}, {D. J.},
+  {Eastment}, {N.}, {Gaussiat}, {F. J.W.}, {Goddard}, {M.}, {Haeffelin}, {H.},
+  {Klein Baltink}, {A. O.}, {Krasnov}, {Pelon}, {J.-M.}, {Piriou}, {A.},
+  {Protat}, {J. H.W.}, {Russchenberg}, {Seifert}, {M. A.}, {Tompkins}, {G.-J.},
+  {V. Zadelhoff}, {F.}, {Vinit}, {U.}, {Willén}, {R. D.}, and {Wilson}:
+  Continuous {{Evaluation}} of {{Cloud Profiles}} in {{Seven Operational Models
+  Using Ground-Based Observations}}.
+
 \bibitem[{{Julien Delanoë} et~al.(){Julien Delanoë}, Delanoë, {Alain
   Protat}, Protat, {Alain Protat}, {Dominique Bouniol}, Bouniol, Bouniol,
   {Andrew J. Heymsfield}, Heymsfield, {Aaron Bansemer}, Bansemer, {Philip R. A.
@@ -96,6 +124,15 @@ Ferreira, R.~N.: Cut-{{Off Lows}} and {{Extreme Precipitation}} in {{Eastern
   Heymsfield, A.~J., {Aaron Bansemer}, Bansemer, A., {Philip R. A. Brown},
   Brown, P., and Brown, P. R.~A.: The Characterization of Ice Cloud Properties
   from Doppler Radar Measurements, 46, 1682--1698, \doi{10.1175/jam2543.1}.
+
+\bibitem[{Marinou et~al.()Marinou, Voudouri, Tsikoudi, Drakaki, Tsekeri,
+  Rosoldi, Ene, Baars, O’Connor, Amiridis, and
+  Meleti}]{marinouGeometricalMicrophysicalProperties2021}
+Marinou, E., Voudouri, K.~A., Tsikoudi, I., Drakaki, E., Tsekeri, A., Rosoldi,
+  M., Ene, D., Baars, H., O’Connor, E., Amiridis, V., and Meleti, C.:
+  Geometrical and {{Microphysical Properties}} of {{Clouds Formed}} in the
+  {{Presence}} of {{Dust}} above the {{Eastern Mediterranean}}, 13, 5001,
+  \doi{10.3390/rs13245001}.
 
 \bibitem[{{Nils Küchler} et~al.(){Nils Küchler}, Küchler, {Stefan Kneifel},
   Kneifel, {Ulrich Löhnert}, Löhnert, {Pavlos Kollias}, Kollias, {Harald
@@ -115,11 +152,18 @@ Ferreira, R.~N.: Cut-{{Off Lows}} and {{Extreme Precipitation}} in {{Eastern
   Ascribed to Sea Ice Leads via Water Vapour Transport in the Central
   {{Arctic}}, \doi{10.5194/acp-23-14521-2023}.
 
-\bibitem[{Porcù et~al.()Porcù, Carrassi, Medaglia, Prodi, and
-  Mugnai}]{porcuStudyCutoffLow2007}
-Porcù, F., Carrassi, A., Medaglia, C.~M., Prodi, F., and Mugnai, A.: A Study
-  on Cut-off Low Vertical Structure and Precipitation in the {{Mediterranean}}
-  Region, 96, 121--140, \doi{10.1007/s00703-006-0224-5}.
+\bibitem[{{Peggy Achtert} et~al.(){Peggy Achtert}, Achtert, {Ewan O’Connor},
+  O'Connor, {Ian M. Brooks}, Brooks, {Georgia Sotiropoulou}, Sotiropoulou,
+  {Georgia Sotiropoulou}, {Matthew D. Shupe}, Shupe, {Bernhard Pospichal},
+  Pospichal, {Barbara Brooks}, Brooks, {Michael Tjernström}, and
+  Tjernström}]{peggyachtertPropertiesArcticLiquid2020}
+{Peggy Achtert}, Achtert, P., {Ewan O’Connor}, O'Connor, E., {Ian M. Brooks},
+  Brooks, I.~M., {Georgia Sotiropoulou}, Sotiropoulou, G., {Georgia
+  Sotiropoulou}, {Matthew D. Shupe}, Shupe, M.~D., {Bernhard Pospichal},
+  Pospichal, B., {Barbara Brooks}, Brooks, B., {Michael Tjernström}, and
+  Tjernström, M.: Properties of {{Arctic}} Liquid and Mixed-Phase Clouds from
+  Shipborne {{Cloudnet}} Observations during {{ACSE}} 2014, 20,
+  14\,983--15\,002, \doi{10.5194/acp-2020-56}.
 
 \bibitem[{{Robin J. Hogan} et~al.(){Robin J. Hogan}, Hogan, {Marion
   Mittermaier}, Mittermaier, {Anthony J. Illingworth}, and
@@ -149,14 +193,6 @@ Porcù, F., Carrassi, A., Medaglia, C.~M., Prodi, F., and Mugnai, A.: A Study
   Poellot}, and Poellot, M.~R.: The {{Retrieval}} of {{Stratus Cloud Droplet
   Effective Radius}} with {{Cloud Radars}}, 19, 835--842,
   \doi{10.1175/1520-0426(2002)019<0835:troscd>2.0.co;2}.
-
-\bibitem[{Shahi et~al.()Shahi, Polcher, Bastin, Pennel, and
-  Fita}]{shahiAssessmentSpatiotemporalVariability2022}
-Shahi, N.~K., Polcher, J., Bastin, S., Pennel, R., and Fita, L.: Assessment of
-  the Spatio-Temporal Variability of the Added Value on Precipitation of
-  Convection-Permitting Simulation over the {{Iberian Peninsula}} Using the
-  {{RegIPSL}} Regional Earth System Model, 59, 471--498,
-  \doi{10.1007/s00382-022-06138-y}.
 
 \bibitem[{{Stefan Kneifel} et~al.(){Stefan Kneifel}, {Stefan Kneifel},
   {Bernhard Pospichal}, {Bernhard Pospichal}, {Leonie von Terzi}, {Leonie von
