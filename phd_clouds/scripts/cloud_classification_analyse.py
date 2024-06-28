@@ -442,6 +442,26 @@ else:
     ax.legend()
     fig.savefig(PATH_FIG + 'new_method_monthly_single_layer_frequency.png', dpi=300, bbox_inches='tight')
     plt.show()
+    
+
+    test_freq = single_layer_cloud_type.resample(time='M').mean()
+    list_var = list(ds_cloud_type.data_vars)
+    fig = plt.figure(figsize=(19, 12))
+    gs = fig.add_gridspec(3, 2, width_ratios=[1, 1], hspace=0.4, wspace=0.25)
+    for i, cloud in enumerate(list_var[:-1]):
+        data = test_freq.where(ds_cloud_type[cloud].astype(bool)).compute()
+        ax = fig.add_subplot(gs[i])
+        for year in np.unique(data.time.dt.year):
+            data_year = data.sel(time=data.time.dt.year == year)
+            daily_data = data_year.groupby('time.dayofyear').median(dim='time', skipna=True)
+            ax.plot(daily_data.dayofyear, daily_data,'--o',  label=f"{year}")
+        ax.set_xlabel("Day of Year")
+        ax.set_ylabel(cloud)
+        ax.set_title(f"{cloud} Clouds")
+        if i == 0:
+            ax.legend()
+    plt.show()
+
 
     # heat = sns.heatmap(pearson_corr,
     #                    mask=mask,
@@ -759,7 +779,7 @@ else:
         ax = fig.add_subplot(gs[i//2, i%2])
         mask_cloud_type = single_layer_cloud_type[var].astype(bool)
 
-        base_cloud_type = ds_cloud_prop['cloud_base'].sel(time=mask_cloud_type)/1000.
+        base_cloud_type = (ds_cloud_prop['cloud_base'].sel(time=mask_cloud_type) - GRANADA_ALTITUDE)/1000
         # base_cloud_type = ds_cloud_prop['cloud_base'].where(mask_cloud_type)/1000.
         df_cloud_type   = base_cloud_type.to_dataframe().reset_index().drop(columns=['time'])
 
@@ -813,7 +833,8 @@ else:
         single_layer_cloud_prop = ds_cloud_prop.where(ds_cloud_occurence['single_layer'], other=np.nan)
         sliced_cloud_prop = single_layer_cloud_prop.sel(time=mask_pair_var.values)/1000
         df = sliced_cloud_type.merge(sliced_cloud_prop).to_dataframe().reset_index().drop(columns=['time', 'month', 'year', pair_var_names[0], pair_var_names[1]])
-
+        df['cloud_base'] = df['cloud_base'] - GRANADA_ALTITUDE/1000
+        df['cloud_top']  = df['cloud_top'] - GRANADA_ALTITUDE/1000
         dataframes.append(df)
     
     ys = ['cloud_base', 'cloud_top', 'cloud_thickness']
