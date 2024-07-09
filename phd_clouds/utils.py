@@ -731,3 +731,81 @@ def reading_dataset_chunking(root_folder: str, target_parent_folder: str, file_e
                 concatenated_datasets_dict[previous_folder_name] = concatenated_dataset.sortby('time')
 
     return concatenated_datasets_dict
+
+def convert_azimuth_y_to_x(angles_y, direction='clockwise'):
+    """
+    Convert an array of azimuth angles from being with respect to the y-axis to the x-axis.
+
+    Parameters:
+    angles_y (np.ndarray): Array of azimuth angles in degrees with respect to the y-axis.
+    direction (str): Direction of measurement ('clockwise' or 'anticlockwise').
+
+    Returns:
+    np.ndarray: Array of azimuth angles in degrees with respect to the x-axis.
+    """
+    if direction == 'clockwise':
+        angles_x = (90 - angles_y) % 360
+    elif direction == 'anticlockwise':
+        angles_x = (angles_y - 90) % 360
+    else:
+        raise ValueError("Direction must be 'clockwise' or 'anticlockwise'")
+    
+    return angles_x
+
+def spherical_to_cartesian(
+    ranges: np.ndarray[np.float64] | xr.DataArray,    
+    azimuth: np.ndarray[np.float64] | xr.DataArray,
+    elevation: np.ndarray[np.float64] | xr.DataArray,
+    ) -> tuple[np.ndarray[np.float64], np.ndarray[np.float64]]:
+    """Convert RHI coordinates to cartessian coordinates
+
+    Args:
+        ranges (np.ndarray[np.float64] | xr.DataArray): Range of the radar.
+        azimuth (np.ndarray[np.float64] | xr.DataArray): Azimuth angle.
+        elevation (np.ndarray[np.float64] | xr.DataArray): Elevation angle.
+
+    Raises:
+        ValueError: Azimuth angle is not constant.
+
+    Returns:
+        tuple[np.ndarray[np.float64], np.ndarray[np.float64]]: x, y coordinates in cartessian plane [units as `ranges`].
+    """    
+
+    if isinstance(ranges, xr.DataArray):
+        ranges = ranges.values
+    if isinstance(azimuth, xr.DataArray):
+        azimuth = azimuth.values
+    if isinstance(elevation, xr.DataArray):
+        elevation = elevation.values
+
+    # # Check elevation angle is constant    
+    # if not np.allclose(azimuth, azimuth[0], atol=0.1):
+    #     raise ValueError("Azimuth angle is not constant.")
+    
+    # Convert azimth to speherical coordinates convention
+    theta = 90 - elevation
+    phi = convert_azimuth_y_to_x(azimuth, direction='clockwise')
+
+    x = ranges[:, np.newaxis]  * np.sin(np.deg2rad(theta)) * np.cos(np.deg2rad(phi))
+    y = ranges[:, np.newaxis]  * np.sin(np.deg2rad(theta)) * np.sin(np.deg2rad(phi))
+    z = ranges[:, np.newaxis]  * np.cos(np.deg2rad(theta))
+
+    return ranges, theta, phi, x, y, z
+
+def cartesian_to_spherical(x: np.ndarray[np.float64], y: np.ndarray[np.float64], z: np.ndarray[np.float64]) -> tuple[np.ndarray[np.float64], np.ndarray[np.float64], np.ndarray[np.float64]]:
+    """Convert cartessian coordinates to spherical coordinates
+
+    Args:
+        x (np.ndarray[np.float64]): x coordinates.
+        y (np.ndarray[np.float64]): y coordinates.
+        z (np.ndarray[np.float64]): z coordinates.
+
+    Returns:
+        tuple[np.ndarray[np.float64], np.ndarray[np.float64], np.ndarray[np.float64]]: ranges, azimuth, elevation.
+    """    
+    ranges = np.sqrt(x**2 + y**2 + z**2)
+    theta = np.rad2deg(np.arccos(z / ranges))
+    phi = np.rad2deg(np.arctan2(y, x))
+    
+    phi[phi < 0] += 360
+    return ranges, theta, phi

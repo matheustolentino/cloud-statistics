@@ -1,4 +1,4 @@
-\begin{thebibliography}{24}
+\begin{thebibliography}{25}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \providecommand{\urlprefix}{}
@@ -6,6 +6,14 @@
   \providecommand{\doi}[1]{https://doi.org/\discretionary{}{}{}#1}\else
   \providecommand{\doi}{https://doi.org/\discretionary{}{}{}\begingroup
   \urlstyle{rm}\Url}\fi
+
+\bibitem[{int()}]{intergovernmentalpanelonclimatechangeipccEarthEnergyBudget2023}
+The {{Earth}}’s {{Energy Budget}}, {{Climate Feedbacks}} and {{Climate
+  Sensitivity}}, in: Climate {{Change}} 2021 – {{The Physical Science
+  Basis}}: {{Working Group I Contribution}} to the {{Sixth Assessment Report}}
+  of the {{Intergovernmental Panel}} on {{Climate Change}}, edited by
+  {Intergovernmental Panel on Climate Change (IPCC)}, pp. 923--1054, Cambridge
+  University Press, ISBN 978-1-00-915788-9, \doi{10.1017/9781009157896.009}.
 
 \bibitem[{{A. Cazorla} et~al.(){A. Cazorla}, Cazorla, {Juan Andrés
   Casquero-Vera}, Casquero-Vera, {Roberto Román}, Román, {Juan Luís
@@ -46,6 +54,12 @@
   Analysis and Impact on the Precipitation Regime, 119, 5895--5912,
   \doi{10.1002/2013jd021274}.
 
+\bibitem[{Bühl et~al.()Bühl, Seifert, Myagkov, and
+  Ansmann}]{buhlMeasuringIceLiquidwater2016}
+Bühl, J., Seifert, P., Myagkov, A., and Ansmann, A.: Measuring Ice- and
+  Liquid-Water Properties in Mixed-Phase Cloud Layers at the {{Leipzig
+  Cloudnet}} Station, 16, 10\,609--10\,620, \doi{10.5194/acp-16-10609-2016}.
+
 \bibitem[{Casquero-Vera et~al.()Casquero-Vera, Lyamani, Dada, Hakala, Paasonen,
   Román, Fraile, Petäjä, Olmo-Reyes, and
   Alados-Arboledas}]{casquero-veraNewParticleFormation2020a}
@@ -55,16 +69,6 @@ Casquero-Vera, J.~A., Lyamani, H., Dada, L., Hakala, S., Paasonen, P., Román,
   South-Eastern {{Iberian Peninsula}}, 20, 14\,253--14\,271,
   \doi{10.5194/acp-20-14253-2020}.
 
-\bibitem[{{Enrique Pravia-Sarabia} et~al.(){Enrique Pravia-Sarabia}, {Juan
-  Pedro Montávez}, {Amar Halifa-Marín}, {Pedro Jiménez‐Guerrero}, and
-  {Juan José
-  Gómez-Navarro}}]{enriquepravia-sarabiaRoleAerosolConcentration2023}
-{Enrique Pravia-Sarabia}, {Juan Pedro Montávez}, {Amar Halifa-Marín}, {Pedro
-  Jiménez‐Guerrero}, and {Juan José Gómez-Navarro}: The {{Role}} of
-  {{Aerosol Concentration}} on {{Precipitation}} in a {{Winter Extreme
-  Mixed-Phase System}}: {{The Case}} of {{Storm Filomena}}, 15, 1398--1398,
-  \doi{10.3390/rs15051398}.
-
 \bibitem[{{F. J. Bello-Millán} et~al.(){F. J. Bello-Millán}, {Julián
   Palacios}, {Paloma Gutierrez-Castillo}, and {Luis
   Parras}}]{f.j.bello-millanSimulationsTornadicSupercell2024}
@@ -72,11 +76,6 @@ Casquero-Vera, J.~A., Lyamani, H., Dada, L., Hakala, S., Paasonen, P., Román,
   {Luis Parras}: Simulations of a Tornadic Supercell Event in the South of
   {{Spain}}: {{Sensitivity}} to Initial and Boundary Conditions and
   Microphysics Parameterizations, \doi{10.1016/j.atmosres.2024.107262}.
-
-\bibitem[{Ferreira()}]{ferreiraCutOffLowsExtreme2021}
-Ferreira, R.~N.: Cut-{{Off Lows}} and {{Extreme Precipitation}} in {{Eastern
-  Spain}}: {{Current}} and {{Future Climate}}, 12, 835,
-  \doi{10.3390/atmos12070835}.
 
 \bibitem[{{Francisco Navas-Guzmán} et~al.(){Francisco Navas-Guzmán},
   Navas-Guzmán, {J. Fernández‐Gálvez}, Fernández-Gálvez, {Jesús
@@ -137,21 +136,6 @@ Hogan, R.~J. and O’Connor, E.~J.: Facilitating Cloud Radar and Lidar
   Brown, P., and Brown, P. R.~A.: The Characterization of Ice Cloud Properties
   from Doppler Radar Measurements, 46, 1682--1698, \doi{10.1175/jam2543.1}.
 
-\bibitem[{{Marcos García Sotillo} et~al.(){Marcos García Sotillo}, Sotillo,
-  {Baptiste Mourre}, Mourre, {Marc Mestres}, Mestres, {Pablo Lorente}, Lorente,
-  {Roland Aznar}, {Roland Aznar}, Aznar, {Manuel Garcı́a-León},
-  García-León, {María Liste}, {Maria Liste}, {Maria Liste}, Liste, {Ana
-  Lúcia Almeida Santana}, Santana, {Manuel Espino}, Espino, {Enrique
-  Álvarez}, and Álvarez}]{marcosgarciasotilloEvaluationOperationalCMEMS2021}
-{Marcos García Sotillo}, Sotillo, M.~G., {Baptiste Mourre}, Mourre, B., {Marc
-  Mestres}, Mestres, M., {Pablo Lorente}, Lorente, P., {Roland Aznar}, {Roland
-  Aznar}, Aznar, R., {Manuel Garcı́a-León}, García-León, M., {María
-  Liste}, {Maria Liste}, {Maria Liste}, Liste, M., {Ana Lúcia Almeida
-  Santana}, Santana, A., {Manuel Espino}, Espino, M., {Enrique Álvarez}, and
-  Álvarez, E.: Evaluation of the {{Operational CMEMS}} and {{Coastal
-  Downstream Ocean Forecasting Services During}} the {{Storm Gloria}}
-  ({{January}} 2020), 8, \doi{10.3389/fmars.2021.644525}.
-
 \bibitem[{Marinou et~al.()Marinou, Voudouri, Tsikoudi, Drakaki, Tsekeri,
   Rosoldi, Ene, Baars, O’Connor, Amiridis, and
   Meleti}]{marinouGeometricalMicrophysicalProperties2021}
@@ -176,6 +160,18 @@ Marinou, E., Voudouri, K.~A., Tsikoudi, I., Drakaki, E., Tsekeri, A., Rosoldi,
   State Evolution Based}} on in Situ {{Measurements}} and {{Modeled Data}} and
   {{Its Impact}} on {{Extreme Values}}, 8, \doi{10.3389/fmars.2021.646873}.
 
+\bibitem[{{María Eugenia Pérez-González} et~al.(){María Eugenia
+  Pérez-González}, González, {José María García Alvarado}, Alvarado,
+  {María del Pilar García Rodríguez}, family=Pilar García~Rodríguez,
+  Ballesta, {Raimundo Jiménez‐Ballesta}, and
+  Iñigo}]{mariaeugeniaperez-gonzalezEvaluationImpactCaused2022}
+{María Eugenia Pérez-González}, González, M. E.~P., {José María García
+  Alvarado}, Alvarado, J. M.~G., {María del Pilar García Rodríguez},
+  family=Pilar García~Rodríguez, given=María, p.~u., Ballesta, R.~J.,
+  {Raimundo Jiménez‐Ballesta}, and Iñigo, V.: Evaluation of the {{Impact
+  Caused}} by the {{Snowfall}} after {{Storm Filomena}} on the {{Arboreal
+  Masses}} of {{Madrid}}, 11, 667--667, \doi{10.3390/land11050667}.
+
 \bibitem[{{Nils Küchler} et~al.(){Nils Küchler}, Küchler, {Stefan Kneifel},
   Kneifel, {Ulrich Löhnert}, Löhnert, {Pavlos Kollias}, Kollias, {Harald
   Czekala}, Czekala, {Thomas Rose}, and
@@ -194,11 +190,18 @@ Marinou, E., Voudouri, K.~A., Tsikoudi, I., Drakaki, E., Tsekeri, A., Rosoldi,
   Ascribed to Sea Ice Leads via Water Vapour Transport in the Central
   {{Arctic}}, \doi{10.5194/acp-23-14521-2023}.
 
-\bibitem[{Porcù et~al.()Porcù, Carrassi, Medaglia, Prodi, and
-  Mugnai}]{porcuStudyCutoffLow2007}
-Porcù, F., Carrassi, A., Medaglia, C.~M., Prodi, F., and Mugnai, A.: A Study
-  on Cut-off Low Vertical Structure and Precipitation in the {{Mediterranean}}
-  Region, 96, 121--140, \doi{10.1007/s00703-006-0224-5}.
+\bibitem[{{Peggy Achtert} et~al.(){Peggy Achtert}, Achtert, {Ewan O’Connor},
+  O'Connor, {Ian M. Brooks}, Brooks, {Georgia Sotiropoulou}, Sotiropoulou,
+  {Georgia Sotiropoulou}, {Matthew D. Shupe}, Shupe, {Bernhard Pospichal},
+  Pospichal, {Barbara Brooks}, Brooks, {Michael Tjernström}, and
+  Tjernström}]{peggyachtertPropertiesArcticLiquid2020}
+{Peggy Achtert}, Achtert, P., {Ewan O’Connor}, O'Connor, E., {Ian M. Brooks},
+  Brooks, I.~M., {Georgia Sotiropoulou}, Sotiropoulou, G., {Georgia
+  Sotiropoulou}, {Matthew D. Shupe}, Shupe, M.~D., {Bernhard Pospichal},
+  Pospichal, B., {Barbara Brooks}, Brooks, B., {Michael Tjernström}, and
+  Tjernström, M.: Properties of {{Arctic}} Liquid and Mixed-Phase Clouds from
+  Shipborne {{Cloudnet}} Observations during {{ACSE}} 2014, 20,
+  14\,983--15\,002, \doi{10.5194/acp-2020-56}.
 
 \bibitem[{{Robin J. Hogan} et~al.(){Robin J. Hogan}, Hogan, {Marion
   Mittermaier}, Mittermaier, {Anthony J. Illingworth}, and
@@ -228,6 +231,18 @@ Porcù, F., Carrassi, A., Medaglia, C.~M., Prodi, F., and Mugnai, A.: A Study
   Poellot}, and Poellot, M.~R.: The {{Retrieval}} of {{Stratus Cloud Droplet
   Effective Radius}} with {{Cloud Radars}}, 19, 835--842,
   \doi{10.1175/1520-0426(2002)019<0835:troscd>2.0.co;2}.
+
+\bibitem[{{Samuel T. Buisán} et~al.(){Samuel T. Buisán}, {Samuel Buisán},
+  {Roberto Serrano-Notivoli}, {Roberto Serrano‐Notivoli}, {John
+  Kochendorfer}, {John Kochendorfer}, {Francisco J. Bello-Millán}, and
+  {Francisco J.
+  Bello-Millán}}]{samuelt.buisanAdjustmentSolidPrecipitation2022}
+{Samuel T. Buisán}, {Samuel Buisán}, {Roberto Serrano-Notivoli}, {Roberto
+  Serrano‐Notivoli}, {John Kochendorfer}, {John Kochendorfer}, {Francisco J.
+  Bello-Millán}, and {Francisco J. Bello-Millán}: Adjustment of Solid
+  Precipitation during the {{Filomena}} Extreme Snowfall Event in {{Spain}}:
+  From Observations to “True Precipitation”,
+  \doi{10.1175/bams-d-22-0012.1}.
 
 \bibitem[{Shahi et~al.()Shahi, Polcher, Bastin, Pennel, and
   Fita}]{shahiAssessmentSpatiotemporalVariability2022}

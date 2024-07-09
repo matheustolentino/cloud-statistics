@@ -13,9 +13,9 @@ import statsmodels.api as sm
 from IPython import get_ipython
 import seaborn as sns
 import matplotlib as mpl
-# ipython = get_ipython()
-# if ipython is not None:
-#     ipython.run_line_magic('matplotlib', 'inline')
+ipython = get_ipython()
+if ipython is not None:
+    ipython.run_line_magic('matplotlib', 'inline')
     
 PATH_FIG          = '../figures/'
 fontsize = 14
@@ -28,7 +28,7 @@ plt.rcParams['font.size'] = fontsize
 
 # plt.ion()
 plt.close('all')
-mpl.use('TkAgg')
+# mpl.use('TkAgg')
 
 # Define a function to calculate skewness
 def calculate_skewness(group):
@@ -444,23 +444,26 @@ else:
     plt.show()
     
 
-    test_freq = single_layer_cloud_type.resample(time='M').mean()
-    list_var = list(ds_cloud_type.data_vars)
-    fig = plt.figure(figsize=(19, 12))
-    gs = fig.add_gridspec(3, 2, width_ratios=[1, 1], hspace=0.4, wspace=0.25)
-    for i, cloud in enumerate(list_var[:-1]):
-        data = test_freq.where(ds_cloud_type[cloud].astype(bool)).compute()
-        ax = fig.add_subplot(gs[i])
-        for year in np.unique(data.time.dt.year):
-            data_year = data.sel(time=data.time.dt.year == year)
-            daily_data = data_year.groupby('time.dayofyear').median(dim='time', skipna=True)
-            ax.plot(daily_data.dayofyear, daily_data,'--o',  label=f"{year}")
-        ax.set_xlabel("Day of Year")
-        ax.set_ylabel(cloud)
-        ax.set_title(f"{cloud} Clouds")
-        if i == 0:
-            ax.legend()
-    plt.show()
+    # list_var = list(ds_cloud_type.data_vars)
+    # fig = plt.figure(figsize=(19, 12))
+    # gs = fig.add_gridspec(3, 2, width_ratios=[1, 1], hspace=0.4, wspace=0.25)
+    # mask = (ds_cloud_occurence['single_layer'].astype(bool)) & (ds_cloud_occurence['noise'] == 0)
+    # single_layer_categorize = ds_categorize.where(mask)
+    # for i, cloud in enumerate(list_var[:-1]):
+    #     # data = single_layer_cloud_type.where(ds_cloud_type[cloud].astype(bool))
+    #     data = single_layer_categorize.where(ds_cloud_type[cloud].astype(bool))
+    #     ax = fig.add_subplot(gs[i])
+    #     for year in np.unique(data.time.dt.year):
+    #         # data_year = data[cloud].sel(time=data.time.dt.year == year)
+    #         data_year = data.sel(time=data.time.dt.year == year)
+    #         daily_data = data_year.groupby('time.dayofyear').mean(dim='time')
+    #         ax.plot(daily_data.dayofyear, daily_data,'--o',  label=f"{year}")
+    #     ax.set_xlabel("Day of Year")
+    #     ax.set_ylabel(f"{cloud} ({single_layer_categorize.units})")
+    #     ax.set_title(f"{cloud} Clouds")
+    #     if i == 0:
+    #         ax.legend()
+    # plt.show()
 
 
     # heat = sns.heatmap(pearson_corr,
