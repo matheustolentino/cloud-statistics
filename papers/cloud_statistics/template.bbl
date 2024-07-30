@@ -1,4 +1,4 @@
-\begin{thebibliography}{25}
+\begin{thebibliography}{32}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \providecommand{\urlprefix}{}
@@ -54,6 +54,27 @@ The {{Earth}}’s {{Energy Budget}}, {{Climate Feedbacks}} and {{Climate
   Analysis and Impact on the Precipitation Regime, 119, 5895--5912,
   \doi{10.1002/2013jd021274}.
 
+\bibitem[{{Andrés Esteban Bedoya-Velásquez} et~al.(){Andrés Esteban
+  Bedoya-Velásquez}, Bedoya-Velásquez, {Francisco Navas-Guzmán},
+  Navas-Guzmán, {Gregori de Arruda Moreira}, family=Arruda Moreira, {Roberto
+  Román}, Román, {A. Cazorla}, Cazorla, {Pablo Ortiz-Amezcua}, Ortiz-Amezcua,
+  {José Antonio Benavent-Oltra}, Benavent-Oltra, {L. Alados-Arboledas},
+  Alados-Arboledas, {Francisco José Olmo Reyes}, Olmo-Reyes, {I.
+  Foyo‐Moreno}, Foyo-Moreno, {Elena Montilla-Rosero}, Montilla-Rosero,
+  {Carlos D. Hoyos}, Hoyos, {Juan Luís Guerrero-Rascado}, and
+  Guerrero-Rascado}]{andresestebanbedoya-velasquezSeasonalAnalysisAtmosphere2019}
+{Andrés Esteban Bedoya-Velásquez}, Bedoya-Velásquez, A.~E., {Francisco
+  Navas-Guzmán}, Navas-Guzmán, F., {Gregori de Arruda Moreira}, family=Arruda
+  Moreira, given=Gregori, p.~u., {Roberto Román}, Román, R., {A. Cazorla},
+  Cazorla, A., {Pablo Ortiz-Amezcua}, Ortiz-Amezcua, P., {José Antonio
+  Benavent-Oltra}, Benavent-Oltra, J.~A., {L. Alados-Arboledas},
+  Alados-Arboledas, L., {Francisco José Olmo Reyes}, Olmo-Reyes, F.~J., {I.
+  Foyo‐Moreno}, Foyo-Moreno, I., {Elena Montilla-Rosero}, Montilla-Rosero,
+  E., {Carlos D. Hoyos}, Hoyos, C.~D., {Juan Luís Guerrero-Rascado}, and
+  Guerrero-Rascado, J.~L.: Seasonal Analysis of the Atmosphere during Five
+  Years by Using Microwave Radiometry over a Mid-Latitude Site, 218, 78--89,
+  \doi{10.1016/j.atmosres.2018.11.014}.
+
 \bibitem[{Bühl et~al.()Bühl, Seifert, Myagkov, and
   Ansmann}]{buhlMeasuringIceLiquidwater2016}
 Bühl, J., Seifert, P., Myagkov, A., and Ansmann, A.: Measuring Ice- and
@@ -68,6 +89,10 @@ Casquero-Vera, J.~A., Lyamani, H., Dada, L., Hakala, S., Paasonen, P., Román,
   New Particle Formation at Urban and High-Altitude Remote Sites in the
   South-Eastern {{Iberian Peninsula}}, 20, 14\,253--14\,271,
   \doi{10.5194/acp-20-14253-2020}.
+
+\bibitem[{Dougherty()}]{doughertyMathematicalMorphologyImage2018}
+Dougherty, E.: Mathematical {{Morphology}} in {{Image Processing}}, CRC Press,
+  ISBN 978-1-351-83050-8.
 
 \bibitem[{{F. J. Bello-Millán} et~al.(){F. J. Bello-Millán}, {Julián
   Palacios}, {Paloma Gutierrez-Castillo}, and {Luis
@@ -105,10 +130,22 @@ Casquero-Vera, J.~A., Lyamani, H., Dada, L., Hakala, S., Paasonen, P., Román,
   Clouds during {{Polarstern}} Cruise {{PS106}}, 13, 5335--5358,
   \doi{10.5194/amt-2019-434}.
 
+\bibitem[{Heese et~al.()Heese, Flentje, Althausen, Ansmann, and
+  Frey}]{heeseCeilometerLidarComparison2010}
+Heese, B., Flentje, H., Althausen, D., Ansmann, A., and Frey, S.: Ceilometer
+  Lidar Comparison: Backscatter Coefficient Retrieval and Signal-to-Noise Ratio
+  Determination, 3, 1763--1770, \doi{10.5194/amt-3-1763-2010}.
+
 \bibitem[{Hogan and O’Connor()}]{hoganFacilitatingCloudRadar}
 Hogan, R.~J. and O’Connor, E.~J.: Facilitating Cloud Radar and Lidar
   Algorithms: The {{Cloudnet Instrument Synergy}}/{{Target Categorization}}
   Product.
+
+\bibitem[{Hogan et~al.()Hogan, Bouniol, Ladd, O'Connor, and
+  Illingworth}]{hoganAbsoluteCalibration942003}
+Hogan, R.~J., Bouniol, D., Ladd, D.~N., O'Connor, E.~J., and Illingworth,
+  A.~J.: Absolute {{Calibration}} of 94/95-{{GHz Radars Using Rain}},
+  \urlprefix\url{https://journals.ametsoc.org/view/journals/atot/20/4/1520-0426_2003_20_572_acogru_2_0_co_2.xml}.
 
 \bibitem[{{J. A.} et~al.(){J. A.}, {Illingworth}, {J. R.}, {Hogan}, {’.
   E.J.o}, {Connor}, {D.}, {Bouniol}, {E. M.}, {Brooks}, {J.}, {Delanoë}, {P.
@@ -136,6 +173,11 @@ Hogan, R.~J. and O’Connor, E.~J.: Facilitating Cloud Radar and Lidar
   Brown, P., and Brown, P. R.~A.: The Characterization of Ice Cloud Properties
   from Doppler Radar Measurements, 46, 1682--1698, \doi{10.1175/jam2543.1}.
 
+\bibitem[{Löhnert and Crewell()}]{lohnertAccuracyCloudLiquid2003}
+Löhnert, U. and Crewell, S.: Accuracy of Cloud Liquid Water Path from
+  Ground-Based Microwave Radiometry 1. {{Dependency}} on Cloud Model
+  Statistics, 38, \doi{10.1029/2002RS002654}.
+
 \bibitem[{Marinou et~al.()Marinou, Voudouri, Tsikoudi, Drakaki, Tsekeri,
   Rosoldi, Ene, Baars, O’Connor, Amiridis, and
   Meleti}]{marinouGeometricalMicrophysicalProperties2021}
@@ -144,33 +186,6 @@ Marinou, E., Voudouri, K.~A., Tsikoudi, I., Drakaki, E., Tsekeri, A., Rosoldi,
   Geometrical and {{Microphysical Properties}} of {{Clouds Formed}} in the
   {{Presence}} of {{Dust}} above the {{Eastern Mediterranean}}, 13, 5001,
   \doi{10.3390/rs13245001}.
-
-\bibitem[{{Marta de Alfonso} et~al.(){Marta de Alfonso}, family=Alfonso, {Jue
-  Lin-Ye}, Lin-Ye, {José María García-Valdecasas}, Garcia-Valdecasas,
-  {Susana Pérez-Rubio}, Pérez-Rubio, {M. Y. Luna}, {M. Yolanda Luna}, Luna,
-  {Daniel Santos‐Muñoz}, Santos-Muñoz, {María Ángeles Martínez Ruiz},
-  Ruiz, {Begoña Pérez-Gómez}, Pérez-Gómez, {Enrique Álvarez-Fanjul}, and
-  Álvarez Fanjul}]{martadealfonsoStormGloriaSea2021}
-{Marta de Alfonso}, family=Alfonso, given=Marta, p.~u., {Jue Lin-Ye}, Lin-Ye,
-  J., {José María García-Valdecasas}, Garcia-Valdecasas, J.~M., {Susana
-  Pérez-Rubio}, Pérez-Rubio, S., {M. Y. Luna}, {M. Yolanda Luna}, Luna,
-  M.~Y., {Daniel Santos‐Muñoz}, Santos-Muñoz, D., {María Ángeles
-  Martínez Ruiz}, Ruiz, M.~I., {Begoña Pérez-Gómez}, Pérez-Gómez, B.,
-  {Enrique Álvarez-Fanjul}, and Álvarez Fanjul, E.: Storm {{Gloria}}: {{Sea
-  State Evolution Based}} on in Situ {{Measurements}} and {{Modeled Data}} and
-  {{Its Impact}} on {{Extreme Values}}, 8, \doi{10.3389/fmars.2021.646873}.
-
-\bibitem[{{María Eugenia Pérez-González} et~al.(){María Eugenia
-  Pérez-González}, González, {José María García Alvarado}, Alvarado,
-  {María del Pilar García Rodríguez}, family=Pilar García~Rodríguez,
-  Ballesta, {Raimundo Jiménez‐Ballesta}, and
-  Iñigo}]{mariaeugeniaperez-gonzalezEvaluationImpactCaused2022}
-{María Eugenia Pérez-González}, González, M. E.~P., {José María García
-  Alvarado}, Alvarado, J. M.~G., {María del Pilar García Rodríguez},
-  family=Pilar García~Rodríguez, given=María, p.~u., Ballesta, R.~J.,
-  {Raimundo Jiménez‐Ballesta}, and Iñigo, V.: Evaluation of the {{Impact
-  Caused}} by the {{Snowfall}} after {{Storm Filomena}} on the {{Arboreal
-  Masses}} of {{Madrid}}, 11, 667--667, \doi{10.3390/land11050667}.
 
 \bibitem[{{Nils Küchler} et~al.(){Nils Küchler}, Küchler, {Stefan Kneifel},
   Kneifel, {Ulrich Löhnert}, Löhnert, {Pavlos Kollias}, Kollias, {Harald
@@ -203,6 +218,29 @@ Marinou, E., Voudouri, K.~A., Tsikoudi, I., Drakaki, E., Tsekeri, A., Rosoldi,
   Shipborne {{Cloudnet}} Observations during {{ACSE}} 2014, 20,
   14\,983--15\,002, \doi{10.5194/acp-2020-56}.
 
+\bibitem[{Protat et~al.({\natexlab{a}})Protat, Armstrong, Haeffelin, Morille,
+  Pelon, Delanoë, and Bouniol}]{protatImpactConditionalSampling2006}
+Protat, A., Armstrong, A., Haeffelin, M., Morille, Y., Pelon, J., Delanoë, J.,
+  and Bouniol, D.: Impact of Conditional Sampling and Instrumental Limitations
+  on the Statistics of Cloud Properties Derived from Cloud Radar and Lidar at
+  {{SIRTA}}, 33, \doi{10.1029/2005GL025340}, {\natexlab{a}}.
+
+\bibitem[{Protat et~al.({\natexlab{b}})Protat, Bouniol, Delanoë, O’Connor,
+  May, Plana-Fattori, Hasson, Görsdorf, and
+  Heymsfield}]{protatAssessmentCloudsatReflectivity2009}
+Protat, A., Bouniol, D., Delanoë, J., O’Connor, E., May, P.~T.,
+  Plana-Fattori, A., Hasson, A., Görsdorf, U., and Heymsfield, A.~J.:
+  Assessment of {{Cloudsat Reflectivity Measurements}} and {{Ice Cloud
+  Properties Using Ground-Based}} and {{Airborne Cloud Radar Observations}},
+  \doi{10.1175/2009JTECHA1246.1}, {\natexlab{b}}.
+
+\bibitem[{Protat et~al.({\natexlab{c}})Protat, Delanoë, O’Connor, and
+  L’Ecuyer}]{protatEvaluationCloudSatCALIPSO2010}
+Protat, A., Delanoë, J., O’Connor, E.~J., and L’Ecuyer, T.~S.: The
+  {{Evaluation}} of {{CloudSat}} and {{CALIPSO Ice Microphysical Products Using
+  Ground-Based Cloud Radar}} and {{Lidar Observations}},
+  \doi{10.1175/2009JTECHA1397.1}, {\natexlab{c}}.
+
 \bibitem[{{Robin J. Hogan} et~al.(){Robin J. Hogan}, Hogan, {Marion
   Mittermaier}, Mittermaier, {Anthony J. Illingworth}, and
   Illingworth}]{robinj.hoganRetrievalIceWater2006}
@@ -232,18 +270,6 @@ Marinou, E., Voudouri, K.~A., Tsikoudi, I., Drakaki, E., Tsekeri, A., Rosoldi,
   Effective Radius}} with {{Cloud Radars}}, 19, 835--842,
   \doi{10.1175/1520-0426(2002)019<0835:troscd>2.0.co;2}.
 
-\bibitem[{{Samuel T. Buisán} et~al.(){Samuel T. Buisán}, {Samuel Buisán},
-  {Roberto Serrano-Notivoli}, {Roberto Serrano‐Notivoli}, {John
-  Kochendorfer}, {John Kochendorfer}, {Francisco J. Bello-Millán}, and
-  {Francisco J.
-  Bello-Millán}}]{samuelt.buisanAdjustmentSolidPrecipitation2022}
-{Samuel T. Buisán}, {Samuel Buisán}, {Roberto Serrano-Notivoli}, {Roberto
-  Serrano‐Notivoli}, {John Kochendorfer}, {John Kochendorfer}, {Francisco J.
-  Bello-Millán}, and {Francisco J. Bello-Millán}: Adjustment of Solid
-  Precipitation during the {{Filomena}} Extreme Snowfall Event in {{Spain}}:
-  From Observations to “True Precipitation”,
-  \doi{10.1175/bams-d-22-0012.1}.
-
 \bibitem[{Shahi et~al.()Shahi, Polcher, Bastin, Pennel, and
   Fita}]{shahiAssessmentSpatiotemporalVariability2022}
 Shahi, N.~K., Polcher, J., Bastin, S., Pennel, R., and Fita, L.: Assessment of
@@ -251,6 +277,13 @@ Shahi, N.~K., Polcher, J., Bastin, S., Pennel, R., and Fita, L.: Assessment of
   Convection-Permitting Simulation over the {{Iberian Peninsula}} Using the
   {{RegIPSL}} Regional Earth System Model, 59, 471--498,
   \doi{10.1007/s00382-022-06138-y}.
+
+\bibitem[{Shupe et~al.()Shupe, Turner, Zwink, Thieman, Mlawer, and
+  Shippert}]{shupeDerivingArcticCloud2015}
+Shupe, M.~D., Turner, D.~D., Zwink, A., Thieman, M.~M., Mlawer, E.~J., and
+  Shippert, T.: Deriving {{Arctic Cloud Microphysics}} at {{Barrow}},
+  {{Alaska}}: {{Algorithms}}, {{Results}}, and {{Radiative Closure}},
+  \doi{10.1175/JAMC-D-15-0054.1}.
 
 \bibitem[{{Stefan Kneifel} et~al.(){Stefan Kneifel}, {Stefan Kneifel},
   {Bernhard Pospichal}, {Bernhard Pospichal}, {Leonie von Terzi}, {Leonie von
@@ -277,5 +310,11 @@ Shahi, N.~K., Polcher, J., Bastin, S., Pennel, R., and Fita, L.: Assessment of
   Clouds and Their Relation to Thermodynamic Conditions at {{Ny-Ålesund}}
   Using Ground-Based Sensor Synergy, 19, 4105--4126,
   \doi{10.5194/acp-19-4105-2019}.
+
+\bibitem[{Yoshida and Asano()}]{yoshidaEffectsVerticalProfiles2005}
+Yoshida, Y. and Asano, S.: Effects of the {{Vertical Profiles}} of {{Cloud
+  Droplets}} and {{Ice Particles}} on the {{Visible}} and {{Near-Infrared
+  Radiative Properties}} of {{Mixed-Phase Stratocumulus Clouds}}, 83, 471--480,
+  \doi{10.2151/jmsj.83.471}.
 
 \end{thebibliography}

@@ -27,6 +27,7 @@ import glob
 import dask
 from typing import Dict, Union, Any, List
 from rpgpy import rpg2nc as rpg2nc_rpgpy
+import logging
 
 def groupSequence(lst, cloud_bins=0):
     # Initialize a result list with the first element of the input list.
@@ -711,7 +712,8 @@ def reading_dataset_chunking(root_folder: str, target_parent_folder: str, file_e
 
             if delayed_datasets:
                 # Use Dask's delayed computation to parallelize the dataset opening
-                datasets = dask.compute(*delayed_datasets)
+                # datasets = dask.compute(*delayed_datasets)
+                datasets = [d.compute() for d in delayed_datasets]
 
                 concatenated_datasets = []
 
@@ -809,3 +811,16 @@ def cartesian_to_spherical(x: np.ndarray[np.float64], y: np.ndarray[np.float64],
     
     phi[phi < 0] += 360
     return ranges, theta, phi
+
+def get_instrument_name(instrument_nickname):
+    try:
+        if instrument_nickname == 'nebula_w' or instrument_nickname == 'nephele':
+            instrument_name  = 'rpg-fmcw-94'
+        elif instrument_nickname == 'nebula_ka':
+            instrument_name  = 'rpg-fmcw-35'
+        else:
+            raise ValueError(f"Unknown instrument nickname {instrument_nickname}")
+        return instrument_name
+    except ValueError:
+        raise ValueError(f"Unknown instrument nickname {instrument_nickname}")
+    
