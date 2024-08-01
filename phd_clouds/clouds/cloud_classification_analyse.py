@@ -922,7 +922,7 @@ else:
     
     ys = ['cloud_base', 'cloud_top', 'cloud_thickness']
     colors_violin = ['Blues', 'Greys', 'YlOrBr']
-    fig = plt.figure(figsize=(22, 18))
+    fig = plt.figure(figsize=(23, 17))
     gs  = fig.add_gridspec(len(dataframes), len(ys), height_ratios=[1]*len(dataframes), hspace=0.15, wspace=0.2)
     for i, df in enumerate(dataframes):
         for j, y in enumerate(ys):
@@ -937,25 +937,65 @@ else:
                 cloud_order = [clouds[0], clouds[1]]
             # print(f"cloud_order: {cloud_order}")
             ax = fig.add_subplot(gs[j, i])
-            sns.violinplot(data = df,
-                            x='season',
-                            y=y,
-                            hue='cloud_type',   
-                            ax=ax,
-                            split=True,
-                            palette=colors_violin[i],
-                            inner="quart",
-                            order=['spring', 'summer', 'fall', 'winter'],
-                            scale='count',
-                            gap=.4,
-                            hue_order=cloud_order,
-                            linecolor='black',
-                            linewidth=2.0
-                            )  # Specify the order of x-axis categories
+            sns.violinplot(data=df,
+                           x='season',
+                           y=y,
+                           hue='cloud_type',
+                           ax=ax,
+                           split=True,
+                           palette=colors_violin[i],
+                           inner="quartile",
+                           order=['spring', 'summer', 'fall', 'winter'],
+                           scale='count',
+                           gap=.4,
+                           hue_order=cloud_order,
+                           linecolor='black',
+                           linewidth=2.0,
+                           medianprops={"color": "r", "linewidth": 2},
+                           )  # Specify the order of x-axis categories
             # for y-label, split the string by - and capitalize each part
             ax.set_ylabel(f'{y.replace("_", " ").capitalize()} (km)')
-            ax.set_xlabel('Seasons')
+            # ax.tick_params(which='minor', length=4, color='r')
+            # ax.set_xlabel('Seasons')
             ax.grid()
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            ax.spines['bottom'].set_visible(False)
+            ax.spines['left'].set_visible(False)
+            ax.set_facecolor('white')
+
+            if cloud_order[0] == 'Liquid' and y == 'cloud_thickness':
+                # plot a zoom between 0 and 2 km overlaping the plot with same width of original plot
+                axins = ax.inset_axes([0.2, 0.4, 0.7, 0.6], transform=ax.transAxes)
+                sns.violinplot(data=df,
+                                 x='season',
+                                 y=y,
+                                 hue='cloud_type',
+                                 ax=axins,
+                                 split=True,
+                                 palette=colors_violin[i],
+                                 inner="quartile",
+                                 order=['spring', 'summer', 'fall', 'winter'],
+                                 scale='count',
+                                 gap=.4,
+                                 hue_order=cloud_order,
+                                 linecolor='black',
+                                 linewidth=2.0,
+                                 medianprops={"color": "r", "linewidth": 2},
+                                 )  # Specify the order of x-axis categories
+                axins.set_ylim([0, 1.2])
+                axins.set_facecolor('white')
+                axins.xaxis.set_tick_params(labelbottom=False)
+                axins.xaxis.set_tick_params(labelleft=False)
+                axins.spines['top'].set_visible(False)
+                axins.spines['right'].set_visible(False)
+                # increase thick resolution
+                axins.yaxis.set_major_locator(plt.MaxNLocator(5))
+
+                axins.get_legend().remove()
+                axins.set_ylabel('')
+                axins.set_xlabel('')
+
             if y == 'cloud_thickness':
                 ax.set_ylim([0, 10])
             else:
@@ -966,6 +1006,12 @@ else:
              
             else:
                 ax.get_legend().remove()
+                # remove the bottom x-axis
+                
+            # remove the bottom x-axis label for all but the last row
+            if j != len(ys) - 1:
+                ax.set_xlabel('')
+                ax.xaxis.set_tick_params(labelbottom=False)
             quartiles = df.groupby(['season', 'cloud_type'])[y].quantile([0.5]).unstack()
             print(f"{y}: {quartiles}")
 
