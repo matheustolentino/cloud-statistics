@@ -19,7 +19,7 @@ plt.close('all')
 
 mpl.use('qtagg')
 
-RHI_LV1 = Path(r"/home/matheustolen/shared/NAS_raw_data/UGR/nebula_w/2024/06/26")
+RHI_LV1 = Path(r"/home/matheustolen/shared/RAW/UGR/nebula_w/2024/06/26")
 # RHI_LV1 = Path(r"/home/matheustolen/shared/NAS_raw_data/UGR/nebula_w/2024/04/20")
 # RHI_LV1 = Path(r"/home/matheustolen/shared/NAS_raw_data/UGR/nebula_w/2024/06/08")
 PATH_NC = Path(r"../../tests/data/radar")
@@ -166,13 +166,13 @@ for i, phi in enumerate(np.unique(concat_data['azimuth'])):
 mlab.savefig(filename="../figures/RHI_cloud_measurement.png")
 mlab.show()
 
-mlab.figure(size=(1000, 1000), bgcolor=(0,0,0))
-_,_,_,xi, yi, zi = spherical_to_cartesian(concat_data['range'], concat_data['azimuth'], concat_data['elevation'])
-mlab.mesh(xi/1e3, yi/1e3, zi/1e3, scalars=concat_data['dBZe'].values.T, 
-                   )
-mlab.colorbar(title='dBz', orientation='vertical', nb_labels=8)
-# mlab.savefig(filename="../figures/RHI_cloud_measurement_volume.png")
-mlab.show()
+# mlab.figure(size=(1000, 1000), bgcolor=(0,0,0))
+# _,_,_,xi, yi, zi = spherical_to_cartesian(concat_data['range'], concat_data['azimuth'], concat_data['elevation'])
+# mlab.mesh(xi/1e3, yi/1e3, zi/1e3, scalars=concat_data['dBZe'].values.T, 
+#                    )
+# mlab.colorbar(title='dBz', orientation='vertical', nb_labels=8)
+# # mlab.savefig(filename="../figures/RHI_cloud_measurement_volume.png")
+# mlab.show()
 
 cartesian_coords = np.array([xm.ravel(), ym.ravel(), zm.ravel()]).T
 transposed_values = concat_data['dBZe'].values.T.ravel()
@@ -200,15 +200,15 @@ tri = Delaunay(cartesian_coords)
 
 # plt.show()
 
-mlab.figure(bgcolor=(1, 1, 1))
-for simplex in tri.simplices:
-    x = cartesian_coords[simplex, 0]
-    y = cartesian_coords[simplex, 1]
-    z = cartesian_coords[simplex, 2]
-    mlab.triangular_mesh(x, y, z, [[0, 1, 2]], color=(1, 0.6, 0.6), opacity=0.5)
+# mlab.figure(bgcolor=(1, 1, 1))
+# for simplex in tri.simplices:
+#     x = cartesian_coords[simplex, 0]
+#     y = cartesian_coords[simplex, 1]
+#     z = cartesian_coords[simplex, 2]
+#     mlab.triangular_mesh(x, y, z, [[0, 1, 2]], color=(1, 0.6, 0.6), opacity=0.5)
 
-mlab.axes(xlabel='X', ylabel='Y', zlabel='Z')
-mlab.show()
+# mlab.axes(xlabel='X', ylabel='Y', zlabel='Z')
+# mlab.show()
 # -------------------------------------------------------------------------------------------
 
 # -------------------------------------------------------------------------------------------
@@ -256,6 +256,7 @@ spherical_grid_cloud = cartesian_to_spherical(cartesian_grid_cloud[:, 0],
 # Plot Cloud using Mayavi
 # -------------------------------------------------------------------------------------------
 # mlab.clf()
+print("Plotting cloud using Mayavi...")
 mlab.figure(size=(1000, 1000), bgcolor=(0,0,0))
 points = mlab.points3d(cartesian_grid_cloud[:, 0]/1e3,
                        cartesian_grid_cloud[:, 1]/1e3,

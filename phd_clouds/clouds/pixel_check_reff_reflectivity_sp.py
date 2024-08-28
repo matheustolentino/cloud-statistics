@@ -545,7 +545,7 @@ time_guess = ti_datetime.strftime('%Y%m%dT%H%M%S.%f')[:-3]
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------
 pattern               = f"{ti_datetime.strftime('%y%m%d_%H')}*.LV0"
-directorypath_rawdata = f"/home/matheustolen/shared/NAS_raw_data/UGR/{instrument_name}/{ti_datetime.strftime('%Y/%m/%d')}"
+directorypath_rawdata = f"/home/matheustolen/shared/RAW/UGR/{instrument_name}/{ti_datetime.strftime('%Y/%m/%d')}"
 
 filepath_rawdata = glob.glob(os.path.join(directorypath_rawdata, pattern))
 raw_filename     = os.path.basename(filepath_rawdata[0]).replace('LV0', 'LV0.nc')

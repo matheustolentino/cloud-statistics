@@ -119,8 +119,8 @@ case_to_only_save = False
 if not process_all:
     path_to_data = "../../tests/data" # Path to save cloudnet downloaded files
 
-    date_ini = "2021-02-11"
-    date_end = "2021-02-11"
+    date_ini = "2022-03-15"
+    date_end = "2022-03-15"
     date_end_new = date_end.replace("-", "")
 
     download_cloudnet_products(date_ini, date_end, path_to_data, product=product_1, site=site)
@@ -492,24 +492,56 @@ for idx_file, file in enumerate(filenames):
         fig.savefig(PATH_FIG + f"{date_str}_cloud_identification.png", dpi=700, bbox_inches='tight')
         plt.show()
 
-        # Do the same plot as above, but for cloud_classification
-        fig, ax = plt.subplots(figsize=(10, 6))
-        pc = ax.pcolormesh(cloud_classification['time'], cloud_classification['height']/1e3, cloud_classification.T, cmap=manual_cmap, vmin=0, vmax=ncolors)
-        countour = ax.contour(categorize['model_time'], categorize['model_height'][:]/1e3,
-                                categorize['temperature'][:].T - 273.15,
-                                levels=[-40, -25, -10, 0, 5], colors='black', linewidths=0.5)
-        countour = ax.contour(categorize['model_time'], categorize['model_height'][:]/1e3,
-                        categorize['temperature'][:].T - 273.15,
-                        levels=[-40, -25, -10, 0, 5], colors='black', linewidths=0.5)
-        countour.clabel(inline=True, fmt='%2.1f'+r'$^{\circ}$C', fontsize=12)
-        ax.set_ylabel('Height (km) a.m.s.l')
-        ax.set_xlabel('Time (UTC)')
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
-        ax.grid()
-        ax.set_ylim([0, 13])
-        ax.set_xlim(data.time.values[0], data.time.values[-1])
-        fig.savefig(PATH_FIG + f"{date_str}_cloudnet_targ_class.png", dpi=700, bbox_inches='tight')
+        # Do the same as above, but lot the reflectivity
+        fig = plt.figure(figsize=(12, 5))
+        gs  = fig.add_gridspec(1, 2, width_ratios=[1, .02], wspace=0.05, hspace=0.08)
+        ax2 = fig.add_subplot(gs[0, 0], sharex=ax1, sharey=ax1)
+        pc = ax2.pcolormesh(cloud_classification['time'], cloud_classification['height']/1e3, cloud_classification.T, cmap=manual_cmap, vmin=0, vmax=ncolors)
+        # countour = ax2.contour(categorize['model_time'], categorize['model_height'][:]/1e3,
+        #                         categorize['temperature'][:].T - 273.15,
+        #                         levels=[-40, -25, -10, 0, 5], colors='black', linewidths=0.5)
+        # countour = ax1.contour(categorize['model_time'], categorize['model_height'][:]/1e3,
+        #                 categorize['temperature'][:].T - 273.15,
+        #                 levels=[-40, -25, -10, 0, 5], colors='black', linewidths=0.5)
+        # countour.clabel(inline=True, fmt='%2.1f'+r'$^{\circ}$C', fontsize=12)
+        ax2.set_ylabel('Altitude (km) a.s.l')
+        ax2.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+        # ax2.set_ylim([categorize['height'][0]/1e3, categorize['height'][-1]/1e3])
+
+        ax2.set_ylim([0, 12])
+        # ax2.set_title(f"Cloud Classification {date_str} - {site}")
+        ax2.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+        # ax2.set_xlim(data.time.values[0], data.time.values[-1])
+        ax2.grid()
+
+        cax = fig.add_subplot(gs[0, 1])
+        cbar = plt.colorbar(pc, cax=cax, ticks=[], orientation='vertical')
+
+        for idx, (color, name) in enumerate(zip(manual_cmap.colors, color_names)):
+            rect = plt.Rectangle((0, idx), 1, 1, color=color)
+            cbar.ax.add_patch(rect)
+            cbar.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=14)
+
+        fig.savefig(PATH_FIG + f"{date_str}_cloud_classification.png", dpi=700, bbox_inches='tight')
         plt.show()
+
+        # Do the same as above but plot categorize["Z"] insteado of target_classification
+        fig = plt.figure(figsize=(12, 5))
+        gs  = fig.add_gridspec(1, 2, width_ratios=[1, .02], wspace=0.05, hspace=0.08)
+        ax2 = fig.add_subplot(gs[0, 0], sharex=ax1, sharey=ax1)
+        pc = ax2.pcolormesh(categorize['time'], categorize['height']/1e3, categorize['Z'].T, cmap='viridis', vmin=-40, vmax=20) 
+        ax2.set_ylabel('Altitude (km) a.s.l')
+        ax2.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+        ax2.set_ylim([0, 12])
+        # ax2.set_title(f"Reflectivity {date_str} - {site}")
+        ax2.grid()
+
+        cax = fig.add_subplot(gs[0, 1])
+        cbar = plt.colorbar(pc, cax=cax, orientation='vertical', label='Reflectivity (dBZ)')
+
+        fig.savefig(PATH_FIG + f"{date_str}_reflectivity.png", dpi=700, bbox_inches='tight')
+        plt.show()
+
 
         if show_category:
             fig = plt.figure(figsize=(16, 11))
