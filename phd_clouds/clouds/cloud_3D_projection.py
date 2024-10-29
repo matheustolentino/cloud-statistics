@@ -46,7 +46,6 @@ date_ini = pd.to_datetime(date_to_read, format='%Y%m%d')
 # add 1 day to the date_ini
 date_end = date_ini + pd.DateOffset(days=1)
 
-
 # 3) Download the cloudnet products
 download_cloudnet_products(date_ini.strftime('%Y-%m-%d'), date_end.strftime('%Y-%m-%d'),
                            path_output=PATH_CAT, product='classification', site=site)

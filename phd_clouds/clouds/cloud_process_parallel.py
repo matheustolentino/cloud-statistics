@@ -1471,21 +1471,21 @@ def process_cloud_data(date: datetime.datetime,
     list_cloud_colors = ["#FFFFFF", "#007CFF", "blue", "cyan", "yellow", "orange"]
     cloud_cmap = plt.cm.colors.ListedColormap(list_cloud_colors)
 
-    fig = plt.figure(figsize=(13, 5))
+    fig = plt.figure(figsize=(12, 5))
     gs = fig.add_gridspec(1, 2, width_ratios=[1, .02], wspace=0.05)
     ax = fig.add_subplot(gs[0, 0])
     pc0 = ax.pcolormesh(ds_cloud['time'], 
                         (ds_cloud['height']+GRANADA_ALTITUDE)/1e3, 
                         ds_cloud['cloud_classification'].T, 
                         cmap=cloud_cmap, vmin=0, vmax=len(cloud_category))
-    for cloud in all_cloud_base.columns:
-        ax.scatter(all_cloud_base.index, (all_cloud_base[cloud]+GRANADA_ALTITUDE)/1e3, color='black', s=5)
-        ax.scatter(all_cloud_top.index, (all_cloud_top[cloud]+GRANADA_ALTITUDE)/1e3, color='red', s=5)
+    # for cloud in all_cloud_base.columns:
+    #     ax.scatter(all_cloud_base.index, (all_cloud_base[cloud]+GRANADA_ALTITUDE)/1e3, color='black', s=5)
+    #     ax.scatter(all_cloud_top.index, (all_cloud_top[cloud]+GRANADA_ALTITUDE)/1e3, color='red', s=5)
 
-    ax.set_ylabel('Height (km) a.m.s.l')
+    ax.set_ylabel('Height (km) a.s.l')
     ax.set_xlabel('Time (UTC)')
-    ax.set_title('Other algorithms - No Rain shown')
-    ax.grid()
+    # ax.set_title('Other algorithms - No Rain shown')
+    ax.grid(True, linestyle=':')
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
     ax.set_xlim([time[0], time[-1]])
     ax.set_ylim([0, (ds_cloud['height'][-1] + GRANADA_ALTITUDE)/1e3])
@@ -1497,7 +1497,7 @@ def process_cloud_data(date: datetime.datetime,
         rect = plt.Rectangle((0, idx), 1, 1, color=color)
         cbar_scat.ax.add_patch(rect)
         cbar_scat.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=14)
-    fig.savefig(PATH_FIG + date.strftime('%Y%m%d') + "_cloud_classification_old_method.png", dpi=300, bbox_inches='tight')
+    fig.savefig(PATH_FIG + date.strftime('%Y%m%d') + "_cloud_classification_profile_based.png", dpi=1000, bbox_inches='tight')
     plt.show()
     breakpoint()
     #------------------------------------------------------------------------------------------------

@@ -823,4 +823,3 @@ def get_instrument_name(instrument_nickname):
         return instrument_name
     except ValueError:
         raise ValueError(f"Unknown instrument nickname {instrument_nickname}")
-    

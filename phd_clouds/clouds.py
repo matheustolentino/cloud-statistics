@@ -70,13 +70,11 @@ def compare_radar_chirp_configurations(start_date: datetime,
 class HMmodel:
     def __init__(self,
                  lwp,
-                 h,
                  z,
                  v=8.7,
                  rw=1e6):
 
         self.cloud_lwp = lwp # liquid water path
-        self.cloud_z   = h   # cloud thickeness
         self.radar_ze  = z
         self.nu        = v
         self.rho_w     = rw
@@ -104,8 +102,11 @@ class HMmodel:
         # (  10^-6 m^2 m^-1 )
         # ( 10^-6 m ) = um
         #print(  ( np.pi*self.rho_w*np.trapz(np.sqrt(self.radar_ze), self.cloud_z)/(48*self.cloud_lwp) )**(1./3.) * self.radar_ze**(1./6.)  )
-        return self.k_rv*( np.pi*self.rho_w*np.trapz(np.sqrt(self.radar_ze), self.cloud_z)/(48*self.cloud_lwp) )**(1./3.) * self.radar_ze**(1./6.)
-
+        # return self.k_rv*( np.pi*self.rho_w*np.trapz(np.sqrt(self.radar_ze), self.cloud_z)/(48*self.cloud_lwp) )**(1./3.) * self.radar_ze**(1./6.)
+        # convert Ze from dBz to mm^6 m^-3
+        # adapted to xarray
+        z_linear = 10**(self.radar_ze/10.)
+        return self.k_rv*( np.pi*self.rho_w*np.sqrt(z_linear).fillna(0).integrate('height')/(48*self.cloud_lwp) )**(1./3.) * z_linear**(1./6.)
 
 class CloudProcess:
     def __init__(self,

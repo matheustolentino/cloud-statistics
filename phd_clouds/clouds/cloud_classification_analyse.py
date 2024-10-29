@@ -177,6 +177,12 @@ if use_old_method:
     fig.savefig(PATH_FIG + 'hourly_seasonly_single_layer_frequency_old_method.png', dpi=300, bbox_inches='tight')
     plt.show()
     
+    # Rename variables in old_method_cloud_ava to match the new method
+    if 'Pre_liquid' in old_method_cloud_ava.data_vars:
+        old_method_cloud_ava = old_method_cloud_ava.rename({'Pre_liquid': 'Liquid-Precipitable',
+                                                            'Mixed_phase': 'Mixed-Phase',
+                                                            'Pre_mixed_phase': 'Mixed-Phase-Precipitable'})
+
     resample_single_layer_frequency = single_layer_cloud_type.resample(time='1D').mean()
     resample_old_method_cloud_ava   = old_method_cloud_ava.resample(time='1D').mean()
     pearson_corr = resample_single_layer_frequency.to_dataframe().drop(columns=['Noise']).corr(method='pearson')
@@ -187,7 +193,7 @@ if use_old_method:
     # single_layer_cloud_type: already single layer for new method
     computed_iwp = chunked_iwp.compute()
     iwc_old_method_ice   = computed_iwp.where(old_method_cloud_ava['Ice'].astype(bool)).resample(time='1D').mean()
-    iwc_old_method_mixed = computed_iwp.where(old_method_cloud_ava['Mixed_phase'].astype(bool)).resample(time='1D').mean()
+    iwc_old_method_mixed = computed_iwp.where(old_method_cloud_ava['Mixed-Phase'].astype(bool)).resample(time='1D').mean()
     
     # remove noise data from single layer clouds
     condition_new_method_cloud1 = (single_layer_cloud_type['Noise']==1) & single_layer_cloud_type['Ice'].astype(bool)
@@ -196,39 +202,13 @@ if use_old_method:
     iwc_new_method_ice   = computed_iwp.where(condition_new_method_cloud1).resample(time='1D').mean()
     iwc_new_method_mixed = computed_iwp.where(condition_new_method_cloud2).resample(time='1D').mean()
     # remove nans from both datasets
-
-
-    fig = plt.figure(figsize=(20, 15))
-    gs = fig.add_gridspec(2, 4, wspace=0.1, hspace=.7,  width_ratios=[1, .15, 1, 0.07], height_ratios=[1.3, 1])
-
-    # Plot for pearson_corr
-    ax1 = fig.add_subplot(gs[0, 0])
-    ax2 = fig.add_subplot(gs[0, 2])
-    ax3 = fig.add_subplot(gs[1, 2])
-    ax4 = fig.add_subplot(gs[1, 0], sharey=ax3, sharex=ax3)
-    cbar_ax = fig.add_subplot(gs[1, 3])
     
-    heat1 = ax1.imshow(pearson_corr,
-                    cmap='coolwarm',
-                    vmin=-1, vmax=1)
-    ax1.set_xticks(np.arange(len(pearson_corr.columns)))
-    ax1.set_yticks(np.arange(len(pearson_corr.columns)))
-    ax1.set_xticklabels(pearson_corr.columns, rotation=60)
-    ax1.set_yticklabels(pearson_corr.columns)
-    for i in range(len(pearson_corr.columns)):
-        for j in range(len(pearson_corr.columns)):
-            text = ax1.text(j, i, round(pearson_corr.iloc[i, j], 2),
-                            ha="center", va="center", color="black")
-    ax1.set_title('Cluster-based algorithm')
-
-    # cax1 = fig.add_subplot(gs[0, 1])
-    # cbar1 = plt.colorbar(heat1, label='Correlation Coefficient', cax=cax1)
+    fig, (ax2, ax1) = plt.subplots(1, 2, figsize=(20, 10))
+    
+    # 
 
     # Plot for pearson_corr_old_method
-   
-    heat2 = ax2.imshow(pearson_corr_old_method,
-                    cmap='coolwarm',
-                    vmin=-1, vmax=1)
+    heat2 = ax2.imshow(pearson_corr_old_method, cmap='coolwarm', vmin=-1, vmax=1)
     ax2.set_xticks(np.arange(len(pearson_corr_old_method.columns)))
     ax2.set_yticks(np.arange(len(pearson_corr_old_method.columns)))
     ax2.set_xticklabels(pearson_corr_old_method.columns, rotation=60)
@@ -236,56 +216,75 @@ if use_old_method:
     for i in range(len(pearson_corr_old_method.columns)):
         for j in range(len(pearson_corr_old_method.columns)):
             text = ax2.text(j, i, round(pearson_corr_old_method.iloc[i, j], 2),
-                            ha="center", va="center", color="black")
+                            ha="center", va="center", color="black", fontsize=12)
     ax2.set_title('Profile-based algorithm')
-    # cax2 = fig.add_subplot(gs[1, :])
-    # cbar2 = plt.colorbar(heat2, label='Pearson Correlation Coefficient', cax=cax2, orientation='horizontal')
 
-    # scatter plot comparing the IWP between ice and mixed-phase using old method and new method
+    # Plot for pearson_corr
+    heat1 = ax1.imshow(pearson_corr, cmap='coolwarm', vmin=-1, vmax=1)
+    ax1.set_xticks(np.arange(len(pearson_corr.columns)))
+    ax1.set_yticks(np.arange(len(pearson_corr.columns)))
+    ax1.set_xticklabels(pearson_corr.columns, rotation=60)
+    ax1.set_yticklabels(pearson_corr.columns)
+    for i in range(len(pearson_corr.columns)):
+        for j in range(len(pearson_corr.columns)):
+            text = ax1.text(j, i, round(pearson_corr.iloc[i, j], 2),
+                            ha="center", va="center", color="black", fontsize=12)
+    ax1.set_title('Cluster-based algorithm')
+
+    # Increase width distance between subplots
+    fig.subplots_adjust(wspace=0.55)
+    fig.savefig(PATH_FIG + 'cloud_freq_methods_comparison_correlation_matrix.png', dpi=300, bbox_inches='tight')
+    plt.show()
+
+    fig, (ax3, ax4) = plt.subplots(1, 2, figsize=(15, 8))
+
+    # Scatter plot comparing the IWP between ice and mixed-phase using old method
     mask_nans = np.isnan(iwc_old_method_ice.values) | np.isnan(iwc_old_method_mixed.values)
     iwc_old_method_ice   = iwc_old_method_ice[~mask_nans]
     iwc_old_method_mixed = iwc_old_method_mixed[~mask_nans]
     profile_algo_correlation = np.corrcoef(iwc_old_method_ice.values, iwc_old_method_mixed.values)
     
-    ax3.scatter(iwc_old_method_ice, iwc_old_method_mixed,
-                c=iwc_old_method_ice.time.dt.month, cmap='jet',
-                s=50)
+    scatter1 = ax3.scatter(iwc_old_method_ice, iwc_old_method_mixed,
+                           c=iwc_old_method_ice.time.dt.month, cmap='Paired', s=50, edgecolors='white')
+    ax3.plot([0, 2500], 
+             [0, 2500], 'k--', lw=2)
     ax3.set_xlabel(r'IWP (Ice) (g/m$^2$)')
     ax3.set_ylabel(r'IWP (Mixed-Phase) (g/m$^2$)')
-    # ax3.set_title('Profile-based algorithm')
     ax3.grid()
-    # ax3.set_xlim([-100, 2500])
-    # ax3.set_ylim([-100, 2000])
-    # Add a tex with the correlation value:
-    x_pos = 0.6
-    y_pos = 0.9
-    ax3.text(x_pos, y_pos, f"R: {profile_algo_correlation[0, 1]:.2f}", fontsize=14, 
-             transform=ax3.transAxes,
-             fontweight='bold')
+    ax3.set_xlim([0, 2500])
+    ax3.set_ylim([0, 2500])
+    ax3.text(0.6, 0.9, f"R: {profile_algo_correlation[0, 1]:.2f}", fontsize=14, 
+             transform=ax3.transAxes, fontweight='bold')
 
+    # Scatter plot comparing the IWP between ice and mixed-phase using new method
     mask_nans = np.isnan(iwc_new_method_ice.values) | np.isnan(iwc_new_method_mixed.values)
     iwc_new_method_ice   = iwc_new_method_ice[~mask_nans]
     iwc_new_method_mixed = iwc_new_method_mixed[~mask_nans]
     profile_algo_correlation = np.corrcoef(iwc_new_method_ice.values, iwc_new_method_mixed.values)
-    ax4.scatter(iwc_new_method_ice, iwc_new_method_mixed,
-                c=iwc_new_method_ice.time.dt.month, cmap='jet',
-                s=50)
+    
+    scatter2 = ax4.scatter(iwc_new_method_ice, iwc_new_method_mixed,
+                           c=iwc_new_method_ice.time.dt.month, cmap='Paired', s=50, edgecolors='white')
+    ax4.plot([0, 2500], 
+             [0, 2500], 'k--', lw=2)
     ax4.set_xlabel(r'IWP (Ice) (g/m$^2$)')
-    ax4.set_ylabel(r'IWP (Mixed-phase ) (g/m$^2$)')
-    # ax4.set_title('Cluster-based algorithm')
+    ax4.set_ylabel(r'IWP (Mixed-Phase) (g/m$^2$)')
     ax4.grid()
-    # Add a tex with the correlation value:
-    ax4.text(x_pos, y_pos, f"R: {profile_algo_correlation[0, 1]:.2f}", fontsize=14, 
-             transform=ax4.transAxes,
-             fontweight='bold')
+    ax4.set_xlim([0, 2500])
+    ax4.set_ylim([0, 2500])
+    ax4.text(0.6, 0.9, f"R: {profile_algo_correlation[0, 1]:.2f}", fontsize=14, 
+             transform=ax4.transAxes, fontweight='bold')
 
-    cbar = fig.colorbar(mpl.cm.ScalarMappable(norm=mpl.colors.Normalize(vmin=1, vmax=12), 
-                                              cmap='jet'), cax=cbar_ax,
-                                              label = 'Month')
-    fig.savefig(PATH_FIG + 'cloud_freq_methods_comparison_correlation_coefficient.png', dpi=300, bbox_inches='tight')
+    # Create a discrete colorbar
+    norm = mpl.colors.BoundaryNorm(np.arange(1, 14), mpl.cm.get_cmap('Paired').N)
+    cbar = fig.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap='Paired'), 
+                        ax=[ax3, ax4], orientation='vertical', fraction=0.046, pad=0.04, label='Month')
+    cbar.set_ticks(np.arange(1.5, 13.5))
+    cbar.set_ticklabels(np.arange(1, 13))
+    # fig.subplots_adjust(wspace=0.3)
+    fig.savefig(PATH_FIG + 'cloud_freq_methods_comparison_scatter_plots.png', dpi=600, bbox_inches='tight')
     plt.show()
 
-    clouds_to_analyse_old_method =  ["Liquid", "Pre_liquid", "Ice", "Mixed_phase", "Pre_mixed_phase"]
+    clouds_to_analyse_old_method =  ["Liquid", "Liquid-Precipitable", "Ice", "Mixed-Phase", "Mixed-Phase-Precipitable"]
     new_list_color               = ["#007CFF", "blue", "cyan", "yellow", "orange"]
     monthly_old_method_cloud_occurence = old_method_cloud_ava[clouds_to_analyse_old_method].groupby('time.month').mean(dim='time')
 
@@ -453,18 +452,85 @@ else:
     fig1.savefig(PATH_FIG + 'new_method_monthly_cloud_occurence.png', dpi=300, bbox_inches='tight')
     plt.show()
 
-    fig2 = plt.figure(figsize=(12, 6))
-    ax2 = fig2.add_subplot(111)
+    # fig2 = plt.figure(figsize=(12, 6))
+    # ax2 = fig2.add_subplot(111)
+    # for var in monthly_cloud_occurence.data_vars:
+    #     if var != 'time':
+    #         ax2.plot(monthly_cloud_occurence['month'], monthly_cloud_occurence[var]*100, '-s', label=var.replace('_', '-').capitalize())  
+    # ax2.set_ylabel('Frequency of occurence (%)')
+    # ax2.set_xlabel('Month')
+    # ax2.grid()
+    # ax2.set_xticks(monthly_cloud_occurence['month'])
+    # ax2.set_xticklabels(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], rotation=30)
+    # ax2.legend()
+    # # fig2.savefig(PATH_FIG + 'new_method_monthly_cloud_occurence.png', dpi=300, bbox_inches='tight')
+    # plt.show()
+
+        # single_layer_mask = ds_cloud_occurence['single_layer']
+    single_layer_cloud_type = ds_cloud_type.where(ds_cloud_occurence['single_layer'], other=0)
+    monthly_single_layer_frequency = single_layer_cloud_type.groupby('time.month').mean(dim='time')
+    list_var_names = list(monthly_single_layer_frequency.data_vars)
+
+    # fig = plt.figure(figsize=(12, 6))
+    # gs = fig.add_gridspec(2, 1, height_ratios=[1, 0.0005], hspace=0.2)
+    # ax = fig.add_subplot(gs[0, 0])
+    # for i, var in enumerate(list_var_names[:-1]):
+    #     # ax.plot(monthly_single_layer_frequency['month'], monthly_single_layer_frequency[var]*100, '--o', label=var.replace('_', '-').capitalize(),
+    #     #     color=list_cloud_colors[i+1])
+    #     ax.scatter(monthly_single_layer_frequency['month'], monthly_single_layer_frequency[var]*100, label=var.replace('_', '-').capitalize(),
+    #         color=list_cloud_colors[i+1], s=150, alpha=0.6, edgecolors='black', linewidth=1.5)
+    #     ax.plot(monthly_single_layer_frequency['month'], monthly_single_layer_frequency[var]*100, '-',
+    #             color=list_cloud_colors[i+1], linewidth=1.5, alpha=0.6)
+    # ax.set_ylabel('Cloud Occurence (%)')
+    # ax.set_xlabel('Month')
+    # # ax.set_title('Single Layer Cloud Frequency')
+    # ax.grid()
+    # ax.set_xticks(monthly_cloud_occurence['month'])
+    # ax.set_xticklabels(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], rotation=30)
+    # ax.legend()
+    # # fig.savefig(PATH_FIG + 'new_method_monthly_single_layer_frequency.png', dpi=300, bbox_inches='tight')
+    # plt.show()
+
+    letters = iter('abcdefghijklmnopqrstuvwxyz')
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10))
+    
+    ax1.text(0.02, 0.93, f"{next(letters)})", transform=ax1.transAxes, fontsize=20, fontweight='bold', va='top')
+    # Plot for monthly_cloud_occurence
     for var in monthly_cloud_occurence.data_vars:
         if var != 'time':
-            ax2.plot(monthly_cloud_occurence['month'], monthly_cloud_occurence[var]*100, '-s', label=var.replace('_', '-').capitalize())  
-    ax2.set_ylabel('Frequency of occurence (%)')
-    ax2.set_xlabel('Month')
-    ax2.grid()
+            ax1.plot(monthly_cloud_occurence['month'], monthly_cloud_occurence[var]*100, '-o', label=var.replace('_', '-').capitalize(), linewidth=2, markersize=8)  
+    ax1.set_ylabel('Frequency of Occurrence (%)', fontsize=14)
+    # ax1.set_xlabel('Month', fontsize=14)
+    ax1.grid(True, linestyle='--', alpha=0.7)
+    ax1.set_xticks(monthly_cloud_occurence['month'])
+    ax1.set_xticklabels(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], rotation=30, fontsize=12)
+    ax1.legend(fontsize=12)
+    ax1.set_title('Monthly Cloud Occurrence', fontsize=16)
+    ax1.set_facecolor('white')
+    ax1.set_ylim([0, 90])
+    ax1.tick_params(axis='both', which='both', direction='out')
+
+    # Print values of monthly_cloud_occurence in a table format
+    print(monthly_cloud_occurence.to_dataframe())
+    
+    ax2.text(0.02, 0.93, f"{next(letters) }) ", transform=ax2.transAxes, fontsize=20, fontweight='bold', va='top')
+    # Plot for monthly_single_layer_frequency
+    for i, var in enumerate(list_var_names[:-1]):
+        ax2.plot(monthly_single_layer_frequency['month'], monthly_single_layer_frequency[var]*100, '-o',
+                 color=list_cloud_colors[i+1], linewidth=2, markersize=8, alpha=0.8, label=var.replace('_', '-').capitalize())
+    ax2.set_ylabel('Cloud Occurrence (%)', fontsize=14)
+    ax2.set_xlabel('Month', fontsize=14)
+    ax2.grid(True, linestyle='--', alpha=0.7)
     ax2.set_xticks(monthly_cloud_occurence['month'])
-    ax2.set_xticklabels(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], rotation=30)
-    ax2.legend()
-    fig2.savefig(PATH_FIG + 'new_method_monthly_cloud_occurence.png', dpi=300, bbox_inches='tight')
+    ax2.set_xticklabels(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], rotation=30, fontsize=12)
+    ax2.legend(fontsize=12)
+    ax2.set_title('Monthly Single Layer Cloud Frequency', fontsize=16)
+    ax2.set_facecolor('white')
+    ax2.set_ylim([0, 10])
+    ax2.tick_params(axis='both', which='both', direction='out')
+
+    plt.tight_layout()
+    fig.savefig(PATH_FIG + 'new_method_monthly_cloud_occurence_analysis.png', dpi=1000, bbox_inches='tight')
     plt.show()
 
     # color_data_ava = sns.color_palette("deep", len(unique_years)+1).as_hex() + ["#FFFFFF"]
@@ -499,30 +565,7 @@ else:
     # fig.savefig(PATH_FIG + 'new_method_separated_monthly_data_occurence.png', dpi=300, bbox_inches='tight')
     # plt.show()
 
-    # single_layer_mask = ds_cloud_occurence['single_layer']
-    single_layer_cloud_type = ds_cloud_type.where(ds_cloud_occurence['single_layer'], other=0)
-    monthly_single_layer_frequency = single_layer_cloud_type.groupby('time.month').mean(dim='time')
 
-    list_var_names = list(monthly_single_layer_frequency.data_vars)
-    fig = plt.figure(figsize=(12, 6))
-    gs = fig.add_gridspec(2, 1, height_ratios=[1, 0.0005], hspace=0.2)
-    ax = fig.add_subplot(gs[0, 0])
-    for i, var in enumerate(list_var_names[:-1]):
-        # ax.plot(monthly_single_layer_frequency['month'], monthly_single_layer_frequency[var]*100, '--o', label=var.replace('_', '-').capitalize(),
-        #     color=list_cloud_colors[i+1])
-        ax.scatter(monthly_single_layer_frequency['month'], monthly_single_layer_frequency[var]*100, label=var.replace('_', '-').capitalize(),
-            color=list_cloud_colors[i+1], s=150, alpha=0.6, edgecolors='black', linewidth=1.5)
-        ax.plot(monthly_single_layer_frequency['month'], monthly_single_layer_frequency[var]*100, '-',
-                color=list_cloud_colors[i+1], linewidth=1.5, alpha=0.6)
-    ax.set_ylabel('Cloud Occurence (%)')
-    ax.set_xlabel('Month')
-    # ax.set_title('Single Layer Cloud Frequency')
-    ax.grid()
-    ax.set_xticks(monthly_cloud_occurence['month'])
-    ax.set_xticklabels(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], rotation=30)
-    ax.legend()
-    fig.savefig(PATH_FIG + 'new_method_monthly_single_layer_frequency.png', dpi=300, bbox_inches='tight')
-    plt.show()
 
     # list_var = list(ds_cloud_type.data_vars)
     # fig = plt.figure(figsize=(19, 12))
@@ -893,15 +936,13 @@ else:
     fig.savefig(PATH_FIG + 'new_method_cloud_base_height_violin_season.png', dpi=300, bbox_inches='tight')
     plt.show()
 
-
-
     list_var_names = list(ds_cloud_type.data_vars)
     split_pairs_var_names = [list_var_names[i:i+2] for i in range(0, len(list_var_names)-2, 2)]
 
     dic = {}
-    dic["Ice"] = ["Ice", "Ice-Precipitable"]
+    dic["Ice"]    = ["Ice", "Ice-Precipitable"]
     dic["Liquid"] = ["Liquid", "Liquid-Precipitable"]
-    dic["Mixed"] = ["Mixed-Phase", "Mixed-Phase-Precipitable"]
+    dic["Mixed"]  = ["Mixed-Phase", "Mixed-Phase-Precipitable"]
 
     dataframes = []
     for pair_var_names in split_pairs_var_names:
@@ -924,9 +965,10 @@ else:
     colors_violin = ['Blues', 'Greys', 'YlOrBr']
     fig = plt.figure(figsize=(23, 17))
     gs  = fig.add_gridspec(len(dataframes), len(ys), height_ratios=[1]*len(dataframes), hspace=0.15, wspace=0.2)
+    letters = iter('abcdefghijklmnopqrstuvwxyz')
     for i, df in enumerate(dataframes):
         for j, y in enumerate(ys):
-            # Make a slipted violin plot for each dataframe
+            # Make a split violin plot for each dataframe
             clouds = df['cloud_type'].unique()
             # split this string into two parts, separated by -
             cloud_posfix = clouds[0].split('-')
@@ -954,7 +996,7 @@ else:
                            medianprops={"color": "r", "linewidth": 2},
                            )  # Specify the order of x-axis categories
             # for y-label, split the string by - and capitalize each part
-            ax.set_ylabel(f'{y.replace("_", " ").capitalize()} (km)')
+            ax.set_ylabel(f'{y.replace("_", " ").capitalize()} (km) a.g.l.')
             # ax.tick_params(which='minor', length=4, color='r')
             # ax.set_xlabel('Seasons')
             ax.grid()
@@ -964,8 +1006,12 @@ else:
             ax.spines['left'].set_visible(False)
             ax.set_facecolor('white')
 
+            # Add letter annotation
+            ax.text(0.02, 0.95, next(letters)+")", transform=ax.transAxes, 
+                    fontsize=20, fontweight='bold', va='top', ha='left', backgroundcolor='white')
+
             if cloud_order[0] == 'Liquid' and y == 'cloud_thickness':
-                # plot a zoom between 0 and 2 km overlaping the plot with same width of original plot
+                # plot a zoom between 0 and 2 km overlapping the plot with same width of original plot
                 axins = ax.inset_axes([0.2, 0.4, 0.7, 0.6], transform=ax.transAxes)
                 sns.violinplot(data=df,
                                  x='season',
@@ -1002,8 +1048,7 @@ else:
                 ax.set_ylim([0, 13])
                     # Show legend only for the first row
             if j == 0:
-                ax.legend()
-             
+                ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.1), ncol=2)
             else:
                 ax.get_legend().remove()
                 # remove the bottom x-axis

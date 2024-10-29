@@ -3,8 +3,16 @@ Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
 The top-level auxiliary file: template.aux
 The style file: copernicus.bst
 Database file #1: ../My_Library.bib
+Warning--entry type for "aemetblogInformeOperativoSemanal2024" isn't style-file defined
+--line 29 of file ../My_Library.bib
+Warning--entry type for "roschkeDiscriminatingDrizzleRain2024" isn't style-file defined
+--line 955 of file ../My_Library.bib
 Warning--to sort, need author or key in intergovernmentalpanelonclimatechangeipccEarthEnergyBudget2023
 Too many commas in name 6 of "{Andrés Esteban Bedoya-Velásquez} and Bedoya-Velásquez, Andrés Esteban and {Francisco Navas-Guzmán} and Navas-Guzmán, Francisco and {Gregori de Arruda Moreira} and family=Arruda Moreira, given=Gregori, prefix=de, useprefix=true and {Roberto Román} and Román, Roberto and {A. Cazorla} and Cazorla, Alberto and {Pablo Ortiz-Amezcua} and Ortiz-Amezcua, Pablo and {José Antonio Benavent-Oltra} and Benavent-Oltra, Jose Antonio and {L. Alados-Arboledas} and Alados-Arboledas, Lucas and {Francisco José Olmo Reyes} and Olmo-Reyes, Francisco José and {I. Foyo‐Moreno} and Foyo-Moreno, I. and {Elena Montilla-Rosero} and Montilla-Rosero, Elena and {Carlos D. Hoyos} and Hoyos, Carlos D. and {Juan Luís Guerrero-Rascado} and Guerrero-Rascado, Juan Luis" for entry andresestebanbedoya-velasquezSeasonalAnalysisAtmosphere2019
+while executing---line 1632 of file copernicus.bst
+Too many commas in name 6 of "{María Eugenia Pérez-González} and González, María Eugenia Pérez and {José María García Alvarado} and Alvarado, José María García and {María del Pilar García Rodríguez} and family=Pilar García Rodríguez, given=María, prefix=del, useprefix=true and Ballesta, Raimundo Jiménez and {Raimundo Jiménez‐Ballesta} and Iñigo, Victoria" for entry mariaeugeniaperez-gonzalezEvaluationImpactCaused2022
+while executing---line 1632 of file copernicus.bst
+Too many commas in name 2 of "{Marta de Alfonso} and family=Alfonso, given=Marta, prefix=de, useprefix=true and {Jue Lin-Ye} and Lin-Ye, Jue and {José María García-Valdecasas} and Garcia-Valdecasas, Jose Maria and {Susana Pérez-Rubio} and Pérez-Rubio, Susana and {M. Y. Luna} and {M. Yolanda Luna} and Luna, M. Yolanda and {Daniel Santos‐Muñoz} and Santos-Muñoz, Daniel and {María Ángeles Martínez Ruiz} and Ruiz, M. Isabel and {Begoña Pérez-Gómez} and Pérez-Gómez, Begoña and {Enrique Álvarez-Fanjul} and Álvarez-Fanjul, Enrique" for entry martadealfonsoStormGloriaSea2021
 while executing---line 1632 of file copernicus.bst
 Warning--empty author in intergovernmentalpanelonclimatechangeipccEarthEnergyBudget2023
 Warning--empty year in intergovernmentalpanelonclimatechangeipccEarthEnergyBudget2023
@@ -12,6 +20,7 @@ Warning--empty journal in a.cazorlaNearrealtimeProcessingCeilometer2017
 Warning--empty year in a.cazorlaNearrealtimeProcessingCeilometer2017
 Warning--empty journal in a.s.frischCloudRadarMicrowave1998
 Warning--empty year in a.s.frischCloudRadarMicrowave1998
+Warning--empty year in aemetblogInformeOperativoSemanal2024
 Warning--empty journal in alexandrerios-entenzaMoistureRecyclingIberian2014
 Warning--empty year in alexandrerios-entenzaMoistureRecyclingIberian2014
 Too many commas in name 6 of "{Andrés Esteban Bedoya-Velásquez} and Bedoya-Velásquez, Andrés Esteban and {Francisco Navas-Guzmán} and Navas-Guzmán, Francisco and {Gregori de Arruda Moreira} and family=Arruda Moreira, given=Gregori, prefix=de, useprefix=true and {Roberto Román} and Román, Roberto and {A. Cazorla} and Cazorla, Alberto and {Pablo Ortiz-Amezcua} and Ortiz-Amezcua, Pablo and {José Antonio Benavent-Oltra} and Benavent-Oltra, Jose Antonio and {L. Alados-Arboledas} and Alados-Arboledas, Lucas and {Francisco José Olmo Reyes} and Olmo-Reyes, Francisco José and {I. Foyo‐Moreno} and Foyo-Moreno, I. and {Elena Montilla-Rosero} and Montilla-Rosero, Elena and {Carlos D. Hoyos} and Hoyos, Carlos D. and {Juan Luís Guerrero-Rascado} and Guerrero-Rascado, Juan Luis" for entry andresestebanbedoya-velasquezSeasonalAnalysisAtmosphere2019
@@ -20,6 +29,8 @@ Too many commas in name 6 of "{Andrés Esteban Bedoya-Velásquez} and Bedoya-Vel
 while executing---line 1718 of file copernicus.bst
 Warning--empty journal in andresestebanbedoya-velasquezSeasonalAnalysisAtmosphere2019
 Warning--empty year in andresestebanbedoya-velasquezSeasonalAnalysisAtmosphere2019
+Warning--empty journal in brenguierCloudMicrophysicalRadiative2003
+Warning--empty year in brenguierCloudMicrophysicalRadiative2003
 Warning--empty journal in buhlMeasuringIceLiquidwater2016
 Warning--empty year in buhlMeasuringIceLiquidwater2016
 Warning--empty journal in casquero-veraNewParticleFormation2020a
@@ -45,6 +56,18 @@ Warning--empty journal in lohnertAccuracyCloudLiquid2003
 Warning--empty year in lohnertAccuracyCloudLiquid2003
 Warning--empty journal in marinouGeometricalMicrophysicalProperties2021
 Warning--empty year in marinouGeometricalMicrophysicalProperties2021
+Too many commas in name 2 of "{Marta de Alfonso} and family=Alfonso, given=Marta, prefix=de, useprefix=true and {Jue Lin-Ye} and Lin-Ye, Jue and {José María García-Valdecasas} and Garcia-Valdecasas, Jose Maria and {Susana Pérez-Rubio} and Pérez-Rubio, Susana and {M. Y. Luna} and {M. Yolanda Luna} and Luna, M. Yolanda and {Daniel Santos‐Muñoz} and Santos-Muñoz, Daniel and {María Ángeles Martínez Ruiz} and Ruiz, M. Isabel and {Begoña Pérez-Gómez} and Pérez-Gómez, Begoña and {Enrique Álvarez-Fanjul} and Álvarez-Fanjul, Enrique" for entry martadealfonsoStormGloriaSea2021
+while executing---line 1718 of file copernicus.bst
+Too many commas in name 2 of "{Marta de Alfonso} and family=Alfonso, given=Marta, prefix=de, useprefix=true and {Jue Lin-Ye} and Lin-Ye, Jue and {José María García-Valdecasas} and Garcia-Valdecasas, Jose Maria and {Susana Pérez-Rubio} and Pérez-Rubio, Susana and {M. Y. Luna} and {M. Yolanda Luna} and Luna, M. Yolanda and {Daniel Santos‐Muñoz} and Santos-Muñoz, Daniel and {María Ángeles Martínez Ruiz} and Ruiz, M. Isabel and {Begoña Pérez-Gómez} and Pérez-Gómez, Begoña and {Enrique Álvarez-Fanjul} and Álvarez-Fanjul, Enrique" for entry martadealfonsoStormGloriaSea2021
+while executing---line 1718 of file copernicus.bst
+Warning--empty journal in martadealfonsoStormGloriaSea2021
+Warning--empty year in martadealfonsoStormGloriaSea2021
+Too many commas in name 6 of "{María Eugenia Pérez-González} and González, María Eugenia Pérez and {José María García Alvarado} and Alvarado, José María García and {María del Pilar García Rodríguez} and family=Pilar García Rodríguez, given=María, prefix=del, useprefix=true and Ballesta, Raimundo Jiménez and {Raimundo Jiménez‐Ballesta} and Iñigo, Victoria" for entry mariaeugeniaperez-gonzalezEvaluationImpactCaused2022
+while executing---line 1718 of file copernicus.bst
+Too many commas in name 6 of "{María Eugenia Pérez-González} and González, María Eugenia Pérez and {José María García Alvarado} and Alvarado, José María García and {María del Pilar García Rodríguez} and family=Pilar García Rodríguez, given=María, prefix=del, useprefix=true and Ballesta, Raimundo Jiménez and {Raimundo Jiménez‐Ballesta} and Iñigo, Victoria" for entry mariaeugeniaperez-gonzalezEvaluationImpactCaused2022
+while executing---line 1718 of file copernicus.bst
+Warning--empty journal in mariaeugeniaperez-gonzalezEvaluationImpactCaused2022
+Warning--empty year in mariaeugeniaperez-gonzalezEvaluationImpactCaused2022
 Warning--empty journal in nilskuchlerWBandRadarRadiometer2017
 Warning--empty year in nilskuchlerWBandRadarRadiometer2017
 Warning--empty journal in pablosaavedragarfiasAsymmetriesCloudMicrophysical2023
@@ -56,10 +79,17 @@ Warning--empty journal in protatAssessmentCloudsatReflectivity2009
 Warning--empty journal in protatEvaluationCloudSatCALIPSO2010
 Warning--empty journal in robinj.hoganRetrievalIceWater2006
 Warning--empty year in robinj.hoganRetrievalIceWater2006
+Warning--empty year in roschkeDiscriminatingDrizzleRain2024
+Warning--empty journal in roseNetworkSuitableMicrowave2005
+Warning--empty year in roseNetworkSuitableMicrowave2005
 Warning--empty journal in razvanpirloagaGroundBasedMeasurementsCloud2022
 Warning--empty year in razvanpirloagaGroundBasedMeasurementsCloud2022
 Warning--empty journal in s.frischRetrievalStratusCloud2002
 Warning--empty year in s.frischRetrievalStratusCloud2002
+Warning--empty journal in samuelt.buisanAdjustmentSolidPrecipitation2022
+Warning--empty year in samuelt.buisanAdjustmentSolidPrecipitation2022
+Warning--empty journal in schimmelIdentifyingCloudDroplets2022b
+Warning--empty year in schimmelIdentifyingCloudDroplets2022b
 Warning--empty journal in shahiAssessmentSpatiotemporalVariability2022
 Warning--empty year in shahiAssessmentSpatiotemporalVariability2022
 Warning--empty journal in shupeDerivingArcticCloud2015
@@ -68,47 +98,51 @@ Warning--empty journal in stefankneifelMultiyearCloudPrecipitation2021
 Warning--empty year in stefankneifelMultiyearCloudPrecipitation2021
 Warning--empty journal in tatiananomokonovaStatisticsCloudsTheir2019
 Warning--empty year in tatiananomokonovaStatisticsCloudsTheir2019
+Warning--empty journal in twomeyInfluencePollutionShortwave1977
+Warning--empty year in twomeyInfluencePollutionShortwave1977
 Warning--empty journal in yoshidaEffectsVerticalProfiles2005
 Warning--empty year in yoshidaEffectsVerticalProfiles2005
-You've used 32 entries,
+Warning--empty journal in zengModelingRadiativeEffect2021
+Warning--empty year in zengModelingRadiativeEffect2021
+You've used 42 entries,
             2932 wiz_defined-function locations,
-            1227 strings with 24358 characters,
-and the built_in function-call counts, 44132 in all, are:
-= -- 4086
-> -- 3140
-< -- 5
-+ -- 1202
-- -- 1016
-* -- 3479
-:= -- 5007
-add.period$ -- 32
-call.type$ -- 32
-change.case$ -- 402
-chr.to.int$ -- 33
-cite$ -- 159
-duplicate$ -- 3485
-empty$ -- 1786
-format.name$ -- 1112
-if$ -- 8425
+            1298 strings with 28684 characters,
+and the built_in function-call counts, 53632 in all, are:
+= -- 4962
+> -- 3733
+< -- 7
++ -- 1431
+- -- 1205
+* -- 4233
+:= -- 6105
+add.period$ -- 42
+call.type$ -- 42
+change.case$ -- 485
+chr.to.int$ -- 43
+cite$ -- 207
+duplicate$ -- 4273
+empty$ -- 2228
+format.name$ -- 1327
+if$ -- 10234
 int.to.chr$ -- 3
 int.to.str$ -- 1
-missing$ -- 544
-newline$ -- 105
-num.names$ -- 125
-pop$ -- 2125
+missing$ -- 665
+newline$ -- 135
+num.names$ -- 165
+pop$ -- 2583
 preamble$ -- 1
-purify$ -- 402
+purify$ -- 485
 quote$ -- 0
-skip$ -- 2218
+skip$ -- 2682
 stack$ -- 0
-substring$ -- 1350
-swap$ -- 3034
+substring$ -- 1625
+swap$ -- 3662
 text.length$ -- 1
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 285
-warning$ -- 61
-while$ -- 154
+type$ -- 375
+warning$ -- 79
+while$ -- 195
 width$ -- 0
-write$ -- 322
-(There were 3 error messages)
+write$ -- 418
+(There were 9 error messages)

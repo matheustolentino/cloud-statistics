@@ -541,44 +541,44 @@ plt.show()
 # ax = fig_microphy.get_axes()
 
 
-# list_figs = []
-# if get_var == "lwc" or get_var == "der":
-#     clouds_to_analyse = ['Liquid', 'Liquid-Precipitable', 'Mixed-Phase', 'Mixed-Phase-Precipitable', 'Ice-Precipitable']
-# elif get_var == "iwc" or get_var == "ier":
-#     clouds_to_analyse = ['Ice', 'Ice-Precipitable', 'Mixed-Phase', 'Mixed-Phase-Precipitable']
+list_figs = []
+if get_var == "lwc" or get_var == "der":
+    clouds_to_analyse = ['Liquid', 'Liquid-Precipitable', 'Mixed-Phase', 'Mixed-Phase-Precipitable', 'Ice-Precipitable']
+elif get_var == "iwc" or get_var == "ier":
+    clouds_to_analyse = ['Ice', 'Ice-Precipitable', 'Mixed-Phase', 'Mixed-Phase-Precipitable']
 
-# for cloud in clouds_to_analyse:
-#     condition       = (ds_cloud_occurence['single_layer'] == 1) & (ds_cloud_occurence['noise'] == 0) & (ds_cloud_type[cloud].astype(bool))
-#     cloud_microphys = chunked_microphys.sel(time=condition)
+for cloud in clouds_to_analyse:
+    condition       = (ds_cloud_occurence['single_layer'] == 1) & (ds_cloud_occurence['noise'] == 0) & (ds_cloud_type[cloud].astype(bool))
+    cloud_microphys = chunked_microphys.sel(time=condition)
     
-#     if get_var == "lwc" or get_var == "iwc":
-#         integrated_microphys = chunked_integrated.sel(time=condition)
+    if get_var == "lwc" or get_var == "iwc":
+        integrated_microphys = chunked_integrated.sel(time=condition)
         
-#         # ----------------------------------------------------------------------------
-#         # Just for fast verification (Comment this part when running for all database)
-#         # ----------------------------------------------------------------------------
-#         # start = "2020-01-01"
-#         # end   = "2020-12-30"
-#         # cloud_microphys      = cloud_microphys.sel(time=slice(start, end))
-#         # integrated_microphys = integrated_microphys.sel(time=slice(start, end))
-#         # ----------------------------------------------------------------------------
+        # ----------------------------------------------------------------------------
+        # Just for fast verification (Comment this part when running for all database)
+        # ----------------------------------------------------------------------------
+        # start = "2020-01-01"
+        # end   = "2020-12-30"
+        # cloud_microphys      = cloud_microphys.sel(time=slice(start, end))
+        # integrated_microphys = integrated_microphys.sel(time=slice(start, end))
+        # ----------------------------------------------------------------------------
 
-#         fig_microphy = plot_microphysics_evolution(cloud_microphys, 
-#                                                integrated_microphys, 
-#                                                cloud_type=cloud, 
-#                                                var_short_name=get_var)
-#     else:
-#         fig_microphy = plot_microphysics_evolution(cloud_microphys, 
-#                                                cloud_type=cloud, 
-#                                                var_short_name=get_var)
+        fig_microphy = plot_microphysics_evolution(cloud_microphys, 
+                                               integrated_microphys, 
+                                               cloud_type=cloud, 
+                                               var_short_name=get_var)
+    else:
+        fig_microphy = plot_microphysics_evolution(cloud_microphys, 
+                                               cloud_type=cloud, 
+                                               var_short_name=get_var)
     
-    # list_figs.append(fig_microphy)
-    # fig_microphy.savefig(f"{PATH_FIG}grouped_by_month_evolution_for_{get_var}_{cloud}.png", dpi=300, bbox_inches='tight')
+    list_figs.append(fig_microphy)
+    fig_microphy.savefig(f"{PATH_FIG}grouped_by_month_evolution_for_{get_var}_{cloud}.png", dpi=300, bbox_inches='tight')
 
-# # save all
-# for i, fig in enumerate(list_figs):
-#     fig.savefig(f"{PATH_FIG}grouped_by_month_evolution_for_{get_var}_{clouds_to_analyse[i]}.png", dpi=300, bbox_inches='tight')
+# save all
+for i, fig in enumerate(list_figs):
+    fig.savefig(f"{PATH_FIG}grouped_by_month_evolution_for_{get_var}_{clouds_to_analyse[i]}.png", dpi=300, bbox_inches='tight')
 
-# # axes = [fig.get_axes() for fig in list_figs]
+# axes = [fig.get_axes() for fig in list_figs]
 
 

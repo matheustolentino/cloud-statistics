@@ -1,4 +1,4 @@
-\begin{thebibliography}{32}
+\begin{thebibliography}{42}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \providecommand{\urlprefix}{}
@@ -43,6 +43,10 @@ The {{Earth}}’s {{Energy Budget}}, {{Climate Feedbacks}} and {{Climate
   Radiometer Measurements of Stratus Cloud Liquid Water Profiles, 103,
   23\,195--23\,197, \doi{10.1029/98jd01827}.
 
+\bibitem[{{aemetblog}()}]{aemetblogInformeOperativoSemanal2024}
+{aemetblog}: Informe operativo semanal del 15 al 21 de abril de 2024,
+  \urlprefix\url{https://aemetblog.es/2024/04/28/informe-operativo-semanal-del-15-al-21-de-abril-de-2024/}.
+
 \bibitem[{{Alexandre Rios-Entenza} et~al.(){Alexandre Rios-Entenza},
   Rios-Entenza, {Pedro M. M. Soares}, Soares, {Ricardo M. Trigo}, Trigo, {Rita
   M. Cardoso}, Cardoso, {Gonzalo Miguez‐Macho}, and
@@ -74,6 +78,12 @@ The {{Earth}}’s {{Energy Budget}}, {{Climate Feedbacks}} and {{Climate
   Guerrero-Rascado, J.~L.: Seasonal Analysis of the Atmosphere during Five
   Years by Using Microwave Radiometry over a Mid-Latitude Site, 218, 78--89,
   \doi{10.1016/j.atmosres.2018.11.014}.
+
+\bibitem[{Brenguier et~al.()Brenguier, Pawlowska, and
+  Schüller}]{brenguierCloudMicrophysicalRadiative2003}
+Brenguier, J.-L., Pawlowska, H., and Schüller, L.: Cloud Microphysical and
+  Radiative Properties for Parameterization and Satellite Monitoring of the
+  Indirect Effect of Aerosol on Climate, 108, \doi{10.1029/2002JD002682}.
 
 \bibitem[{Bühl et~al.()Bühl, Seifert, Myagkov, and
   Ansmann}]{buhlMeasuringIceLiquidwater2016}
@@ -187,6 +197,33 @@ Marinou, E., Voudouri, K.~A., Tsikoudi, I., Drakaki, E., Tsekeri, A., Rosoldi,
   {{Presence}} of {{Dust}} above the {{Eastern Mediterranean}}, 13, 5001,
   \doi{10.3390/rs13245001}.
 
+\bibitem[{{Marta de Alfonso} et~al.(){Marta de Alfonso}, family=Alfonso, {Jue
+  Lin-Ye}, Lin-Ye, {José María García-Valdecasas}, Garcia-Valdecasas,
+  {Susana Pérez-Rubio}, Pérez-Rubio, {M. Y. Luna}, {M. Yolanda Luna}, Luna,
+  {Daniel Santos‐Muñoz}, Santos-Muñoz, {María Ángeles Martínez Ruiz},
+  Ruiz, {Begoña Pérez-Gómez}, Pérez-Gómez, {Enrique Álvarez-Fanjul}, and
+  Álvarez Fanjul}]{martadealfonsoStormGloriaSea2021}
+{Marta de Alfonso}, family=Alfonso, given=Marta, p.~u., {Jue Lin-Ye}, Lin-Ye,
+  J., {José María García-Valdecasas}, Garcia-Valdecasas, J.~M., {Susana
+  Pérez-Rubio}, Pérez-Rubio, S., {M. Y. Luna}, {M. Yolanda Luna}, Luna,
+  M.~Y., {Daniel Santos‐Muñoz}, Santos-Muñoz, D., {María Ángeles
+  Martínez Ruiz}, Ruiz, M.~I., {Begoña Pérez-Gómez}, Pérez-Gómez, B.,
+  {Enrique Álvarez-Fanjul}, and Álvarez Fanjul, E.: Storm {{Gloria}}: {{Sea
+  State Evolution Based}} on in Situ {{Measurements}} and {{Modeled Data}} and
+  {{Its Impact}} on {{Extreme Values}}, 8, \doi{10.3389/fmars.2021.646873}.
+
+\bibitem[{{María Eugenia Pérez-González} et~al.(){María Eugenia
+  Pérez-González}, González, {José María García Alvarado}, Alvarado,
+  {María del Pilar García Rodríguez}, family=Pilar García~Rodríguez,
+  Ballesta, {Raimundo Jiménez‐Ballesta}, and
+  Iñigo}]{mariaeugeniaperez-gonzalezEvaluationImpactCaused2022}
+{María Eugenia Pérez-González}, González, M. E.~P., {José María García
+  Alvarado}, Alvarado, J. M.~G., {María del Pilar García Rodríguez},
+  family=Pilar García~Rodríguez, given=María, p.~u., Ballesta, R.~J.,
+  {Raimundo Jiménez‐Ballesta}, and Iñigo, V.: Evaluation of the {{Impact
+  Caused}} by the {{Snowfall}} after {{Storm Filomena}} on the {{Arboreal
+  Masses}} of {{Madrid}}, 11, 667--667, \doi{10.3390/land11050667}.
+
 \bibitem[{{Nils Küchler} et~al.(){Nils Küchler}, Küchler, {Stefan Kneifel},
   Kneifel, {Ulrich Löhnert}, Löhnert, {Pavlos Kollias}, Kollias, {Harald
   Czekala}, Czekala, {Thomas Rose}, and
@@ -249,6 +286,19 @@ Protat, A., Delanoë, J., O’Connor, E.~J., and L’Ecuyer, T.~S.: The
   Content from Radar Reflectivity Factor and Temperature and Its Use in
   Evaluating a Mesoscale Model, 45, 301--317, \doi{10.1175/jam2340.1}.
 
+\bibitem[{Roschke et~al.()Roschke, Witthuhn, Klingebiel, Haarig, Foth,
+  Kötsche, and Kalesse-Los}]{roschkeDiscriminatingDrizzleRain2024}
+Roschke, J., Witthuhn, J., Klingebiel, M., Haarig, M., Foth, A., Kötsche, A.,
+  and Kalesse-Los, H.: Discriminating between "{{Drizzle}} or Rain" and Sea
+  Salt Aerosols in {{Cloudnet}} for Measurements over the {{Barbados Cloud
+  Observatory}}, \doi{10.5194/egusphere-2024-894}.
+
+\bibitem[{Rose et~al.()Rose, Crewell, Löhnert, and
+  Simmer}]{roseNetworkSuitableMicrowave2005}
+Rose, T., Crewell, S., Löhnert, U., and Simmer, C.: A Network Suitable
+  Microwave Radiometer for Operational Monitoring of the Cloudy Atmosphere, 75,
+  183--200, \doi{10.1016/j.atmosres.2004.12.005}.
+
 \bibitem[{{Răzvan Pîrloagă} et~al.(){Răzvan Pîrloagă}, {Răzvan
   Pîrloagă}, Ene, {Dragoş Ene}, {Mihai Boldeanu}, {Mihai Boldeanu}, {Bogdan
   Antonescu}, {Bogdan Antonescu}, {Ewan J. O’Connor}, {Ewan O’Connor},
@@ -269,6 +319,25 @@ Protat, A., Delanoë, J., O’Connor, E.~J., and L’Ecuyer, T.~S.: The
   Poellot}, and Poellot, M.~R.: The {{Retrieval}} of {{Stratus Cloud Droplet
   Effective Radius}} with {{Cloud Radars}}, 19, 835--842,
   \doi{10.1175/1520-0426(2002)019<0835:troscd>2.0.co;2}.
+
+\bibitem[{{Samuel T. Buisán} et~al.(){Samuel T. Buisán}, {Samuel Buisán},
+  {Roberto Serrano-Notivoli}, {Roberto Serrano‐Notivoli}, {John
+  Kochendorfer}, {John Kochendorfer}, {Francisco J. Bello-Millán}, and
+  {Francisco J.
+  Bello-Millán}}]{samuelt.buisanAdjustmentSolidPrecipitation2022}
+{Samuel T. Buisán}, {Samuel Buisán}, {Roberto Serrano-Notivoli}, {Roberto
+  Serrano‐Notivoli}, {John Kochendorfer}, {John Kochendorfer}, {Francisco J.
+  Bello-Millán}, and {Francisco J. Bello-Millán}: Adjustment of Solid
+  Precipitation during the {{Filomena}} Extreme Snowfall Event in {{Spain}}:
+  From Observations to “True Precipitation”,
+  \doi{10.1175/bams-d-22-0012.1}.
+
+\bibitem[{Schimmel et~al.()Schimmel, Kalesse-Los, Maahn, Vogl, Foth, Garfias,
+  and Seifert}]{schimmelIdentifyingCloudDroplets2022b}
+Schimmel, W., Kalesse-Los, H., Maahn, M., Vogl, T., Foth, A., Garfias, P.~S.,
+  and Seifert, P.: Identifying Cloud Droplets beyond Lidar Attenuation from
+  Vertically Pointing Cloud Radar Observations Using Artificial Neural
+  Networks, 15, 5343--5366, \doi{10.5194/amt-15-5343-2022}.
 
 \bibitem[{Shahi et~al.()Shahi, Polcher, Bastin, Pennel, and
   Fita}]{shahiAssessmentSpatiotemporalVariability2022}
@@ -311,10 +380,21 @@ Shupe, M.~D., Turner, D.~D., Zwink, A., Thieman, M.~M., Mlawer, E.~J., and
   Using Ground-Based Sensor Synergy, 19, 4105--4126,
   \doi{10.5194/acp-19-4105-2019}.
 
+\bibitem[{Twomey()}]{twomeyInfluencePollutionShortwave1977}
+Twomey, S.: The {{Influence}} of {{Pollution}} on the {{Shortwave Albedo}} of
+  {{Clouds}},
+  \urlprefix\url{https://journals.ametsoc.org/view/journals/atsc/34/7/1520-0469_1977_034_1149_tiopot_2_0_co_2.xml}.
+
 \bibitem[{Yoshida and Asano()}]{yoshidaEffectsVerticalProfiles2005}
 Yoshida, Y. and Asano, S.: Effects of the {{Vertical Profiles}} of {{Cloud
   Droplets}} and {{Ice Particles}} on the {{Visible}} and {{Near-Infrared
   Radiative Properties}} of {{Mixed-Phase Stratocumulus Clouds}}, 83, 471--480,
   \doi{10.2151/jmsj.83.471}.
+
+\bibitem[{Zeng et~al.()Zeng, Gong, Li, and
+  Wu}]{zengModelingRadiativeEffect2021}
+Zeng, X., Gong, J., Li, X., and Wu, D.~L.: Modeling the {{Radiative Effect}} on
+  {{Microphysics}} in {{Cirrus Clouds Against Satellite Observations}}, 126,
+  e2020JD033\,923, \doi{10.1029/2020JD033923}.
 
 \end{thebibliography}
