@@ -1,6 +1,31 @@
-\section{Cloud assessment by time}\label{sec:old_method}
+\section{Profile-based algorithm}\label{sec:old_method}
 
-This method have been used by recent studies such as \cite{razvanpirloagaGroundBasedMeasurementsCloud2022, tatiananomokonovaStatisticsCloudsTheir2019, stefankneifelMultiyearCloudPrecipitation2021}. Each study has adopted some different criteria to classify single layer clouds, but they all classify cloud layers by profile. Here, we adopted some criteria based on these studies and employed the following method: cloud layers in the atmospheric column were classified through pixel sequence inquiry. These pixel sequences were divided in the following 5 groups according to \citet{razvanpirloagaGroundBasedMeasurementsCloud2022}: liquid, ice, mixed phase, liquid with precipitation and mixed phase with precipitation. Specifically, liquid clouds were assigned as any combination of "droplets" and "drizzle \& droplets" pixels. Ice clouds were assigned when only an "ice" pixel sequence was encountered. Mixed phase clouds were assigned with any combination of "droplets", "ice", "ice \& droplets", "melting ice", "melting \& droplets", "drizzle and droplets" pixels. Precipitation cases were classified whether at least one pixel of "drizzle or rain" is found below liquid and mixed phase clouds. Unlike previous studies, whether rain pixels are found with more than 20 pixels (256-1022 m) of distance from cloud base, the clouds are not classified as precipitable, assuming that rain droplets are not falling from these cloud layers. In all cases, for being considered a cloud layer, a minimum sequence of 3 cloud pixels (38-153 m) \citep{tatiananomokonovaStatisticsCloudsTheir2019} must be satisfied, in addition to a minimum sequence of 5 pixels (64-255 m) of "Clear sky", "Aerosol", "Insect" and "Aerosol \& insect" to separate multi-layers. Therefore, free hydrometeor layers in the neighborhood of the cloud allowed the identification of cloud base and top. Nevertheless, thresholds here were based on \citet{razvanpirloagaGroundBasedMeasurementsCloud2022}, but these values are not currently well defined, their determination has been guided by empirical experience.
+The Profile-based algorithm classifies clouds by individual profiles \citep{pirloagaGroundBasedMeasurementsCloud2022, nomokonovaStatisticsCloudsTheir2019, kneifelMultiyearCloudPrecipitation2022}. The PBA uses the target classification (TC) from Cloudnet to classify sequences of pixels with height. For each time step, vertical sequences of pixels in TC are classified as follow: 
+
+\begin{enumerate}
+	
+	\item Cloud layer criteria: More than 3 consecutive hydrometeor pixels (38-153 m) \citep{nomokonovaStatisticsCloudsTheir2019} are considered a cloud layer.
+	
+	\begin{enumerate}
+		\item Liquid criteria: Sequence of only "Droplets" and "Drizzle \& Droplets" pixels
+		
+		\item Ice criteria: Sequence of only "Ice" pixels
+		
+		\item Mixed-Phase criteria: Sequence of only "Droplets", "Ice", "Ice \& Droplets", "Melting ice", "Melting \& droplets", "Drizzle and droplets" pixels
+		
+		\item Rain criteria: For Liquid or Mixed-Phase clouds, if more than 1 pixel of "Drizzle or rain" is found below the cloud layer, then it is considered as a precipitating layer. Thus, this cloud layer is then classified as Precipitating Liquid cloud or Precipitating Mixed-Phase cloud.
+		
+	\end{enumerate}
+	
+	\item Multilayer classification
+	
+	\begin{enumerate}
+		
+		\item Multi-layer criteria: More than 4 pixels (64-255 m) \citep{pirloagaGroundBasedMeasurementsCloud2022} of any combination of "Clear sky", "Aerosol", "Insect" and "Aerosol \& insect" between cloud layers. Otherwise, it's a single layer cloud. 
+		
+	\end{enumerate}
+	
+\end{enumerate}
 
 \section{Pixel dilatation}\label{sec:dilation}
 
@@ -8,11 +33,16 @@ The dilation method consists in expanding the ones in the cloud mask to connect 
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=.9\textwidth]{../../phd_clouds/figures/scheme_dilatation}
+	\includegraphics[width=.7\textwidth]{./figures/scheme_dilatation}
 	\caption{Pixel dilatation and pixel contraction illustration. Left panel shows two hydrometeor groups. Right panel still shows these two clouds and the dilated pixels in red. Since these clouds are connected, the classification algorithm will understand there is only one cloud. Bottom panel shows the result of the pixel contraction, returning cloud pixels to its original position}
 	\label{fig:dilatation}
 \end{figure}
 
-Next, a contraction process is done to return the coordinates of true hydrometeors to the original position. The contraction will remove the coordinates of fake hydrometeor pixels (pixels in red on the above figure). Afterwards, the classification algorithm can follow its chain and calculate the percentage of each hydrometeor type inside each group to classify different clouds in the cloudnet product. 
+Next, a contraction process is done to return the coordinates of true hydrometeors to the original position. The contraction will remove the fake coordinates of hydrometeor (pixels in red on the above figure). In order to illustrate the method, the left panel of Figure \ref{fig:cluster_identification} shows the Cloudnet hydrometeor classification product (on 11 February 2021), while the right panel shows all hydrometeors clusters. Groups inside the black dashed lines are considered clusters and will be classified into cloud types. Additionally, clusters that are very close to each other will be merged.
 
-
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=.95\textwidth]{./figures/20210211_cloud_identification}
+	\caption{Cloud cluster identification by Cloudnet target classification on 11 February 2021. (a) Target classification, which shows particles typing in time and altitude. (b) Cloud clusters identified in black (dashed lines) and noise (less than 100 pixels connected) by red, dashed lines}
+	\label{fig:cluster_identification}
+\end{figure}

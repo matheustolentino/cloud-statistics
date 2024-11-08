@@ -34,7 +34,7 @@ plt.rcParams['font.serif'] = ['Times New Roman'] + plt.rcParams['font.serif']
 plt.rcParams['font.size'] = fontsize
 
 
-PATH_FIG          = '../figures/'
+PATH_FIG          = '../../papers/cloud_statistics/figures/'
 PATH_FIG_TEST     = '../../tests/figures/'
 
 def israinabove(hydromet_only_column: np.ndarray, rain_value: int) -> bool:
@@ -129,8 +129,8 @@ case_to_only_save = False
 if not process_all:
     path_to_data = "../../tests/data" # Path to save cloudnet downloaded files
 
-    date_ini = "2024-10-03"
-    date_end = "2024-10-03"
+    date_ini = "2023-05-06"
+    date_end = "2023-05-06"
     date_end_new = date_end.replace("-", "")
 
     download_cloudnet_products(date_ini, date_end, path_to_data, product=product_1, site=site)
@@ -516,11 +516,11 @@ for idx_file, file in enumerate(filenames):
         #                 categorize['temperature'][:].T - 273.15,
         #                 levels=[-40, -25, -10, 0, 5], colors='black', linewidths=0.5)
         # countour.clabel(inline=True, fmt='%2.1f'+r'$^{\circ}$C', fontsize=12)
-        ax2.set_ylabel('Altitude (km) a.s.l')
+        ax2.set_ylabel('Height (km) a.s.l')
+        ax2.set_xlabel('Time (UTC)')
         ax2.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
         # ax2.set_ylim([categorize['height'][0]/1e3, categorize['height'][-1]/1e3])
 
-        ax2.set_ylim([0, 12])
         # ax2.set_title(f"Cloud Classification {date_str} - {site}")
         ax2.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
         # ax2.set_xlim(data.time.values[0], data.time.values[-1])
@@ -532,8 +532,9 @@ for idx_file, file in enumerate(filenames):
             rect = plt.Rectangle((0, idx), 1, 1, color=color)
             cbar.ax.add_patch(rect)
             cbar.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=14)
-
-        # fig.savefig(PATH_FIG + f"{date_str}_cloud_classification.png", dpi=700, bbox_inches='tight')
+        ax2.set_facecolor('white')
+        ax2.set_ylim([0, ds_cloud['height'][-1]/1e3])
+        fig.savefig(PATH_FIG + f"{date_str}_cloud_classification.png", dpi=700, bbox_inches='tight')
         plt.show()
 
         fig, ax = plt.subplots(figsize=(12, 5))
@@ -551,7 +552,7 @@ for idx_file, file in enumerate(filenames):
         # show untill the 1:00 UTC of the next day
         ax.set_xlim(data.time.values[0], data.time.values[-1])
         ax.grid()
-        # fig.savefig(PATH_FIG + f"{date_str}_cloud_identification.png", dpi=700, bbox_inches='tight')
+        fig.savefig(PATH_FIG + f"{date_str}_cloud_identification.png", dpi=700, bbox_inches='tight')
         plt.show()
         
         fig = plt.figure(figsize=(12, 5))
@@ -579,7 +580,7 @@ for idx_file, file in enumerate(filenames):
             rect = plt.Rectangle((0, idx), 1, 1, color=color)
             cbar_scat.ax.add_patch(rect)
             cbar_scat.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=14)
-        # fig.savefig(PATH_FIG + f"{date_str}_cloud_classification_cluster.png", dpi=1000, bbox_inches='tight')
+        fig.savefig(PATH_FIG + f"{date_str}_cloud_classification_cluster.png", dpi=1000, bbox_inches='tight')
         plt.show()
 
   
@@ -777,6 +778,7 @@ for idx_file, file in enumerate(filenames):
 
 # Microphysical properties inside specific clouds
 # for single layer mixed phase clouds
+set_trace()
 cloud_identifier = 5
 mask_cloud_type = ds_cloud['cloud_classification'] == cloud_identifier
 # mask for single layer without noie

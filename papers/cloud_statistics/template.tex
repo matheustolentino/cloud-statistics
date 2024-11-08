@@ -78,6 +78,7 @@
 \usepackage[flushleft]{threeparttable} % Add this line for table notes
 
 \usepackage{xcolor}
+\usepackage{easyReview}
 \definecolor{mycustomcolor}{RGB}{255, 200, 0}
 
 \usepackage{graphicx}
@@ -88,6 +89,7 @@
 \usepackage{natbib}
 \usepackage{tikz}
 \usetikzlibrary{shapes.geometric, positioning, fit, backgrounds,matrix, arrows.meta}
+\usepackage{enumitem}
 
 \tikzstyle{startstop} = [rectangle, rounded corners, 
 minimum width=1cm, 
@@ -194,10 +196,8 @@ fill=green!30]
 %
 \input{mat-methods/methods.tex}
 
-\section{Results and discussion}\label{sec:results}
 \input{results/results.tex}
 
-\section{Conclusions}\label{sec:conlusion}
 \input{conclusion/conclusion.tex}
 
 \appendix
@@ -278,8 +278,7 @@ TEXT
 %% \bibliographystyle{copernicus}
 %% \bibliography{example.bib}
 \bibliographystyle{copernicus}
-%\bibliography{export.bib}
-\bibliography{../My_Library.bib}
+\bibliography{./refbetter.bib}
 
 %%
 %% URLs and DOIs can be entered in your BibTeX file as:

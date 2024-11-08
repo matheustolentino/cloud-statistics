@@ -16,8 +16,8 @@ from IPython import get_ipython
 import matplotlib.animation as animation
 import pickle
 
-PATH_FIG          = '../figures/'
-PATH_FIG_PICKLE   = '../figures/pickle/'
+PATH_FIG          = '../../papers/cloud_statistics/figures/'
+PATH_FIG_PICKLE   = '../../papers/cloud_statistics/figures/pickle/'
 PATH_SAVE_DATA    = '../data/'
 fontsize = 14
 # Set the font to Times New Roman using LaTeX
@@ -278,6 +278,7 @@ def plot_microphysics_evolution2(sliced_microphys,
         if cloud_type == 'Liquid' or cloud_type == 'Liquid-Precipitable':
             zlim = [0, 7]
             cflevels = np.arange(0, 500, 10)
+            # cflevels = np.array([50, 100, 400, 800, 1000, 5000, 10000, 30000])
         elif cloud_type == 'Mixed-Phase' or cloud_type == 'Mixed-Phase-Precipitable':
             zlim = [0, 13]
             cflevels = np.arange(0, 500, 10)
@@ -302,9 +303,14 @@ def plot_microphysics_evolution2(sliced_microphys,
         clevels = [30, 70]
         zlim = [0, 13]
     
+    # norm = mpl.colors.Normalize(vmin=cflevels[0], vmax=cflevels[-1], clip=False)
     cf = ax.contourf(mean_by_month.month.values, mean_by_month.height.values / 1e3,
-                     mean_by_month.values.T, levels=cflevels, cmap=sns.color_palette("icefire", as_cmap=True))
-    
+                     mean_by_month.values.T, levels=cflevels, cmap=sns.color_palette("icefire", as_cmap=True),
+                    )
+    # make a pcolormesh 
+    # cf = ax.pcolormesh(mean_by_month.month.values, mean_by_month.height.values / 1e3,
+    #                      mean_by_month.values.T, shading='nearest', cmap=sns.color_palette("jet", as_cmap=True))
+
     countour = ax.contour(mean_by_month.month.values, mean_by_month.height.values / 1e3,
                           mean_by_month.values.T, levels=clevels, colors='white', linewidths=2)
     ax.clabel(countour, inline=True, fontsize=10)
@@ -338,7 +344,7 @@ def plot_microphysics_evolution2(sliced_microphys,
     #     broken_axis = True
     #     dx_tick = 400
     elif cloud_type == 'Mixed-Phase-Precipitable' and var_short_name == 'iwc':
-        xi_broken, xf_broken = 150, 250
+        xi_broken, xf_broken = 150, 200
         broken_axis = True
         dx_tick = 50
     elif cloud_type == 'Ice' and var_short_name == 'iwc':
@@ -444,7 +450,6 @@ def plot_microphysics_evolution2(sliced_microphys,
     # if var_short_name == 'lwc' or var_short_name == 'iwc':
     #     mean_by_season.to_netcdf(f"{PATH_SAVE_DATA}mean_by_season_{get_var}_{cloud_type}.nc")
     #     mean_by_month.to_netcdf(f"{PATH_SAVE_DATA}mean_by_month_{get_var}_{cloud_type}.nc")
-    # set_trace()
 
 def get_vars(cloud):
     if cloud == 'Liquid' or cloud == 'Liquid-Precipitable':
@@ -635,10 +640,10 @@ filepath_cloud_prop       = "/media/matheustolen/Seagate Basic/cloudnet/cloud_cl
 ds_cloud_occurence, ds_cloud_type = read_cloud_files_2D(filepath_cloud_occurence, 
                                                         filepath_cloud_cloud_type)
 file_paths_cloud_prop     = [os.path.join(filepath_cloud_prop, file) for file in os.listdir(filepath_cloud_prop) if file.endswith('.nc')]
-mixed_phase_cloud         = True
-clouds = ['Mixed-Phase', 'Mixed-Phase-Precipitable']
+mixed_phase_cloud         = False
+clouds = ['Mixed-Phase-Precipitable']
 
-# clouds = ['Liquid', 'Liquid-Precipitable', 'Ice', 'Ice-Precipitable']
+clouds = ['Ice', 'Ice-Precipitable']
 letters = iter('abcdefghijklmnopqrstuvwxyz')
 print("read cloud macrophysics")
 # read cloud prop but convert altitud to height using granada altitude

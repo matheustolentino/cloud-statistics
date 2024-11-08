@@ -17,7 +17,7 @@ import matplotlib as mpl
 # if ipython is not None:
 #     ipython.run_line_magic('matplotlib', 'inline')
     
-PATH_FIG          = '../figures/'
+PATH_FIG          = '../../papers/cloud_statistics/figures/'
 fontsize = 14
 # Set the font to Times New Roman using LaTeX
 plt.rcParams['font.family'] = 'serif'
@@ -203,9 +203,11 @@ if use_old_method:
     iwc_new_method_mixed = computed_iwp.where(condition_new_method_cloud2).resample(time='1D').mean()
     # remove nans from both datasets
     
-    fig, (ax2, ax1) = plt.subplots(1, 2, figsize=(20, 10))
+    clouds_for_pearson_plot =  ["Liquid", "Liquid-Precipitable", "Ice", "Mixed-Phase", "Mixed-Phase-Precipitable"]
     
-    # 
+    # For ploting the pearson correlation, 
+
+    fig, (ax2, ax1) = plt.subplots(1, 2, figsize=(20, 10))
 
     # Plot for pearson_corr_old_method
     heat2 = ax2.imshow(pearson_corr_old_method, cmap='coolwarm', vmin=-1, vmax=1)
@@ -1086,6 +1088,143 @@ else:
     fig.savefig(PATH_FIG + 'new_method_cloud_prop_violin_season.png', dpi=300, bbox_inches='tight')
     plt.show()
 
+    ys = ['cloud_base', 'cloud_top', 'cloud_thickness']
+    colors_violin = ['Blues', 'Greys', 'YlOrBr']
+    fig = plt.figure(figsize=(23, 17))
+    gs  = fig.add_gridspec(len(dataframes), len(ys), height_ratios=[1]*len(dataframes), hspace=0.15, wspace=0.2)
+    letters = iter('abcdefghijklmnopqrstuvwxyz')
+    for i, df in enumerate(dataframes):
+        for j, y in enumerate(ys):
+            # Make a split violin plot for each dataframe
+            clouds = df['cloud_type'].unique()
+            # split this string into two parts, separated by -
+            cloud_posfix = clouds[0].split('-')
+            # the violin on the right should be for cloud_posfix == Precipitable
+            if len(cloud_posfix) > 1 and cloud_posfix[1] == 'Precipitable':
+                cloud_order = [clouds[1], clouds[0]]
+            else:
+                cloud_order = [clouds[0], clouds[1]]
+            # print(f"cloud_order: {cloud_order}")
+            ax = fig.add_subplot(gs[j, i])
+            sns.violinplot(data=df,
+                           x='season',
+                           y=y,
+                           hue='cloud_type',
+                           ax=ax,
+                           split=True,
+                           palette=colors_violin[i],
+                           inner="quartile",
+                           order=['spring', 'summer', 'fall', 'winter'],
+                           scale='count',
+                           gap=.4,
+                           hue_order=cloud_order,
+                           linecolor='black',
+                           linewidth=2.0,
+                           medianprops={"color": "r", "linewidth": 2},
+                           )  # Specify the order of x-axis categories
+            # for y-label, split the string by - and capitalize each part
+            ax.set_ylabel(f'{y.replace("_", " ").capitalize()} (km) a.g.l.')
+            # ax.tick_params(which='minor', length=4, color='r')
+            # ax.set_xlabel('Seasons')
+            ax.grid()
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            ax.spines['bottom'].set_visible(False)
+            ax.spines['left'].set_visible(False)
+            ax.set_facecolor('white')
+
+            # Add letter annotation
+            ax.text(0.02, 0.95, next(letters)+")", transform=ax.transAxes, 
+                    fontsize=20, fontweight='bold', va='top', ha='left', backgroundcolor='white')
+
+            if cloud_order[0] == 'Liquid' and y == 'cloud_thickness':
+                # plot a zoom between 0 and 2 km overlapping the plot with same width of original plot
+                axins = ax.inset_axes([0.2, 0.4, 0.7, 0.6], transform=ax.transAxes)
+                sns.violinplot(data=df,
+                                 x='season',
+                                 y=y,
+                                 hue='cloud_type',
+                                 ax=axins,
+                                 split=True,
+                                 palette=colors_violin[i],
+                                 inner="quartile",
+                                 order=['spring', 'summer', 'fall', 'winter'],
+                                 scale='count',
+                                 gap=.4,
+                                 hue_order=cloud_order,
+                                 linecolor='black',
+                                 linewidth=2.0,
+                                 medianprops={"color": "r", "linewidth": 2},
+                                 )  # Specify the order of x-axis categories
+                axins.set_ylim([0, 1.2])
+                axins.set_facecolor('white')
+                axins.xaxis.set_tick_params(labelbottom=False)
+                axins.xaxis.set_tick_params(labelleft=False)
+                axins.spines['top'].set_visible(False)
+                axins.spines['right'].set_visible(False)
+                # increase thick resolution
+                axins.yaxis.set_major_locator(plt.MaxNLocator(5))
+
+                axins.get_legend().remove()
+                axins.set_ylabel('')
+                axins.set_xlabel('')
+
+            if y == 'cloud_thickness':
+                ax.set_ylim([0, 10])
+            else:
+                ax.set_ylim([0, 13])
+                    # Show legend only for the first row
+            if j == 0:
+                ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.1), ncol=2)
+            else:
+                ax.get_legend().remove()
+                # remove the bottom x-axis
+                
+            # remove the bottom x-axis label for all but the last row
+            if j != len(ys) - 1:
+                ax.set_xlabel('')
+                ax.xaxis.set_tick_params(labelbottom=False)
+            quartiles = df.groupby(['season', 'cloud_type'])[y].quantile([0.5]).unstack()
+            print(f"{y}: {quartiles}")
+
+            if j == 0:
+                # Add text annotations for number of data points
+                counts = df.groupby(['season', 'cloud_type']).size().unstack()
+                for season in counts.index:
+                    for cloud_type in counts.columns:
+                        count = counts.at[season, cloud_type]
+                        x_pos = ['spring', 'summer', 'fall', 'winter'].index(season)
+                        # y_pos = ax.get_ylim()[1] * 0.9  # Position the text at 90% of the y-axis limit
+                        y_pos = 4
+                        #alter between left and right side of the violin
+                        if cloud_type == clouds[0]:
+                            x_pos += 0.3
+                            y_pos += 0.5
+                        else:
+                            x_pos -= 0.3
+                            y_pos -= 0.5
+                        ax.text(x_pos, y_pos, f'({int(count)})',
+                                 ha='center',
+                                   va='center',
+                                     fontsize=12,
+                                       color='black',
+                                         weight='bold')
+
+    fig.savefig(PATH_FIG + 'new_method_cloud_prop_violin_season.png', dpi=300, bbox_inches='tight')
+    plt.show()
+    
+    fig = plt.figure(figsize=(15, 10))
+    single_layer_lwp = chunked_lwp.where(ds_cloud_occurence['single_layer'], drop=True) / 1e3
+    single_layer_lwp.plot()
+    single_layer_lwp.resample(time='7D').mean().plot()
+    plt.show()
+
+    fig = plt.figure(figsize=(15, 10))
+    single_layer_lwp = ds_categorize.where(ds_cloud_occurence['single_layer'], drop=True) / 1e3
+    single_layer_lwp.plot()
+    single_layer_lwp.resample(time='7D').mean().plot()
+    plt.show()
+    
     # # Create a dataframe for liquid and liquid preicipitable
     # df_cloud_type_single_layer = ds_cloud_type_single_layer.to_dataframe().reset_index().melt(id_vars=['time'],
     #                                                                                             var_name='cloud_type',

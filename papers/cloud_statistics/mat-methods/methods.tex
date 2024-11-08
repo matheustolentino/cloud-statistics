@@ -1,147 +1,240 @@
 \section{Experimental site and Instrumentation}\label{sec:site_instruments_products}
 
-The AGORA ACTRIS-CCRES station (37$^{\circ}$2'N, 3$^{\circ}$6'E, 680 masl) is located in the South of the Iberian Peninsula being one the most meridional CLOUDNET stations. This station is characterized  by a continental climate, with colder months during winter and spring and warm months during summer and fall. Especially between summer and winter,temperature and humidity  present the largest contrast,  as revealed by \cite{andresestebanbedoya-velasquezSeasonalAnalysisAtmosphere2019}. The authors show that these changes are mainly due to solar incidence, being the diurnal cycle a strong component in seasonal differences. For non cloudy data, typically surface temperature in summer can vary around 30 – 40 $^{\circ}$C, meanwhile they vary around 15 $^{\circ}$C in winter. The relative humidity below 5 km a.g.l presents the opposite behavior, ranging between 60-75\% during winter, and 40-50\% during summer. 
-%However, larger values were also detected above 5 km at 16 UTC within thinner layers for all seasons. The height of this humidity layer can vary with seasons, being higher in summer and fall (7-9 km) and lower in winter and spring (5-7 km). 
+The AGORA ACTRIS-CCRES station (37.16$^{\circ}$N, 3.61$^{\circ}$W, 680 m a.s.l) is located in the South of the Iberian Peninsula being one the most meridional CLOUDNET stations. This station has been part of Cloudnet since 2018 and was integrated into ACTRIS CCRES (where ACTRIS stands for Aerosols, Clouds, and Trace gasses Research InfraStructure, and CCRES for Centre for Cloud Remote Sensing) in 2023 as a new national facility. The region experiences a continental climate, with colder months in winter and spring, and warmer months in summer and fall. Particularly, between summer and winter, the temperature and humidity presented the largest differences \citep{bedoya-velasquezSeasonalAnalysisAtmosphere2019}.
+The relative humidity below 5 km a.g.l ranges between 60-75\% during winter, and 40-50\% during summer. 
 These thermodynamic conditions will be particularly important to understand diurnal cycle of cloud types and inter-annual differences in cloud properties analyzed in further sections.
 
 \subsubsection{Instrumentation}
-In this study we use a combination of active and passive remote sensors that are part of ACTRIS CCRES and exploited in CLOUDNET. These instruments include a microwave radiometer, a ceilometer and a cloud radar. A synergistic combination of these instruments have been widely used for many Cloudnet stations. This combination shows a promising configuration for long-term cloud observations \citep{j.a.ContinuousEvaluationCloud2007}, especially to calculate cloud microphysics, providing better accuracy than satellites \citep{protatAssessmentCloudsatReflectivity2009}.
 
-The RPG-HATPRO G2 (Humidity and Temperature PROfiler) MWR is a passive remote sensing instrument that measures the brightness temperature around the water vapor (22-31 GHz) and oxygen (51-58 GHz) absorption bands. This instrument has radiometric accuracy of 0.3-0.4 K and provides accurate values of retrieved liquid water path (LWP) and integrated water vapor (IWV) with 1\,s of integration time \citep{lohnertAccuracyCloudLiquid2003}. In addition, it provides temperature and humidity profiles with the same time resolution. More details can be found in \cite{francisconavas-guzmanTroposphericWaterVapour2014, roseNetworkSuitableMicrowave2005}  
+In this study we use a synergistic combination of a MicroWave Radiometer (MWR), a ceilometer and a 94 GHz Cloud Doppler Radar (CDR). These instruments have been widely used for many Cloudnet stations and shows a promising configuration for long-term cloud observations \citep{illingworthCloudnet2007}, especially to calculate cloud microphysics with better accuracy than satellites \citep{protatAssessmentCloudsatReflectivity2009}. These instruments are operated in AGORA and their relevant technical specifications are shown in table \ref{tab:info_instrument}. This table details operational frequencies or wavelengths, type of measurements, products, measurement ranges, data collection intervals, and references for more details.
 
-The CHM15k Nimbus ceilometer is an active remote sensing instrument that works with a pulsed laser of Nd:YAG. It measures in the photon-counting mode and provides the  attenuated backscattering coefficient ($\beta$) of aerosols and small cloud droplets. This instrument has repetition frequency range about  5-7 kHz, where each pulse is emitted at 1064 nm with 8.4 $\mu$J of energy. The laser beam has a range resolution of 15 m and can diverge 0.3 mrad, reaching a complete overlap of about 1500m a.g.l \citep{heeseCeilometerLidarComparison2010}. Especifically, this ceilometer is operated with a time resolution of 15\,s \citep{a.cazorlaNearrealtimeProcessingCeilometer2017}. 
-The dual polarimetric RPG-FMCW 94 GHz Doppler cloud radar is also an active remote sensing instrument that operates at 94 GHz. This instrument uses the frequency-modulated continuous wave (FMCW) signal which makes it possible to vary the vertical and temporal resolution. Their frequency range is from 300-3700 kHz and the antenna beam width is 0.56 $^{\circ}$. 
-It measures the Doppler velocity spectrum for horizontal and vertical linear polarizations at 94 GHz. Unlike traditional single polarization measurements that retrieve only reflectivity (Z), mean Doppler velocity (ν$_{D}$), and spectral width (S$_{\omega}$), this advanced radar also derives the linear depolarization ratio (LDR), enabling the detection of the melting layer, aerosols, and insects as described by \cite{hoganFacilitatingCloudRadar}. Additionally, the instrument was mounted on a platform that enabled it to perform complex scans at different geometries.
-Table \ref{tab:info_instrument} provides an overview of the AGORA instrumentation, detailing operational frequencies or wavelengths, type of measurements, products, measurement ranges, data collection intervals, and references with detailed descriptions.
+The RPG-HATPRO G2 (Humidity and Temperature PROfiler) MWR is a passive remote sensing instrument that measures the brightness temperature (T$_{B}$) around the water vapor (22-31 GHz) and oxygen (51-58 GHz) absorption bands. The instrument is used to retrieve liquid water path (LWP) and integrated water vapor (IWV) (see Tab. \ref{tab:info_instrument}). Their principal characteristics are radiometric accuracy of 0.3-0.4\,K and integration time of 1\,s. More details can be found in \cite{navas-guzmanTroposphericWaterVapour2014a, roseNetworkSuitableMicrowave2005}.
 
-\begin{table}[H]
-	\caption{Summary of instruments and their data products. }
-	\begin{tabular}{@{}lllllll@{}}
-		\toprule
-		\textbf{Instrument}                                                         & \textbf{Bands / wavelengths}                                                                     & \textbf{Measured}                                                                   & \textbf{Products}                                          & \textbf{Range}                                                                           & \textbf{Time}                                                                           & \textbf{References}                         \\ \midrule
-		\begin{tabular}[c]{@{}l@{}}94 GHz Cloud \\ Doppler Radar\end{tabular}       & 94 GHz (W-band)                                                                                  & \begin{tabular}[c]{@{}l@{}}Doppler velocity \\ spectrum (DVS)\end{tabular}          &  $\nu_{D}$ , Z, S$_{w}$ & [13,51]\,m \tnote{a} & [1.1, 3.6]\,s \tnote{b}  & \cite{nilskuchlerWBandRadarRadiometer2017}                               \\
-		\hline
-		&                                                                                                  &                                                                                     & q and T                                                    & [10, 300]\,m \tnote{c}       & [2, 2.5]\,min                                                                             &                                             \\ 
-		\multirow{-2}{*}{\begin{tabular}[c]{@{}l@{}}MWR RPG \\ HATPRO\end{tabular}} & \multirow{-2}{*}{\begin{tabular}[c]{@{}l@{}}22-31 GHz (K-band)\\ 51-58 GHz (V-band)\end{tabular}} & \multirow{-2}{*}{\begin{tabular}[c]{@{}l@{}}Brightness \\ Temperature\end{tabular}} & LWP                                                        & -                                                                                        & 2 s                                                                                     & \multirow{-2}{*}{\cite{francisconavas-guzmanTroposphericWaterVapour2014}} \\
-		\hline
-		\begin{tabular}[c]{@{}l@{}}CHM15k \\ Nimbus \\ Ceilometer\end{tabular}      & 1064 nm                                                                                          &                                                                                     & $\beta$                              & 15 m                                                                                     & 15 s                                                                                    & \cite{a.cazorlaNearrealtimeProcessingCeilometer2017}                      \\ \bottomrule
-	\end{tabular}
+The CHM15k Nimbus ceilometer is an active remote sensing instrument that utilizes a vertically pointed Nd:YAG pulsed laser to measure backscattered photons. The instrument is used to retrieve the attenuated backscattering coefficient ($\beta$) of aerosols and small cloud droplets. Their principal characteristics are repetition frequency intervals of 5-7 kHz, where each pulse is emitted at 1064 nm with 8.4 $\mu$J of energy. The laser beam divergence is 0.3 mrad, and range and time resolution of 15\,m and 15\,s, respectively. Also, the overlap completeness at 1500m a.g.l \citep{heeseCeilometerLidarComparison2010}. More details can be found in \citep{cazorlaRealtimeProcessingCeilometer2017}.
+
+The dual polarimetric RPG-FMCW 94 GHz CDR is also an active remote sensing instrument that measures the Doppler Velocity Spectrum (DVS) for horizontal and vertical linear polarizations at 94 GHz. The instrument is used to compute the reflectivity (Z), mean Doppler velocity (ν$_{D}$), and spectral width (S$_{\omega}$). The CDR also derives the linear depolarization ratio (LDR), enabling the detection of the melting layer, aerosols, and insects as described by \cite{hoganFacilitatingCloudRadar2004}. Their principal characteristics are the frequency-modulated continuous wave (FMCW) signal, which allows different range and time configurations (see Tab. \ref{tab:info_instrument}), the frequency range of 300-3700 kHz and, the antenna beam width of 0.56~$^{\circ}$. 
+
+%\begin{table}[H]
+%	\caption{Summary of instruments and their data products. }
+%	\begin{threeparttable}
+%	\begin{tabular}{@{}lllllll@{}}
+%		\toprule
+%		\textbf{Instrument}                                                         & \textbf{Bands / wavelengths}                                                                     & \textbf{Measured}                                                                   & \textbf{Products}                                          & \textbf{Range}                                                                           & \textbf{Time}                                                                           & \textbf{References}                         \\ \midrule
+%		\begin{tabular}[c]{@{}l@{}}
+%			94 GHz Cloud  \\
+%			Doppler Radar
+%		\end{tabular}       & 94 GHz (W-band)                                                                                  & \begin{tabular}[c]{@{}l@{}}Doppler velocity \\ spectrum (DVS)\end{tabular}          &  $\nu_{D}$ , Z, S$_{w}$ & [13,51]\,m \tnote{a} & [1.1, 3.6]\,s \tnote{b}  & \cite{kuchlerWBandRadarRadiometer2017}                               \\
+%		\hline
+%		&                                                                                                  &                                                                                     & q and T                                                    & [10, 300]\,m \tnote{c}       & [2, 2.5]\,min                                                                             &                                             \\ 
+%		\multirow{-2}{*}{\begin{tabular}[c]{@{}l@{}}MWR RPG \\ HATPRO\end{tabular}} & \multirow{-2}{*}{\begin{tabular}[c]{@{}l@{}}22-31 GHz (K-band)\\ 51-58 GHz (V-band)\end{tabular}} & \multirow{-2}{*}{\begin{tabular}[c]{@{}l@{}}Brightness \\ Temperature\end{tabular}} & LWP                                                        & -                                                                                        & 2 s                                                                                     & \multirow{-2}{*}{\cite{navas-guzmanTroposphericWaterVapour2014a}} \\
+%		\hline
+%		\begin{tabular}[c]{@{}l@{}}
+%			  CHM15k   \\
+%			  Nimbus   \\
+%			Ceilometer
+%		\end{tabular}      & 1064 nm                                                                                          &                                                                                     & $\beta$                              & 15 m                                                                                     & 15 s                                                                                    & \cite{cazorlaRealtimeProcessingCeilometer2017}                      \\ \bottomrule
+%	\end{tabular}
+%	\label{tab:info_instrument}
+%	\begin{tablenotes}\footnotesize
+%		\item[a] This range varies with the height and depends on the chirp table configuration.
+%		\item[b] It also depends on the chirp type.
+%		\item[c] Humidity and temperature profiles have a range varying from 10 to 150 m in the first 4.4 km and from 50 to 300 m between 4.4 and 10 km.
+%	\end{tablenotes}
+%    \end{threeparttable}
+%\end{table}
+
+
+\begin{table}[ht!]
+	\centering
+	\caption{Instrument specification and data products}
 	\label{tab:info_instrument}
-	\begin{tablenotes}
-		\footnotesize
-		\item[a] This range varies with the height and depends on the chirp table configuration.
-		\item[b] It also depends on the chirp type.
-		\item[c] Humidity and temperature profiles have a range varying from 10 to 150 m in the first 4.4 km and from 50 to 300 m between 4.4 and 10 km.
-	\end{tablenotes}
+	\begin{threeparttable}
+	\resizebox{\textwidth}{!}{%
+		\begin{tabular}{@{}p{2cm}llllll@{}}
+			\toprule
+			\textbf{Instrument}              & \textbf{Bands / wavelenghts}              & \textbf{Measured}              & \textbf{Pos-processed}                           & \textbf{Range}      & \textbf{Time}         & \textbf{References} \\ \midrule
+			94-GHz\,Cloud Doppler Radar       & 94 GHz (W-band)                           & DVS                                      & {\color[HTML]{1F1F1F} $\nu_{D}$ , Z, $\delta$, S$_{w}$}, LDR & 12.8 to 51.1 m  \tnote{a}    & 1.1 to 3.6\,s \tnote{b}         &    \cite{kuchlerWBandRadarRadiometer2017}                 \\
+			& {\color[HTML]{1F1F1F} 22-31 GHz (K-bad)}  &                                          &                                                            &                     &                       &                     \\
+			\multirow{-2}{*}{\parbox{2cm}{RPG\,HATPRO}} & {\color[HTML]{1F1F1F} 51-58 GHz (V-band)} & \multirow{-2}{*}{T$_{B}$} & \multirow{-2}{*}{LWP}                                      & \multirow{-2}{*}{-} & \multirow{-2}{*}{1 s} & \multirow{-2}{*}{\cite{navas-guzmanTroposphericWaterVapour2014a}}  \\
+			CHM15k Nimbus\,Ceilometer         & 1064 nm                                   &                                          & $\beta$ (sr$^{-1}$ m$^{-1} $)                              & 15 m                & 15 s                  &    \cite{cazorlaRealtimeProcessingCeilometer2017}                 \\ \bottomrule
+		\end{tabular}%
+	}
+	\begin{tablenotes}\footnotesize
+	\item[a] This range varies with the height and depends on the chirp table configuration.
+	\item[b] It also depends on the chirp type.
+\end{tablenotes}
+\end{threeparttable}
 \end{table}
-
-
-\section{Cloudnet database}
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Información cloudnet de la introducción
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-The  AGORA station has been part of Cloudnet since 2018 and was integrated into ACTRIS CCRES (where ACTRIS stands for Aerosols, Clouds, and Trace gasses Research InfraStructure, and CCRES for Centre for Cloud Remote Sensing) in 2023 as a new national facility. The Cloudnet processing chain \citep{j.a.ContinuousEvaluationCloud2007} performs extensive quality assurance on raw instruments for providing high-level products, such as target classification, liquid water path, and droplet effective radius. This chain standardizes data processing within the cloud remote sensing community. Their products are derived using a synergistic approach, integrating vertically pointing measurements from ground-based instruments like Doppler cloud radars, microwave radiometers, and ceilometers. Specifically, the target classification product, generated through these three instruments, has been utilized in numerous studies for cloud typing and multi-year analysis \citep{razvanpirloagaGroundBasedMeasurementsCloud2022, tatiananomokonovaStatisticsCloudsTheir2019, stefankneifelMultiyearCloudPrecipitation2021}.
-Therefore, an extensive dataset spanning the years 2018 to 2023 was utilized in this study.
-Figure \ref{fig:data_availability} illustrates the monthly Cloudnet high level products availability for the AGORA ACTRIS-CCRES station. The availability of this data depends on simultaneous vertically pointing measurements of the microwave radiometer, ceilometer, Doppler cloud radar, as well as the meteorological model products - the ECMWF model (European Centre for Medium-Range Weather Forecasts). As observed, the months with lower data availability are Jan-Mar, with 40-50\% of the data available, whereas from Apr to Oct the data availability is over 60\% .The years 2018 (270,000 profiles) and 2020 (968,769 profiles) are the years with the least and greatest amount of data. The white bars denote periods with missing data due to instrument maintenance, technical issues, and scanning measurements (which are not processed by Cloudnet). Despite the missing periods, the recorded dataset establishes a solid database, with a large enough sample to perform the analysis of cloud cover above AGORA. 
+The Cloudnet processing chain \citep{illingworthCloudnet2007} performs extensive quality assurance on raw instruments for providing high-level products, such as target classification, liquid water path, and droplet effective radius. This chain standardizes data processing within the cloud remote sensing community. Their products are derived using a synergistic approach, integrating vertically pointing measurements from ground-based CDRs, MWRs, and ceilometers. Specifically, the target classification product, generated through these three instruments, has been utilized in numerous studies for cloud typing and multi-year analysis \citep{pirloagaGroundBasedMeasurementsCloud2022, nomokonovaStatisticsCloudsTheir2019, kneifelMultiyearCloudPrecipitation2022}, as already commented.
+
+We used a large dataset covering the years 2018 to 2023. Figure \ref{fig:data_availability} illustrates the monthly Cloudnet high level products availability for the AGORA ACTRIS-CCRES station. The availability of this data depends on simultaneous vertically pointing measurements of the RPG-HATPRO G2, CHM15k Nimbus ceilometer, RPG-FMCW 94 GHz CDR, as well as meteorological model products from the ECMWF model (European Centre for Medium-Range Weather Forecasts) at our station. As can be seen in Figure \ref{fig:data_availability}, the months that least meet these conditions are Jan-Mar, with 40-50\% of the data available, whereas from Apr to Oct the data availability is over 60\%. The years 2018 (270,000 profiles) and 2020 (968,769 profiles) have the least and largest amount of data, respectively. The white bars denote periods with missing data due to instrument maintenance, technical issues, and scanning measurements (which are not processed by Cloudnet). It is worthy to note that most of the missing data are days without clouds, as will be clear in section \ref{sec:anual_variability}. Thus, the recorded dataset shows a solid database, with enough samples to perform an statistical analysis. 
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=.8\textwidth]{../../phd_clouds/figures/new_method_separated_monthly_data_occurence}
+	\includegraphics[width=.8\textwidth]{./figures/new_method_separated_monthly_data_occurence}
 	\caption{High level post-processed data availability per month at the AGORA ACTRIS CCRES station. This dataset represents more than half a decade of synergic ground-based measurements at this station. Each color represents the data availability for different years.}
 	\label{fig:data_availability}
 \end{figure}
 
 \subsubsection{Cloudnet products}\label{sec:cloudnet_products}
-The Cloudnet products used in this study include target classification and microphysical retrievals, such as effective radius, and liquid and ice water content. These were re-gridded to a temporal resolution of 30 seconds and spatial resolution determined by the radar chirp table (Table \ref{tab:info_instrument}). The cloud radar reflectivity was corrected for two-way gas and liquid attenuation, crucial for high-frequency radars, which are notably attenuated by gases and liquid droplets \citep{hoganAbsoluteCalibration942003}. Data from cloud radar, ceilometer, microwave radiometer, and the ECMWF model were used to derive the target classification \citep{hoganFacilitatingCloudRadar}. This classification assigns integer values (0-10) to atmospheric particles by height and time, with categories ranging from Clear sky (0), Droplets (1), Drizzle or rain (2), Drizzle \& droplets (3), Ice (4), Ice \& droplets (5), Melting ice (6), Melting \& droplets (7), Aerosol (8), Insects (9), Aerosol \& insect (10). Liquid and supercooled droplets were identified using lidar attenuated backscatter and radar Doppler velocity spectra \citep{schimmelIdentifyingCloudDroplets2022b}, applied only at temperatures above -40$^{\circ}$C. Rain was identified as falling liquid particles below the cloud base, while ice was attributed to particles with wet-bulb temperatures below freezing. The melting layer was detected using wet-bulb temperature divergence and linear depolarization ratio from cloud radar.
-Microphysical properties were retrieved for hydrometeor pixels classified by the target classification. Liquid water content (LWC) and droplet effective radius ($r_{liq}$) were retrieved in liquid water pixels, including those containing ice and droplets. LWC retrieval, scaled to match liquid water path (LWP) from the microwave radiometer, has a 15\% relative uncertainty \citep{a.s.frischCloudRadarMicrowave1998}. Droplet effective radius retrievals, based on a size distribution method, are also subject to 15\% uncertainty due to reflectivity errors \citep{s.frischRetrievalStratusCloud2002}. Input data and uncertainties are detailed in Table \ref{tab:microphys} 
-For ice pixels, ice water content (IWC) was retrieved using the Z-IWC-T relation based on radar reflectivity and temperature \citep{robinj.hoganRetrievalIceWater2006}. The W-band retrievals have a relative error ranging from +55\% to -35\% for temperatures between -20$^{\circ}$C and -10$^{\circ}$C, and +90\% to -47\% for temperatures below -40$^{\circ}$C. The main source of error is reflectivity, where a 3\% reflectivity error can lead to a 12\% error in ice water path (IWP) \citep{pablosaavedragarfiasAsymmetriesCloudMicrophysical2023}. The ice effective radius ($r_{ice}$) was retrieved using the Z-T relation, with a 50\% relative uncertainty \citep{hannesgriescheApplicationShipborneRemote2020}, highlighting the challenges of accurately retrieving ice properties (Table \ref{tab:microphys}).
 
+The relevant Cloudnet products in this study include only target classification  \citep{hoganFacilitatingCloudRadar2024} and microphysical retrievals, such as effective radius, and liquid and ice water content. A resumed description of microphysical products assumptions and uncertainties are shown in table \ref{tab:microphys}. These products are re-gridded to time resolution of 30\,s and same radar range resolution. Nevertheless, these products can be highly affected by uncorrected radar reflectivity values. For high-frequency radars, such as the RPG models, this variable suffers a strong attenuation by liquid water and gases \citep{hoganAbsoluteCalibration942003}. Hence, Cloudnet applies the two-way gas and liquid attenuation correction for the reflectivity. 
+The target classification product assigns an integer (0-10) to atmospheric particles by height and time. The particle names and its respective numbers are the following: Clear sky (0), Droplets (1), Drizzle or rain (2), Drizzle \& droplets (3), Ice (4), Ice \& droplets (5), Melting ice (6), Melting \& droplets (7), Aerosol (8), Insects (9), Aerosol \& insect (10). Nevertheless, we are interested only in hydrometeors, thus we will refer to HC (hydrometeor classification) as only pixels classified as hydrometeors i.e. from 1 to 7. Briefly, these pixels are classified as follow: Liquid and supercooled droplets were identified using lidar attenuated backscatter and CDR Doppler velocity spectra \citep{schimmelIdentifyingCloudDroplets2022b}, applied only at temperatures above -40$^{\circ}$C. Rain was identified as falling liquid particles below the cloud base, while ice was attributed to particles with wet-bulb temperatures below freezing. The melting layer was detected using wet-bulb temperature divergence and LDR from CDR.
+%%%% Misclassification %%%%%%%
+
+For the AGORA station, many cases of hydrometeor misclassification on HC were observed. Figure \ref{fig:cloudnet_misclassification}.a shows a thin and lower precipitable ice cloud between 08:00 and 20:00. However, at this time, there are just insects and aerosols in the atmosphere, as can be checked by small values of attenuated backscattering (Fig. \ref{fig:cloudnet_misclassification}.c) and CDR reflectivity (Fig. \ref{fig:cloudnet_misclassification}.d). This occurs because insect detection is highly dependent on the model temperature and the LDR \citep{roschkeDiscriminatingDrizzleRain2024}. Due to the absence of LDR in many stored CDR data files at our station, insect detection is suboptimal in these cases. However, these cases were easily identified and filtered as follow: 
+Precipitating and non precipitating ice clouds which were identified with mean cloud base below 4 km (above mean sea level) and average cloud thickness below 700 meters were reclassified as noise. These thresholds were empirically determined by analyzing many different days of target classification products at the Granada station.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{./figures/20210418_cloudnet_misclassification}
+	\caption{A case study of Cloudnet hydrometeor misclassification. (a) Target classification product; (b) Radar reflectivity factor from Doppler cloud radar; (c) Attenuated backscattering coefficient from ceilometer. No evidence of clouds in the ABL can be identified by the instruments.}
+	\label{fig:cloudnet_misclassification}
+\end{figure}
+
+%%%% Misclassificartion %%%%%%%
+
+Microphysical properties were retrieved for hydrometeor pixels classified by HC. Liquid water content (LWC) and droplet effective radius ($r_{liq}$) were retrieved at “Droplets”, “Drizzle \& droplets” and “Ice \& droplets” pixels. For LWC retriving, LWP from MWR, and temperature (T$_{M}$) and pressure (P$_{M}$) from ECMWF model were used as input parameters. It has 15\% of relative uncertainty \citep{frischCloudRadarMicrowave1998}.
+
+
+The droplet effective radius retrieval assumes a lognormal distribution for droplet (DSD) sizes and has 15\% of uncertainty due to reflectivity errors \citep{frischRetrievalStratusCloud2002}. This information is resumed in Table \ref{tab:microphys}.
+
+
+Ice water content is retrieved using the Z-IWC-T relation \citep{hoganRetrievalIceWater2006}. It has a relative error ranging from +55\% to -35\% for temperatures between -20$^{\circ}$C and -10$^{\circ}$C, and +90\% to -47\% for temperatures below -40$^{\circ}$C. The main source of error is reflectivity, where a 3\% reflectivity error can lead to a 12\% error in ice water path (IWP) \citep{saavedragarfiasAsymmetriesCloudMicrophysical2023}. The ice effective radius ($r_{ice}$) was retrieved using the Z-T relation, with a 50\% relative uncertainty \citep{griescheApplicationShipborneRemote2019}. These uncertainties are quite high, highlighting the challenges of accurately retrieving ice properties.
+
+%% Please add the following required packages to your document preamble:
+%% \usepackage{booktabs}
+%% \usepackage{multirow}
+%\begin{table}[ht!]
+%	\centering
+%	\caption{Cloudnet microphysics products used in this study, their inputs and assumptions}
+%	\resizebox{\textwidth}{!}{%
+%	\begin{tabular}{@{}llll@{}}
+%		\toprule
+%		\textbf{Cloudnet products}                  & \textbf{Input role}                              & \textbf{$\sigma_{re}$/$r_{e}$} & \textbf{References}                                                                \\ \midrule
+%		\multirow{3}{*}{Liquid water content (LWC)} & Z and $\beta$: cloud base and top identification & \multirow{3}{*}{15\%}          & \multirow{3}{*}{Frisch et al. (1998)}                                              \\
+%		& T, P, assuming an adiabatic lifting          &                                &                                                                                    \\
+%		& MWR or CDR LWP to scale LWC                      &                                &                                                                                    \\
+%		Ice water content (IWC)                     & Z and T profiles                        & -35\% to 90\%                        & \begin{tabular}[c]{@{}l@{}} \cite{hoganRetrievalIceWater2006} \\ \cite{delanoeCharacterizationIceCloud2007}\end{tabular} \\
+%		Droplet effective radius ($r_{liq}$)       & Z, and N and $\sigma$ of lognormal PSD           & 15\%                           & \cite{frischRetrievalStratusCloud2002}                                                               \\
+%		Ice effective radius ($r_{ice}$)          & Z and T                                & 50\%                        & \cite{griescheApplicationShipborneRemote2019} \\ \bottomrule
+%	\end{tabular}
+%}
+%	\label{tab:microphys}
+%\end{table}
 
 
 % Please add the following required packages to your document preamble:
 % \usepackage{booktabs}
 % \usepackage{multirow}
-\begin{table}[H]
+% \usepackage{graphicx}
+\begin{table}[]
+	\centering
 	\caption{Cloudnet microphysics products used in this study, their inputs and assumptions}
-	\begin{tabular}{@{}llll@{}}
-		\toprule
-		\textbf{Cloudnet products}                  & \textbf{Input role}                              & \textbf{$\sigma_{re}$/$r_{e}$} & \textbf{References}                                                                \\ \midrule
-		\multirow{3}{*}{Liquid water content (LWC)} & Z and $\beta$: cloud base and top identification & \multirow{3}{*}{15\%}          & \multirow{3}{*}{Frisch et al. (1998)}                                              \\
-		& T, P, assuming an adiabatic lifting          &                                &                                                                                    \\
-		& MWR or CDR LWP to scale LWC                      &                                &                                                                                    \\
-		Ice water content (IWC)                     & Z and T profiles                        & -35\% to 90\%                        & \begin{tabular}[c]{@{}l@{}} \cite{robinj.hoganRetrievalIceWater2006} \\ \cite{juliendelanoeCharacterizationIceCloud2007}\end{tabular} \\
-		Droplet effective radius ($r_{liq}$)       & Z, and N and $\sigma$ of lognormal PSD           & 15\%                           & \cite{s.frischRetrievalStratusCloud2002}                                                               \\
-		Ice effective radius ($r_{ice}$)          & Z and T                                & 50\%                        & \cite{hannesgriescheApplicationShipborneRemote2020} \\ \bottomrule
-	\end{tabular}
 	\label{tab:microphys}
+	\resizebox{\textwidth}{!}{%
+		\begin{tabular}{@{}llll@{}}
+			\toprule
+			\textbf{Cloudnet microphysics}              & \textbf{Input specification}                    & \textbf{Relative standard deviation} & \textbf{Reference}                    \\ \midrule
+			\multirow{3}{*}{Liquid water content (LWC)} & \multirow{3}{*}{T$_M$ and P$_M$}    & \multirow{3}{*}{15\%}                & \multirow{3}{*}{\cite{frischCloudRadarMicrowave1998}} \\
+			&                                                 &                                      &                                       \\
+			&                                                 &                                      &                                       \\
+			Ice water content (IWC)                     & Z and T$_M$                                     & 55\% -35\% T1                        & \cite{hoganRetrievalIceWater2006}                   \\
+			Droplet effetive radius ($r_{liq}$)       & Z and lognormal parameters (N and $\sigma_{x}$) & 15\%                                 & \cite{frischRetrievalStratusCloud2002}                  \\
+			Ice effective radius ($r_{ice}$)          & Z and T$_M$                                     & 50\%                                 & \cite{griescheApplicationShipborneRemote2019}                 \\ \bottomrule
+		\end{tabular}%
+	}
 \end{table}
 
 \section{Methodology}\label{sec:classification_algorithm}
 
-\subsection{Cluster classification method}\label{sec:new_method}
+\subsection{Cluster-based algorithm and cloud structure computation}\label{sec:new_method}
 
-The cluster-based algorithm classifies groups of hydrometeors into cloud types by using a cloud mask from the target classification product to identify connected hydrometeors in height and time. These clusters are then categorized into cloud types based on the percentage of different hydrometeors they contain. Unlike profile-based methods, which classify clouds column-by-column and often result in abrupt changes in cloud classification over short time intervals, the cluster-based approach aims to provide a more continuous, time-homogenized classification. This method has proven effective in reducing high correlations between ice and mixed-phase cloud properties, offering a more consistent cloud classification across time. 
+The cluster-based algorithm (CBA) is a novel algorithm for cloud classification. The CBA classifies clusters of hydrometeors based on their composition i.e the percentage of different hydrometeor inside the cluster. The algorithm also classifies clouds as single-layer or multi-layer based on time. Figure \ref{fig:classificationby_group_scheme} illustrate algorithm steps (numbered 1 to 7), which are described as follows:
 
-In both cases, the Cloudnet target classification product is used as a basis for cloud typing. This product provides the hydrometeor type information for each profile. Thus, the pixels classified as hydrometeors, such as Droplets, Ice and Drizzle \& Droplets are used to classify clouds. In the case of the profile-based method, \cite{buhlMeasuringIceLiquidwater2016} already adapted it for only mixed phase clouds, selecting only cases with more than 15 min of coherent cloud profiles (with similar cloud profiling within 300 s). Nevertheless, by adding new criterias to identify liquid and ice clouds, this method can classify segments of one cloud in different categories, depending on the time threshold. Hence, we introduce a new approach that does not classify cloud profiles neither segments, but cloud clusters.
+\begin{enumerate}
+	\item Cloud classification
+	
+	\begin{enumerate}
+		\item Cloud Mask: A cloud mask is generated from the CLOUDNET target classification
+		\item Cluster Identification: Cloud pixels separated only by two pixels in any direction (analogous to 30 s - 1 min, and 20 - 50 m of height) are considered part of the same cloud. This is reached using a pixel dilation and contraction technique \citep{doughertyMathematicalMorphologyImage2018}, expanding and contracting each cluster (see Appendix \ref{sec:dilation} for a more detailed explanation of the method). In other words, clusters that are very close to each other will be merged
+		\item Cloud Criteria: Whether the cluster has more than 100 pixels, it is considered a cloud (without considering Drizzle or rain pixels). Otherwise, it is deemed as noise and is excluded from further analysis. This number of pixels was selected to focus on clouds of significant size.
+		\item Cloud Phase: Clouds are classified as liquid, ice, mixed-phase, precipitating liquid, precipitating ice or precipitating mixed-phase. The criteria of each cloud depends on the percentage of hydrometeors, and are defined as follow: 
+		
+		\begin{enumerate}
+			\item Liquid criteria: The percentage of Droplets and drizzle plus the percentage of Droplets must be greater than 70\%, i.e. P(Droplets and drizzle) + P(Droplets) > 70\%
+			\item Ice criteria: The percentage of Ice must be greater than 90\%, i.e. P(Ice) > 90\% or the percentage of Droplets plus Ice \& droplets must be less than 10\%, i.e P(Droplets) + P(Ice \& droplets) < 10\%. These thresholds were defined empirically after an extensive verification of case studies. We observed that thunderstorm clouds are practically made of Ice and Ice \& droplets in most cases. However, they also have melting layer pixels, preventing the ice percentage from reaching 90\%. That's why we also verify if there is a small percentage of water inside these clouds. Otherwise, cloud phase is classified as mixed-phase.
+		\end{enumerate}
+		\item Rain criteria: If the cloud has more than 10 pixels of Drizzle or rain, it is considered as a precipitating cloud.
+	\end{enumerate}
+	
+	\item Multi-layer classification
+	\begin{enumerate}
+		\item Drizzle Removal: For precipitating Ice clouds and precipitating Mixed-phase clouds, Drizzle pixels are removed below the melting layer. Below this layer, they are considered as rain pixels, thus they are removed to avoid using these pixels for cloud base height (CBH) estimations.
+		\item Cloud Layer Criteria: For cloudy periods, time intervals where clouds overlap are categorized as multi-layer. Otherwise, clouds are categorized as a single-layer type. The minimum vertical distance between clouds to be considered as multilayer is one pixel. It was settled to avoid any possibility of considering multi-layers in further analysis.
+		
+	\end{enumerate}
+	
+\end{enumerate}
 
-Prior to the use of the target classification product, a preprocessing of the data was required. It has been observed that for some specific cases, misclassification of some pixels may occur. Figure \ref{fig:cloudnet_misclassification}.b illustrates a thinand lower precipitable ice cloud present between 08:00 and 20:00 at 2 km (turquoise layer in Fig \ref{fig:cloudnet_misclassification}.a). However, there is no evidence of clouds in the attenuated backscatter (Fig \ref{fig:cloudnet_misclassification}.d) and the radar reflectivity (Fig \ref{fig:cloudnet_misclassification}.c). These misclassifications stem from an inaccurate representation of the temperature profile by the models in the region of Granada, affecting the target classification algorithm, and subsequently, the cloud classification performed in this study. To mitigate these issues and prevent misinterpretation of future cloud statistics, we established a filter to detect and remove these cases. Basically, all these precipitating and non precipitating ice clouds which were identified with mean cloud base below 4 km (above mean sea level) and average cloud thickness below 700 meters were reclassified as noise. These values were empirically determined by analyzing many different days of target classification products at the Granada station 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\textwidth]{../../phd_clouds/figures/20210418_cloudnet_misclassification}
-	\caption{A case study of Cloudnet hydrometeor misclassification. (a) Target classification product; (b) Radar reflectivity factor from Doppler cloud radar; (c) Attenuated backscattering coefficient from ceilometer. No evidence of clouds in the ABL can be identified by the instruments.}
-	\label{fig:cloudnet_misclassification}
-\end{figure}
-
-Once the data are curated, the different cloud types are identified. Recent studies employed a cloud classification algorithm by profile with the aim of classify clouds
-\citep{razvanpirloagaGroundBasedMeasurementsCloud2022, tatiananomokonovaStatisticsCloudsTheir2019, stefankneifelMultiyearCloudPrecipitation2021} and analyze their statistics. However, this algorithm admits different cloud typing inside the same cloud, assigning similar physical properties for different cloud types. In the appendix \ref{sec:old_method}, we describe this algorithm, adapting the criteria used by \cite{razvanpirloagaGroundBasedMeasurementsCloud2022, tatiananomokonovaStatisticsCloudsTheir2019}.  
-In this study we propose a new methodology to overcome these inaccuracies. We define a cloud as a group of at least 100 pixels identified by Cloudnet as droplet, drizzle (see Fig. 3). To do so, a cloud mask is generated from the CLOUDNET target classification. Cloud pixels separated only by two pixels in any direction (analogous to 1 min, and 20 - 50 m of height) are considered part of the same cloud. This is achieved using a pixel dilation and contraction technique \citep{doughertyMathematicalMorphologyImage2018}, which expands and contracts the cloud shapes (see Appendix \ref{sec:dilation} for a more detailed explanation of the method). Once the cloud pixels are grouped, each cloud must have more than 100 pixels to be considered (without considering Drizzle or Rain pixels). Otherwise, it is deemed as noise. In order to illustrate this method, the left panel of Figure \ref{fig:cluster_identification} shows the Cloudnet target classification product (on 11 February 2021), while the right panel shows all groups of hydrometeors identified for this data. Groups inside the black dashed lines are considered clusters and will be classified into cloud types. Additionally, clusters that are very close to each other will be merged to form one cloud. Small and isolated groups of hydrometeors with less than 100 pixels are identified as noise, and are marked by the red dashed lines in Figure \ref{fig:cluster_identification}.b.  
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=.95\textwidth]{../../phd_clouds/figures/20210211_cloud_identification}
-	\caption{Cloud cluster identification by Cloudnet target classification on 11 February 2021. (a) Target classification, which shows particles typing in time and altitude. (b) Cloud clusters identified in black (dashed lines) and noise (less than 100 pixels connected) by red, dashed lines}
-	\label{fig:cluster_identification}
-\end{figure}
-
-Once the clouds are identified, each cloud is classified as one of these six types: liquid, ice, mixed-phase, precipitating liquid, precipitating ice, and precipitating mixed-phase. To do so, the hydrometeor type percentages are calculated for each cloud, (shown in figure \ref{fig:classificationby_group_scheme}). A cloud is classified as liquid cloud (Liquid criteria) if it comprises more than 70\% of Droplets and Drizzle plus Droplets. Then, it is further classified as a precipitating liquid cloud (Rainy criteria) if it contains at least 10 connected Rain pixels. Similarly, a cloud is classified as an ice cloud (Ice criteria) if the previous verification is not satisfied and if  this group contains more than 90\% of ice or less than 10\% of Droplets plus Ice \& droplets. The same rain verification as in the liquid case is made to classify this group as a pure ice cloud or a precipitating ice cloud. Otherwise, clouds are classified as mixed-phase or precipitating mixed-phase through the same rain verification as in the other clouds.
-In relation to precipitating ice and precipitating mixed-phase clouds, an extensive analysis of individual case studies revealed that Drizzle \& droplets only appear below the melting layer together with Drizzle \& rain droplets. Therefore, to avoid an underestimation of cloud base height due to drizzle, we removed these pixels for these clouds since they are probably rain.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=.9\textwidth]{../../phd_clouds/figures/scheme_cloud_classification_1}
-	\caption{Scheme of the cloud classification algorithm}
+	\includegraphics[width=.9\textwidth]{./figures/new_cba_scheme}
+	\caption{Flowchart of the cluster-based algorithm (CBA). Details of each step are provided in the text.}
 	\label{fig:classificationby_group_scheme}
 \end{figure}
 
-After the cloud classification, each cloud is then classified as single or multi-layer over time. Initially, time intervals where clouds overlap are identified. Overlapped pieces of clouds are classified as multi-layer, whereas non-overlapping pieces in principle are classified as single layer.
-If a cloud had a second layer separated by only one pixel at some time interval, that interval is identified as containing multi-layer. Otherwise, the clouds at that interval are classified as a single layer. One pixel separation as threshold was settled to avoid any possibility of considering multi-layers.
+For single layer clouds, cloud structure such as cloud base and top height (CBH, CTH), and cloud thickness are calculated as follows: CBH and CTH are calculated as the first and last pixel within the cloud column. For non-precipitating cloud columns, the first pixel is detected by the ceilometer and the last by the CDR. For precipitating Ice or precipitating Mixed-phase clouds, the first pixel detected by the ceilometer is the Droplets or Drizzle \& droplets, which are within the rain layer. These pixels are probably rain pixels, that's why we remove them below the melting layer rather than using the CBH product directly from Cloudnet. Lastly, cloud thickness was calculated as the difference between cloud base and top height pixels.
 
-In this study, only single layer clouds are analyzed. For the single layer case, cloud properties are calculated as follows: the cloud base and top height are determined by the first and last height pixels within the cloud layer, respectively. Cloud thickness is obtained by the difference between cloud base and top height pixels.
+Multi-layer clouds are problematic due to inaccurate LWP partitioning among cloud layers \citep{shupeDerivingArcticCloud2015}. The partitioning needs an accurate cloud profile, which cannot be assessed with only radar reflectivity. The reflectivity is not sensible to small cloud droplets and the lidar signal is totally attenuated by the first layer. Hence, liquid layers will be poorly identified causing an inaccurate determination of liquid and mixed phase clouds \citep{nomokonovaStatisticsCloudsTheir2019}. Therefore, the following analyses are focused only on single-layer clouds, since their physical properties can be accurately retrieved.
 
 \subsection{Cloud typing assessment}\label{sec:daily_cycle}
 
-An evaluation of the cluster classification algorithm presented in this study against the profile-based method used by previous studies is conducted in order to evaluate its applicability for further analysis. Here, we aim to provide insights into the correlation on cloud statistics between different cloud categories generated by these two methods. In this framework, Figure \ref{fig:cloud_classification_comparison} shows a case study on 6 May  2023 in Granada comparing profile-based cloud classification and cluster classification for a mixed phase cloud, where red and black dots represent the cloud base and top, respectively. As expected, the profile-based classification on the right panel leads to the fragmentation of a single cloud into different types. In this case, the same cloud is being classified as ice and mixed-phase. On the other hand, in the left panel, the new classification method preserves the homogeneity of the cloud and classifies it as mixed-phase cloud, resulting in a more realistic classification.
+A comparison between CBA and the profile-based algorithm (PBA) (see Appendix \ref{sec:old_method} for algorithm description), used by previous studies, is conducted in order to evaluate its applicability. 
+Figure \ref{fig:cloud_classification_comparison} presents a comparison between PBA and CBA applied for a mixed phase on 6 May 2023 in Granada. The cloud phase can be checked in Figure \ref{fig:cloud_classification_comparison}.a, which shows a clear layer of mixed phase cloud. Below that, Figure \ref{fig:cloud_classification_comparison}.b shows that the PBA fragments the cloud structure into different types. It is easy to observe that the same cloud is being classified as ice or mixed-phase cloud multiple times in the PBA. On the other hand, Figure \ref{fig:cloud_classification_comparison}.c shows that the CBA preserves the homogeneity of the cloud and classifies it correctly during the entire cloudy time.
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=1\textwidth]{../../phd_clouds/figures/scheme_cloud_classification}
-	\caption{Comparison of cloud classification methods. The left panel illustrates the new method, which preserves cloud homogeneity and provides a more realistic classification. The right panel shows the old method used in recent studies, where cloud classification is time-based.}
+	\includegraphics[width=.7\textwidth]{./figures/scheme_cloud_classification.png}
+	\caption{Comparison of cloud typing from different cloud classification algorithms at the AGORA station, on 6 May 2023; (a) HC from Cloudnet, indicating a clear single layer of Mixed-Phase cloud (b) PBA cloud typing, showing an inhomogeneous cloud classification. (c) CBA cloud typing, showing an homogeneous cloud classification.}
 	\label{fig:cloud_classification_comparison}
 \end{figure}
 
-As a consequence, the profile-based method of cloud classification can generate high correlations between cloud categories in terms of frequency of occurrence and cloud properties, which are not realistic. For example, the right panel of Figure~\ref{fig:cloud_classification_comparison} suggests that both ice and mixed phase clouds will have similar daily cloud occurrence and average cloud base. However, this is occurring because of the classification method, which could further affect the analysis of cloud type properties reaching misleading conclusions. 
+The inhomogeneous cloud classification of the PBA may result in assigning similar physical properties to different cloud types. As can be clearly seen in Figure~\ref{fig:cloud_classification_comparison}.b, both ice and mixed phase clouds will have similar daily cloud occurrence and average CBH. However, this is a consequence of the classification algorithm, which could affect further analysis of cloud type properties, reaching misleading conclusions.
 
-We calculated the daily cloud occurrence for each cloud type to quantify the correlation between cloud categories generated by these two classification algorithms for the whole database in order to assess the cluster-based method proposed in this study. Figure \ref{fig:pearson_correlation} shows the pearson correlation coefficients of daily cloud occurrence between cloud types for the cluster classification on the left, and for the classification by profile on the right. As it can be seen, the cluster method presents generally weaker correlations among cloud types, with most values clustering around zero. For example, the highest correlations observed were 0.19 between Liquid and Liquid-Precipitable clouds and 0.17 between Liquid and Mixed-Phase-Precipitable clouds, indicating relatively weak relationships. Additionally, some negligible negative correlations were observed, e.g. between Ice and Mixed-Phase-Precipitable clouds (-0.1). This suggests that the new method may provide a clearer distinction between cloud types, which is advantageous for analyses requiring precise classification. In contrast, the profile-based classification exhibited stronger and more pronounced correlations. Notably, the correlation between Ice and Mixed-Phase clouds was 0.4, and between Liquid and precipitating liquid clouds was 0.32, highlighting significant interdependencies between these cloud types. These relatively higher correlations are a consequence of the classification scheme defined in the profile-based method, which allows tagging multiple cloud types inside the same cloud. As a result, the comparison indicates that the new method, with its generally weaker correlations, may be better suited for distinguishing different cloud types. These findings underscore the importance of selecting an appropriate analytical method to study cloud properties between different cloud types.
+To assess the impact of the cloud classification algorithm on cloud property statistics, Pearson correlation coefficients between cloud types were calculated based on their daily occurrence. Figure \ref{tab:pearson_correlation}.a and Figure \ref{tab:pearson_correlation}.b show only the relevant correlations we found for PBA and CBA, respectively. They are correlations between Mixed-Phase and Ice clouds, Liquid and Precipitating Liquid clouds, and Precipitating Mixed-Phase and Precipitating-Liquid clouds.
 
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=.8\textwidth]{../../phd_clouds/figures/correlation_methods}
-	\caption{The Pearson correlation matrix of daily cloud occurrence among different cloud types is shown in the top panel. The correlations for cluster-based methods are on the left and the profile-based correlation is on the right. Below each correlation matrix, the corresponding comparison of IWC between ice and mixed phase is shown.}
-	\label{fig:pearson_correlation}
-\end{figure}
+For the PBA, the correlations are 0.39 between ice and mixed-phase clouds and 0.32 between liquid and precipitating liquid. On the other hand, the corresponding correlations for the CBA are 0.09 and 0.19, respectively. As shown, the CBA exhibits weaker or negligible correlations, whereas those from the PBA are more pronounced. The pronounced correlations from PBA are related to its classification scheme, which may link clouds between each other. However, the CBA provides a time-homogenized cloud classification, avoiding the cloud linking. These findings underscore how these two algorithms associate different cloud types, which can potentially impact cloud property statistics.
 
-Regarding the correlation in cloud properties, we computed the daily average of IWP for ice and mixed-phase clouds for the two classification methods. The bottom panel of Figure \ref{fig:pearson_correlation} shows the IWP of mixed phase clouds in function of the IWP of ice clouds. The R factor is the Pearson correlation coefficient between the IWP of these two cloud types. This coefficient is quite higher for the profile-based method, showing a correlation of 0.7. On the other hand, the cluster method exhibited only 0.24, with no apparent correlation. In addition, the correlation seems to be not monthly dependent as there is no clear separation by month. It is worthy to note that this section is not focused on the analysis of IWP, this will be done in section \ref{sec:cloud_microphys}. Instead of this, here we focused on the influence of the classification algorithm on cloud properties analysis. Following, the observations suggest that statistics on cloud properties can be highly influenced by the profile-based classification. As a result, this method may lead to the misinterpretation of real cloud properties, raising the relevance of previous evaluation of cloud classification algorithms before doing statistics on cloud properties. In this light, the new approach shows a promising classification method and will be employed in this study.
+%\begin{figure}[H]
+%	\centering
+%	\includegraphics[width=.8\textwidth]{./figures/correlation_methods}
+%	\caption{The Pearson correlation matrix of daily cloud occurrence among different %cloud types is shown in the top panel. The correlations for cluster-based methods are on %the left and the profile-based correlation is on the right. Below each correlation matrix, the %corresponding comparison of IWC between ice and mixed phase is shown.}
+%	\label{tab:pearson_correlation}
+%\end{figure}
+
+\begin{table}[ht!]
+	\caption{Comparison of Pearson correlation coefficients for daily cloud occurrence (D.O.) and IWC between different cloud types using CBA and PBA.}
+	\begin{tabular}{cccc}
+		\hline
+		\multicolumn{2}{c}{\textbf{Cloud type}}          & \multicolumn{2}{c}{\textbf{Pearson correlation on D.O}} \\ \hline
+		\multicolumn{1}{l}{} & \multicolumn{1}{l}{}      & PBA                              & CBA                              \\ \cline{3-4} 
+		Mixed-Phase          & Ice                       & 0.39                             & 0.09                             \\
+		Liquid               & Precipitating Liquid      & 0.32                             & 0.19                             \\
+		Precipitating Liquid & Precipitating Mixed-Phase & 0.26                             & 0.04                             \\ \hline
+		\multicolumn{1}{l}{} & \multicolumn{1}{l}{}      & \multicolumn{2}{c}{\textbf{Pearson correlation on IWC}}             \\
+		\multicolumn{1}{l}{} & \multicolumn{1}{l}{}      & PBA                              & CBA                              \\ \cline{3-4} 
+		Mixed-Phase          & Ice                       & 0.70                             & 0.24                             \\ \hline
+	\end{tabular}
+
+	\label{tab:pearson_correlation}
+\end{table}
+
+
+Table \ref{tab:pearson_correlation} shows the correlation of daily average IWP between ice and mixed-phase clouds, for PBA and CBA, respectively. Their corresponding Pearson correlation coefficient (R) are 0.7 and 0.24, almost 3 times higher for PBA. Since there is no evidence that the IWP should correlate between Ice and Mixed-Phase clouds, there is no explanation for such high correlations observed for the PBA. Therefore, this algorithm can generate not explained relations between clouds. In this light, the new approach shows a promising classification method and will be employed in this study.
 
 

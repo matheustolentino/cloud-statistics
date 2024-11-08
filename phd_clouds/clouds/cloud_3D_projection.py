@@ -24,7 +24,7 @@ RHI_LV1 = Path(r"/home/matheustolen/shared/RAW/UGR/nebula_w/2024/06/26")
 # RHI_LV1 = Path(r"/home/matheustolen/shared/NAS_raw_data/UGR/nebula_w/2024/06/08")
 PATH_NC = Path(r"../../tests/data/radar")
 PATH_CAT = Path(r"../../tests/data/classification")
-FIGURE_DIR = Path(r"../figures")
+FIGURE_DIR = Path(r"../../papers/cloud_statistics/figures/")
 
 # -------------------------------------------------------------------------------------------
 # Instrument and site information
