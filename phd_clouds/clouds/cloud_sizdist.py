@@ -92,14 +92,6 @@ def mixture_gamma(x: np.ndarray, *params: float) -> np.ndarray:
         pdf += w * gamma.pdf(x, a, scale=b)
     return pdf
 
-def neg_log_likelihood(params):
-    weights = params[:3]
-    shapes = params[3:6]
-    scales = params[6:]
-    pdf = mixture_gamma(x_data, weights, shapes, scales)
-    log_likelihood = np.sum(np.log(pdf))
-    return -log_likelihood
-
 def find_point(dist_new):
     aux_dist = np.diff(dist_new)
     ind_sep_aux = np.where(aux_dist > -0.00001)[0]

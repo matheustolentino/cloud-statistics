@@ -17,7 +17,7 @@ import matplotlib as mpl
 # if ipython is not None:
 #     ipython.run_line_magic('matplotlib', 'inline')
     
-PATH_FIG          = '../../papers/cloud_statistics/figures/'
+PATH_FIG          = '../../../cloud-statistics/figures/'
 fontsize = 14
 # Set the font to Times New Roman using LaTeX
 plt.rcParams['font.family'] = 'serif'

@@ -15,6 +15,7 @@ import matplotlib.font_manager as fm
 import os
 from phd_clouds.mwr_class import Mwr
 from phd_clouds.utils import assign_season
+from phd_clouds.constants import SEASONS
 
 # Define the path to the figures directory
 PATH_FIG = '../figures/'

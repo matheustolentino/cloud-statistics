@@ -29,6 +29,7 @@ gfatpy = ">=0.13.0"
 mayavi = "^4.8.2"
 configobj = "^5.0.8"
 pyqt5 = "^5.15.10"
+pypeako = "^0.0.2.post2"
 
 [build-system]
 requires = ["poetry-core"]
