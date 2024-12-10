@@ -23,6 +23,7 @@ import glob
 from cloudnetpy.products import generate_der
 from cloudnetpy.products.der import Parameters
 import matplotlib as mpl
+from IPython import get_ipython
 
 fontsize = 14
 # Set the font to Times New Roman using LaTeX
@@ -32,8 +33,13 @@ plt.rcParams['font.serif'] = ['Times New Roman'] + plt.rcParams['font.serif']
 # Set the fontsize for all elements in the plot
 plt.rcParams['font.size'] = fontsize
 
-plt.close('all')
 mpl.use('qtagg')
+plt.close('all')
+
+# plt.ion()
+# ipython = get_ipython()
+# if ipython is not None:
+#     ipython.run_line_magic('matplotlib', 'inline')
 
 PATH_FIG          = '../../../cloud-statistics/figures/'
 PATH_FIG_TEST     = '../../tests/figures/'
@@ -122,8 +128,8 @@ case_to_only_save = False
 if not process_all:
     path_to_data = "../../tests/data" # Path to save cloudnet downloaded files
 
-    date_ini = "2023-05-27"
-    date_end = "2023-05-27"
+    date_ini = "2023-05-19"
+    date_end = "2023-05-19"
     date_end_new = date_end.replace("-", "")
 
     download_cloudnet_products(date_ini, date_end, path_to_data, product=product_1, site=site)
@@ -455,81 +461,7 @@ for idx_file, file in enumerate(filenames):
         cloud_props.to_netcdf(path_save + f"/cloud_properties/{date_str}_cloud_props.nc")
         cloud_type.to_netcdf(path_save + f"/cloud_type/{date_str}_cloud_type.nc")
     # new_der.to_netcdf(f"/media/matheustolen/Seagate Basic/cloudnet/der/{date_str}_new_der.nc")
-    
-    # Add lwp in categorize in cloud_props(base, top, width):
-    cloud_props["lwp"] = categorize["lwp"]
-    cloud_props["rainfall_rate"] = categorize["rainfall_rate"]
     # ---------------------------------------------------------------------------------------------
-    # Data sliced for certain time interval 
-    # ---------------------------------------------------------------------------------------------
-    start_time = pd.to_datetime(cloud_props.time.values[0]).strftime('%Y-%m-%d')
-    ini= "00:00"
-    end= "23:59"
-    scloud_props = cloud_props.sel(time=slice(pd.to_datetime(f"{start_time} {ini}"), pd.to_datetime(f"{start_time} {end}")))
-    scategorize  = categorize.sel(time=slice(pd.to_datetime(f"{start_time} {ini}"), pd.to_datetime(f"{start_time} {end}")))
-    smask        = (cloud_occurrence["single_layer"] == 1).sel(time=slice(pd.to_datetime(f"{start_time} {ini}"), pd.to_datetime(f"{start_time} {end}")))
-    # ---------------------------------------------------------------------------------------------
-    # get data in cloud_props and categorize at each 5 minutes (moving mean of 5 min)
-    # and take the correlation between cloud thickness and lwp:
-    # https://pandas.pydata.org/docs/reference/api/pandas.core.window.rolling.Rolling.corr.html
-    # ---------------------------------------------------------------------------------------------
-    # Add cloud thickness and lwp in a pandas dataframe:
-    df = scloud_props.cloud_thickness.to_dataframe()
-    df['lwp'] = scloud_props.lwp.to_dataframe()
-    #df.dropna(inplace=True)
-    # Calculate the correlation between cloud thickness and lwp at each 5 minutes:
-    time_roll = "30T"
-    corr_pd = df['cloud_thickness'].rolling(window=time_roll).corr(df['lwp'])
-    # corr_pd.plot()
-    # transform the correlation to xarray dataset:
-    scloud_props['corr'] = xr.DataArray(corr_pd.values, coords={'time': scloud_props.time}, dims='time')
-    scloud_props['corr'].attrs['long_name'] = f'Correlation at each {time_roll} min'
-    scloud_props['corr'].attrs['description'] = 'Correlation between cloud thickness and lwp at each 5 minutes'
-    # scloud_props['corr'].attrs['units'] = '1'
-    # ---------------------------------------------------------------------------------------------
-    # Coarsen the data
-    # ---------------------------------------------------------------------------------------------
-    time_coarsen = "10min"
-    coarsen_props      = scloud_props.copy()
-    coarsen_categorize = scategorize.copy()
-
-    fig = plt.figure(figsize=(15, 9))
-    gs = fig.add_gridspec(2, 4, width_ratios=[1, .02, .2, .6], wspace=0.1, hspace=0.4)
-
-    ax1 = fig.add_subplot(gs[0, 0])
-    scategorize['Z'].T.plot(ax=ax1, cmap='viridis', vmin=-40, vmax=20, add_colorbar=False)
-    ax1.fill_between(scategorize.time.values, 0, 12000, where=smask, color='blue', alpha=0.2)
-    # put NAN in the correalation where the cloud is not single layer
-    # scloud_props['corr'] = scloud_props['corr'].where(smask)
-    scloud_props.cloud_base.plot(ax=ax1, color='r', linestyle='-')
-    scloud_props.cloud_top.plot(ax=ax1, color='k', linestyle='-')
-
-    # plot a blue area for intervals with single layer clouds
-    cbar = fig.add_subplot(gs[0, 1])
-    cbar = plt.colorbar(ax1.collections[0], cax=cbar, label=categorize['Z'].units)
-    
-    ax2 = fig.add_subplot(gs[1, 0], sharex=ax1)
-    coarsen_props.cloud_thickness.plot(ax=ax2, color='b', label=time_coarsen)
-    ax2.legend()
-
-    ax3 = ax2.twinx()
-    coarsen_props.lwp.plot(ax=ax3, color='r')
-    ax3.spines['right'].set_color('red')
-
-    ax4 = fig.add_subplot(gs[0, 3])
-    scloud_props.plot.scatter(x='lwp', y='cloud_thickness', ax=ax4)
-
-    ax5 = ax2.twinx()
-    scloud_props['corr'] = scloud_props['corr'].where(scloud_props['lwp'] > 0.4)
-    scloud_props.corr.plot(ax=ax5, color='g')
-    ax5.spines['right'].set_position(('outward', 60))  # Move the y-axis outward
-    ax5.spines['right'].set_color('green')
-    # plot horizontal line at zero correlation
-    ax5.axhline(y=0, color='g', linestyle='--')
-
-    plt.show()
-    # ---------------------------------------------------------------------------------------------
-
     array_cloud = np.zeros((data.time.shape[0], data.height.shape[0]))
     cloud_int= {
         "No Cloud": 0,
@@ -554,10 +486,100 @@ for idx_file, file in enumerate(filenames):
     ds_cloud.cloud_classification.attrs['long_name'] = 'Cloud classification'
     ds_cloud.cloud_classification.attrs['description'] = \
     'Cloud classification based on cloudnet target classification.\nHydrometeor cluster classification algorithm. \n0: No Cloud, \n1: Liquid, \n2: Liquid-Precipitable, \n3: Ice, \n4: Ice-Precipitable, \n5: Mixed-Phase, \n6: Mixed-Phase-Precipitable, \n7: Noise'
+    # 
+    # Add lwp in categorize in cloud_props(base, top, width):
+    cloud_props["lwp"] = categorize["lwp"]
+    cloud_props["rainfall_rate"] = categorize["rainfall_rate"]
+    # ---------------------------------------------------------------------------------------------
+    # Data sliced for certain time interval 
+    # ---------------------------------------------------------------------------------------------
+    start_time = pd.to_datetime(cloud_props.time.values[0]).strftime('%Y-%m-%d')
+    ini= "00:00"
+    end= "23:59"
+    scloud_props = cloud_props.sel(time=slice(pd.to_datetime(f"{start_time} {ini}"), pd.to_datetime(f"{start_time} {end}")))
+    scategorize  = categorize.sel(time=slice(pd.to_datetime(f"{start_time} {ini}"), pd.to_datetime(f"{start_time} {end}")))
+    # smask        = single_layer_mask.sel(time=slice(pd.to_datetime(f"{start_time} {ini}"), pd.to_datetime(f"{start_time} {end}")))
+    smask       = cloud_occurrence["single_layer"].sel(time=slice(pd.to_datetime(f"{start_time} {ini}"), pd.to_datetime(f"{start_time} {end}")))
+    # ---------------------------------------------------------------------------------------------
+    # get data in cloud_props and categorize at each 5 minutes (moving mean of 5 min)
+    # and take the correlation between cloud thickness and lwp:
+    # https://pandas.pydata.org/docs/reference/api/pandas.core.window.rolling.Rolling.corr.html
+    # ---------------------------------------------------------------------------------------------
+    # Add cloud thickness and lwp in a pandas dataframe:
+    df = scloud_props.cloud_thickness.to_dataframe()
+    df['lwp'] = scloud_props.lwp.to_dataframe()
+    #df.dropna(inplace=True)
+    # Calculate the correlation between cloud thickness and lwp at each 5 minutes:
+    time_roll = "10T"
+    corr_pd = df['cloud_thickness'].rolling(window=time_roll, min_periods=10, center=False).corr(df['lwp'])
+    # corr_pd.plot()
+    # transform the correlation to xarray dataset:
+    scloud_props['corr'] = xr.DataArray(corr_pd.values, coords={'time': scloud_props.time}, dims='time')
+    scloud_props['corr'].attrs['long_name'] = f'Correlation at each {time_roll} min'
+    scloud_props['corr'].attrs['description'] = 'Correlation between cloud thickness and lwp at each 5 minutes'
+    # scloud_props['corr'].attrs['units'] = '1'
+    # ---------------------------------------------------------------------------------------------
+    # Coarsen the data
+    # ---------------------------------------------------------------------------------------------
+    time_coarsen = "10min"
+    coarsen_props      = scloud_props.copy()
+    coarsen_categorize = scategorize.copy()
     
+    fig = plt.figure(figsize=(15, 9))
+    gs = fig.add_gridspec(2, 4, width_ratios=[1, .02, .2, .6], wspace=0.1, hspace=0.4)
+
+    ax1 = fig.add_subplot(gs[0, 0])
+    # scategorize['Z'].T.plot(ax=ax1, cmap='viridis', vmin=-40, vmax=20, add_colorbar=False)
+    ds_cloud['cloud_classification'].T.plot(ax=ax1, cmap=cloud_cmap, vmin=0, vmax=7, add_colorbar=False)
+    ax1.fill_between(scategorize.time.values, 0, 12000, where=smask, color='blue', alpha=0.2)
+    # put NAN in the correalation where the cloud is not single layer
+    # scloud_props['corr'] = scloud_props['corr'].where(smask)
+    scloud_props.cloud_base.plot(ax=ax1, color='r', linestyle='-')
+    scloud_props.cloud_top.plot(ax=ax1, color='k', linestyle='-')
+
+    # plot a blue area for intervals with single layer clouds
+    cbar = fig.add_subplot(gs[0, 1])
+    cbar = plt.colorbar(ax1.collections[0], cax=cbar,
+                        ticks=range(len(cloud_int)),
+                        orientation='vertical')
+    cbar.ax.set_yticklabels(list(cloud_int.keys()))
+    
+    ax2 = fig.add_subplot(gs[1, 0], sharex=ax1)
+    coarsen_props.cloud_thickness.plot(ax=ax2, color='b', label=time_coarsen)
+    ax2.legend()
+
+    ax3 = ax2.twinx()
+    coarsen_props.lwp.plot(ax=ax3, color='r')
+    ax3.spines['right'].set_color('red')
+
+    ax4 = fig.add_subplot(gs[0, 3])
+    scloud_props.plot.scatter(x='lwp', y='cloud_thickness', ax=ax4)
+
+    ax5 = ax2.twinx()
+    scloud_props.corr.plot(ax=ax5, color='g')
+    ax5.spines['right'].set_position(('outward', 50))  # Move the y-axis outward
+    ax5.spines['right'].set_color('green')
+    # plot horizontal line at zero correlation
+    ax5.axhline(y=0, color='g', linestyle='--')
+    plt.show()
+
+    # Plot filtered cloud thickness
+    mask_lwp  = scloud_props['lwp'] > 0.5
+    mask_corr = scloud_props['corr'] < 0.0
+    fig, ax1 = plt.subplots(figsize=(12, 5))
+    ds_cloud['cloud_classification'].T.plot(ax=ax1, cmap=cloud_cmap, vmin=0, vmax=7,add_colorbar=False)
+    cbar = plt.colorbar(ax1.collections[0], ax=ax1, ticks=range(len(cloud_int)), orientation='vertical')
+    cbar.ax.set_yticklabels(list(cloud_int.keys()))
+    smask_filter = (mask_lwp & mask_corr) | (scloud_props['lwp'] > 1)
+    ax1.fill_between(scategorize.time.values, 0, 12000, where=smask_filter, color='red', alpha=0.2)
+    scloud_props.cloud_base.plot(ax=ax1, color='r', linestyle='-')
+    scloud_props.cloud_top.plot(ax=ax1, color='k', linestyle='-')
+    plt.show()
+    
+    # ---------------------------------------------------------------------------------------------
     letters = iter('abcdefghijklmnopqrstuvwxyz')
     show_category = False
-    if not process_all or make_plot:
+    # if not process_all or make_plot:
         # # -----------------------------------------------------------------------------
         # # Plot reflectivity time serie
         # # -----------------------------------------------------------------------------
@@ -665,86 +687,86 @@ for idx_file, file in enumerate(filenames):
         #     rect = plt.Rectangle((0, idx), 1, 1, color=color)
         #     cbar_scat.ax.add_patch(rect)
         #     cbar_scat.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=14)
-        # fig.savefig(PATH_FIG + f"{date_str}_cloud_classification_cluster.png", dpi=1000, bbox_inches='tight')
+        # # fig.savefig(PATH_FIG + f"{date_str}_cloud_classification_cluster.png", dpi=1000, bbox_inches='tight')
         # plt.show()
         # # -----------------------------------------------------------------------------
 
-        # -----------------------------------------------------------------------------
-        # Plot C.T.P, C.C.P and LWP
-        # -----------------------------------------------------------------------------
-        if show_category:
-            fig = plt.figure(figsize=(14, 11))
-            gs = fig.add_gridspec(3, 2, width_ratios=[1, .02], height_ratios=[1, 1, .3], wspace=0.05, hspace=0.08)
-        else:
-            fig = plt.figure(figsize=(13, 9))
-            gs = fig.add_gridspec(3, 2, width_ratios=[1, .02], height_ratios=[1, 1, .5], wspace=0.05, hspace=0.05)
+        # # -----------------------------------------------------------------------------
+        # # Plot C.T.P, C.C.P and LWP
+        # # -----------------------------------------------------------------------------
+        # if show_category:
+        #     fig = plt.figure(figsize=(14, 11))
+        #     gs = fig.add_gridspec(3, 2, width_ratios=[1, .02], height_ratios=[1, 1, .3], wspace=0.05, hspace=0.08)
+        # else:
+        #     fig = plt.figure(figsize=(13, 9))
+        #     gs = fig.add_gridspec(3, 2, width_ratios=[1, .02], height_ratios=[1, 1, .5], wspace=0.05, hspace=0.05)
 
-        ax1 = fig.add_subplot(gs[1, 0])
-        pc0 = ax1.pcolormesh(ds_cloud['time'], ds_cloud['height']/1e3, ds_cloud['cloud_classification'].T, cmap=cloud_cmap, vmin=0, vmax=len(cloud_category))
+        # ax1 = fig.add_subplot(gs[1, 0])
+        # pc0 = ax1.pcolormesh(ds_cloud['time'], ds_cloud['height']/1e3, ds_cloud['cloud_classification'].T, cmap=cloud_cmap, vmin=0, vmax=len(cloud_category))
 
-        sc1 = ax1.scatter(cloud_props['time'], cloud_props['cloud_base']/1e3, s=1, color='r', label='Cloud base')
-        sc2 = ax1.scatter(cloud_props['time'], cloud_props['cloud_top']/1e3, s=1, color='k', label='Cloud top')
-        ax1.xaxis.set_tick_params(labelbottom=False)
-        ax1.set_ylabel('Height (km) a.s.l')
-        ax1.grid()
-        # set x limitis from 17 to 18 UTC
-        # ax1.set_xlim(datetime.datetime.strptime(date_str, '%Y%m%d') + datetime.timedelta(hours=1), datetime.datetime.strptime(date_str, '%Y%m%d') + datetime.timedelta(hours=15))
-        # ax1.set_ylim([0, 4])
+        # sc1 = ax1.scatter(cloud_props['time'], cloud_props['cloud_base']/1e3, s=1, color='r', label='Cloud base')
+        # sc2 = ax1.scatter(cloud_props['time'], cloud_props['cloud_top']/1e3, s=1, color='k', label='Cloud top')
+        # ax1.xaxis.set_tick_params(labelbottom=False)
+        # ax1.set_ylabel('Height (km) a.s.l')
+        # ax1.grid()
+        # # set x limitis from 17 to 18 UTC
+        # # ax1.set_xlim(datetime.datetime.strptime(date_str, '%Y%m%d') + datetime.timedelta(hours=1), datetime.datetime.strptime(date_str, '%Y%m%d') + datetime.timedelta(hours=15))
+        # # ax1.set_ylim([0, 4])
 
-        ax1.set_xlim(data.time.values[0], data.time.values[-1])
-        ax1.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+        # ax1.set_xlim(data.time.values[0], data.time.values[-1])
+        # ax1.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
 
-        ax2 = fig.add_subplot(gs[0, 0], sharex=ax1, sharey=ax1)
-        pc = ax2.pcolormesh(cloud_classification['time'], cloud_classification['height']/1e3, cloud_classification.T, cmap=manual_cmap, vmin=0, vmax=ncolors)
-        countour = ax2.contour(categorize['model_time'], categorize['model_height'][:]/1e3,
-                                categorize['temperature'][:].T - 273.15,
-                                levels=[-40, -25, -10, 0, 5], colors='black', linewidths=0.5)
-        countour = ax1.contour(categorize['model_time'], categorize['model_height'][:]/1e3,
-                        categorize['temperature'][:].T - 273.15,
-                        levels=[-40, -25, -10, 0, 5], colors='black', linewidths=0.5)
-        countour.clabel(inline=True, fmt='%2.1f'+r'$^{\circ}$C', fontsize=12)
-        ax2.set_ylabel('Height (km) a.s.l')
-        ax2.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
-        # ax2.set_ylim([categorize['height'][0]/1e3, categorize['height'][-1]/1e3])
-        ax2.set_ylim([0, cloud_classification['height'][-1]/1e3])
-        ax2.xaxis.set_tick_params(labelbottom=False)
-        ax2.set_title(f"Cloud Classification {date_str} - {site}")
-        ax2.grid()
+        # ax2 = fig.add_subplot(gs[0, 0], sharex=ax1, sharey=ax1)
+        # pc = ax2.pcolormesh(cloud_classification['time'], cloud_classification['height']/1e3, cloud_classification.T, cmap=manual_cmap, vmin=0, vmax=ncolors)
+        # countour = ax2.contour(categorize['model_time'], categorize['model_height'][:]/1e3,
+        #                         categorize['temperature'][:].T - 273.15,
+        #                         levels=[-40, -25, -10, 0, 5], colors='black', linewidths=0.5)
+        # countour = ax1.contour(categorize['model_time'], categorize['model_height'][:]/1e3,
+        #                 categorize['temperature'][:].T - 273.15,
+        #                 levels=[-40, -25, -10, 0, 5], colors='black', linewidths=0.5)
+        # countour.clabel(inline=True, fmt='%2.1f'+r'$^{\circ}$C', fontsize=12)
+        # ax2.set_ylabel('Height (km) a.s.l')
+        # ax2.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+        # # ax2.set_ylim([categorize['height'][0]/1e3, categorize['height'][-1]/1e3])
+        # ax2.set_ylim([0, cloud_classification['height'][-1]/1e3])
+        # ax2.xaxis.set_tick_params(labelbottom=False)
+        # ax2.set_title(f"Cloud Classification {date_str} - {site}")
+        # ax2.grid()
 
-        cax = fig.add_subplot(gs[0, 1])
-        cbar = plt.colorbar(pc, cax=cax, ticks=[], orientation='vertical')
+        # cax = fig.add_subplot(gs[0, 1])
+        # cbar = plt.colorbar(pc, cax=cax, ticks=[], orientation='vertical')
 
-        for idx, (color, name) in enumerate(zip(manual_cmap.colors, color_names)):
-            rect = plt.Rectangle((0, idx), 1, 1, color=color)
-            cbar.ax.add_patch(rect)
-            cbar.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=14)
+        # for idx, (color, name) in enumerate(zip(manual_cmap.colors, color_names)):
+        #     rect = plt.Rectangle((0, idx), 1, 1, color=color)
+        #     cbar.ax.add_patch(rect)
+        #     cbar.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=14)
 
-        cax_scat = fig.add_subplot(gs[1, 1])
-        cbar_scat = plt.colorbar(pc0, cax=cax_scat, ticks=[], orientation='vertical')
+        # cax_scat = fig.add_subplot(gs[1, 1])
+        # cbar_scat = plt.colorbar(pc0, cax=cax_scat, ticks=[], orientation='vertical')
 
-        for idx, (color, name) in enumerate(zip(cloud_cmap.colors, cloud_category)):
-            rect = plt.Rectangle((0, idx), 1, 1, color=color)
-            cbar_scat.ax.add_patch(rect)
-            cbar_scat.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=14)
+        # for idx, (color, name) in enumerate(zip(cloud_cmap.colors, cloud_category)):
+        #     rect = plt.Rectangle((0, idx), 1, 1, color=color)
+        #     cbar_scat.ax.add_patch(rect)
+        #     cbar_scat.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=14)
 
-        if show_category:
-            ax3 = fig.add_subplot(gs[2, 0], sharex=ax1)
-            ax3.plot(data.time, cloud_occurrence['single_layer'], label='Single Layer')
-            ax3.plot(data.time, cloud_occurrence['multi_layer'], label='Multi Layer')
-            ax3.plot(data.time, cloud_occurrence['clear_sky'], label='Clear Sky')
-            ax3.plot(data.time, cloud_occurrence['noise'], label='Noise')
-            ax3.set_xlabel('Time')
-            ax3.legend()
-        else:
-            ax3 = fig.add_subplot(gs[2, 0], sharex=ax1)
-            ax3.plot(categorize['time'], categorize['lwp']*1000, 'm')
-            ax3.set_ylabel('LWP (g/m$^2$)')
-            ax3.set_xlabel('Time (UTC) HH:MM')
-            ax3.grid()
+        # if show_category:
+        #     ax3 = fig.add_subplot(gs[2, 0], sharex=ax1)
+        #     ax3.plot(data.time, cloud_occurrence['single_layer'], label='Single Layer')
+        #     ax3.plot(data.time, cloud_occurrence['multi_layer'], label='Multi Layer')
+        #     ax3.plot(data.time, cloud_occurrence['clear_sky'], label='Clear Sky')
+        #     ax3.plot(data.time, cloud_occurrence['noise'], label='Noise')
+        #     ax3.set_xlabel('Time')
+        #     ax3.legend()
+        # else:
+        #     ax3 = fig.add_subplot(gs[2, 0], sharex=ax1)
+        #     ax3.plot(categorize['time'], categorize['lwp']*1000, 'm')
+        #     ax3.set_ylabel('LWP (g/m$^2$)')
+        #     ax3.set_xlabel('Time (UTC) HH:MM')
+        #     ax3.grid()
 
-        # fig.savefig(PATH_FIG_TEST + f"{date_str}_cloud_classification_zoom.png", dpi=300, bbox_inches='tight')
-        case_to_only_save = False
-        plt.show()
+        # # fig.savefig(PATH_FIG_TEST + f"{date_str}_cloud_classification_zoom.png", dpi=300, bbox_inches='tight')
+        # case_to_only_save = False
+        # plt.show()
         # -----------------------------------------------------------------------------
 
         # # -----------------------------------------------------------------------------
