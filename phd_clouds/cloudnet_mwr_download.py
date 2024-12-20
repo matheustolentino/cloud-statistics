@@ -9,7 +9,7 @@ payload = {
     'product': 'mwr',
     'site': 'granada',
     'dateFrom': '2018-04-22',
-    'dateTo': '2023-10-20'
+    'dateTo': '2023-12-31'
 }
 metadata = requests.get(url, params=payload).json()
 

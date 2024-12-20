@@ -13,9 +13,7 @@ from scipy import ndimage
 import numpy as np
 import pandas as pd
 import matplotlib.dates as mdates
-import matplotlib
 import matplotlib.colors as colors
-from IPython import get_ipython
 from phd_clouds.clouds import HMmodel
 from pathlib import Path
 from gfatpy.radar.rpg_nc import rpg
@@ -24,6 +22,9 @@ from rpgpy import rpg2nc
 import glob
 from cloudnetpy.products import generate_der
 from cloudnetpy.products.der import Parameters
+import matplotlib as mpl
+from IPython import get_ipython
+from scipy.optimize import curve_fit
 
 fontsize = 14
 # Set the font to Times New Roman using LaTeX
@@ -33,8 +34,16 @@ plt.rcParams['font.serif'] = ['Times New Roman'] + plt.rcParams['font.serif']
 # Set the fontsize for all elements in the plot
 plt.rcParams['font.size'] = fontsize
 
+plt.close('all')
+mpl.use('qtagg')
 
-PATH_FIG          = '../../papers/cloud_statistics/figures/'
+
+# plt.ion()
+# ipython = get_ipython()
+# if ipython is not None:
+#     ipython.run_line_magic('matplotlib', 'inline')
+
+PATH_FIG          = '../../../cloud-statistics/figures/'
 PATH_FIG_TEST     = '../../tests/figures/'
 
 def israinabove(hydromet_only_column: np.ndarray, rain_value: int) -> bool:
@@ -93,13 +102,91 @@ list_cloud_colors = ["blue", "cyan", "green", "yellow", "orange", "magenta"]
 all_hydromet_values = [CLOUD_LIQUID, DRIZZLE_OR_RAIN, DRIZZLE_OR_RAIN_LIQUID_DROPLETS,\
                                         ICE_PARTICLES, ICE_WITH_SUP_WATER, MELTING_ICE,\
                                                 MELTING_ICE_LIQUID_DROPLETS]
+# ---------------------------------------------------------------------------------------------
+# Functions
+# ---------------------------------------------------------------------------------------------
+def mask_attenuation(data, ds_cloud, cloud_cmap, cloud_int, time_roll="10T", lwp_treshold=0.8, corr_treshold=-0.5, lwp2_treshold=1, make_plot=False):
+    """
+    Apply attenuation filter to cloud properties and categorize data.
+    """
+    # ---------------------------------------------------------------------------------------------
+    # get data in cloud_props and categorize at each 5 minutes (moving mean of 5 min)
+    # and take the correlation between cloud thickness and lwp:
+    # https://pandas.pydata.org/docs/reference/api/pandas.core.window.rolling.Rolling.corr.html
+    # ---------------------------------------------------------------------------------------------
+    # Add cloud thickness and lwp in a pandas dataframe:
+    df = data.cloud_thickness.to_dataframe()
+    df['lwp_radar'] = data.lwp_radar.to_dataframe()
+    #df.dropna(inplace=True)
+    # Calculate the correlation between cloud thickness and lwp at each 5 minutes:
+    corr_pd = df['cloud_thickness'].rolling(window=time_roll, min_periods=10, center=False).corr(df['lwp_radar'])
+    # corr_pd.plot()
+    # transform the correlation to xarray dataset:
+    data['corr'] = xr.DataArray(corr_pd.values, coords={'time': data.time}, dims='time')
+    data['corr'].attrs['long_name'] = f'Correlation (thickness & lwp)'
+    data['corr'].attrs['description'] = 'Correlation between cloud thickness and lwp at each 5 minutes'
+    # data['corr'].attrs['units'] = '1'
+    # ---------------------------------------------------------------------------------------------
+    # Coarsen the data
+    # ---------------------------------------------------------------------------------------------
+    mask_lwp     = data['lwp_radar'] > lwp_treshold
+    mask_corr    = data['corr'] < corr_treshold
+    smask_filter = (mask_lwp & mask_corr) | (data['lwp_radar'] > lwp2_treshold)
+    
+    if make_plot:
+        fig = plt.figure(figsize=(20, 10))
+        gs = fig.add_gridspec(2, 2, width_ratios=[1, .02], height_ratios=[1, .6], wspace=0.02, hspace=0.2)
+
+        ax2 = fig.add_subplot(gs[1, 0])
+        data.cloud_thickness.plot(ax=ax2, color='b')
+
+        ax3 = ax2.twinx()
+        data.lwp_radar.plot(ax=ax3, color='r')
+        ax3.spines['right'].set_color('red')
+        ax3.axhline(y=lwp_treshold, color='r', linestyle='--')
+        ax3.axhline(y=lwp2_treshold, color='k', linestyle='--')
+
+        ax5 = ax2.twinx()
+        data.corr.plot(ax=ax5, color='g')
+        ax5.spines['right'].set_position(('outward', 50))  # Move the y-axis outward
+        ax5.spines['right'].set_color('green')
+        # plot horizontal line at zero correlation
+        ax5.axhline(y=corr_treshold, color='g', linestyle='--')
+        
+        # smask_filter = (mask_lwp & mask_corr)
+        ax1 = fig.add_subplot(gs[0, 0], sharex=ax2)
+        # scategorize['Z'].T.plot(ax=ax1, cmap='viridis', vmin=-40, vmax=20, add_colorbar=False)
+        ds_cloud['cloud_classification'].T.plot(ax=ax1, cmap=cloud_cmap, vmin=0, vmax=7, add_colorbar=False)
+        # ax1.fill_between(scategorize.time.values, 0, 12000, where=smask, color='blue', alpha=0.2) # single layer
+        ax1.fill_between(ds_cloud.time.values, 0, 12000, where=smask_filter, color='red', alpha=0.2) # removed areas due to attenuation
+        # put NAN in the correalation where the cloud is not single layer
+        # data['corr'] = data['corr'].where(smask)
+        data.cloud_base.plot(ax=ax1, color='r', linestyle='-')
+        data.cloud_top.plot(ax=ax1, color='k', linestyle='-')
+
+        # plot a blue area for intervals with single layer clouds
+        cbar = fig.add_subplot(gs[0, 1])
+        cbar = plt.colorbar(ax1.collections[0], cax=cbar,
+                            ticks=range(len(cloud_int)),
+                            orientation='vertical')
+        cbar.ax.set_yticklabels(list(cloud_int.keys()))
+        datestrings = data.time.dt.strftime('%Y%m%d').values
+        plt.tight_layout()
+        fig.savefig(f"{PATH_FIG_TEST}{datestrings[0]}_attenuation_mask.png", dpi=600, bbox_inches='tight')
+        plt.show()
+
+    return smask_filter.astype(float)
+# ---------------------------------------------------------------------------------------------
 
 path_save = "/media/matheustolen/Seagate Basic/cloudnet/cloud_classification" # Path to save the cloud classification files
 path_microphys = "/home/matheustolen/Documentos/matheus_doctorado/output_retrievals" # Path with files already downloaded
 path_categorize = "/media/matheustolen/Seagate Basic/cloudnet/categorize" # Path with files already downloaded
+path_radar = "/media/matheustolen/Seagate Basic/cloudnet/radar" # Path with files already downloaded
 site = 'granada'
 product_1 = 'classification'
 product_2 = 'categorize'
+product_3 = 'mwr'
+product_4 = 'radar'
 
 process_all = False
 save_files = False
@@ -116,51 +203,51 @@ else:
     print("*****************Warning**********************\nNot filtering ice clouds in the ABL")
 
 
-plt.close('all')
-
-ipython = get_ipython()
-if ipython is not None:
-    ipython.run_line_magic('matplotlib', 'inline')
-
-# # plt.ion()
-# matplotlib.use('qtagg')
-
 case_to_only_save = False
 if not process_all:
     path_to_data = "../../tests/data" # Path to save cloudnet downloaded files
 
-    date_ini = "2023-05-06"
-    date_end = "2023-05-06"
+    date_ini = "2024-11-13"
+    date_end = "2024-11-13"
     date_end_new = date_end.replace("-", "")
 
     download_cloudnet_products(date_ini, date_end, path_to_data, product=product_1, site=site)
     download_cloudnet_products(date_ini, date_end, path_to_data, product=product_2, site=site)
+    download_cloudnet_products(date_ini, date_end, path_to_data, product=product_3, site=site)
+    download_cloudnet_products(date_ini, date_end, path_to_data, product=product_4, site=site)
 
     # Load the NetCDF file
     filenames = [f"{date_end_new}_{site}_{product_1}.nc"]
-    lwc_filepaths = [f"{date_end_new}_{site}_lwc-scaled-adiabatic.nc"]
-    iwc_filepaths = [f"{date_end_new}_{site}_iwc-Z-T-method.nc"]
-    der_filepaths = [f"{date_end_new}_{site}_der.nc"]
-    ier_filepaths = [f"{date_end_new}_{site}_ier.nc"]
+    # lwc_filepaths = [f"{date_end_new}_{site}_lwc-scaled-adiabatic.nc"]
+    # iwc_filepaths = [f"{date_end_new}_{site}_iwc-Z-T-method.nc"]
+    # der_filepaths = [f"{date_end_new}_{site}_der.nc"]
+    # ier_filepaths = [f"{date_end_new}_{site}_ier.nc"]
 else:
     path_to_data    = "/media/matheustolen/Seagate Basic/cloudnet/classification" # Path with files already downloaded
-    lwc_filepaths = [file for file in os.listdir(path_microphys) if file.endswith("lwc-scaled-adiabatic.nc")]
-    iwc_filepaths = [file for file in os.listdir(path_microphys) if file.endswith("iwc-Z-T-method")]
-    der_filepaths = [file for file in os.listdir(path_microphys) if file.endswith("der.nc")] 
-    ier_filepaths = [file for file in os.listdir(path_microphys) if file.endswith("ier.nc")]
+    
+    # lwc_filepaths = [file for file in os.listdir(path_microphys) if file.endswith("lwc-scaled-adiabatic.nc")]
+    # iwc_filepaths = [file for file in os.listdir(path_microphys) if file.endswith("iwc-Z-T-method")]
+    # der_filepaths = [file for file in os.listdir(path_microphys) if file.endswith("der.nc")] 
+    # ier_filepaths = [file for file in os.listdir(path_microphys) if file.endswith("ier.nc")]
 
     # Get a linst of filenames of products
     filenames = os.listdir(path_to_data)
 
+mwr_files = []
 for idx_file, file in enumerate(filenames):
     # Load the downloaded with xarray pandas:
     data         = xr.open_dataset(os.path.join(path_to_data, file))
     date_end_new = pd.to_datetime(data.time.values[-1]).strftime("%Y%m%d")
     
     if process_all:
-        categorize   = xr.open_dataset(os.path.join(path_categorize, f"{date_end_new}_{site}_{product_2}.nc"))
+        categorize = xr.open_dataset(os.path.join(path_categorize, f"{date_end_new}_{site}_{product_2}.nc"))
+        radar_lwp  = xr.open_dataset(glob.glob(os.path.join(path_radar, f"{date_end_new}_{site}_rpg-fmcw-94*.nc"))[0])['lwp']
     else: 
-        categorize   = xr.open_dataset(os.path.join(path_to_data, f"{date_end_new}_{site}_{product_2}.nc"))
+        categorize = xr.open_dataset(os.path.join(path_to_data, f"{date_end_new}_{site}_{product_2}.nc"))
+        radar_lwp  = xr.open_dataset(glob.glob(os.path.join(path_to_data, f"{date_end_new}_{site}_rpg-fmcw-94*.nc"))[0])['lwp']
+        mwr_files = glob.glob(os.path.join(path_to_data, f"{date_end_new}_{site}_hatpro*.nc"))
+
+
     # # Load the microphysical data
     # lwc = xr.open_dataset(os.path.join(path_microphys, lwc_filepaths[idx_file]))
     # iwc = xr.open_dataset(os.path.join(path_microphys, iwc_filepaths[idx_file]))
@@ -393,6 +480,7 @@ for idx_file, file in enumerate(filenames):
                     if is_thick_enough and is_base_enough:
                         cloud_occurrence["single_layer"][aux_time_single_layer] = 0
                         time_idx_noise[aux_time_single_layer] = 1
+                        cloud_type["Noise"][aux_time_single_layer] = 1
                         cloud_props["cloud_base"][aux_time_single_layer] = np.nan
                         cloud_props["cloud_top"][aux_time_single_layer]  = np.nan
                         cloud_props["cloud_thickness"][aux_time_single_layer] = np.nan
@@ -443,22 +531,12 @@ for idx_file, file in enumerate(filenames):
     mask_clear_sky = mask_clear_sky.astype(float)
     cloud_occurrence["clear_sky"] = xr.DataArray(data=mask_clear_sky.values, coords={'time': data.time}, dims='time')
     cloud_occurrence["noise"]     = xr.DataArray(data=time_idx_noise, coords={'time': data.time}, dims='time')  # not mutually exclusive with clear sky
-
-    new_height = np.arange(0, 14000+100, 100)
-    # Identify single layer and non-noise clouds in time
-    single_layer_mask = (cloud_occurrence["single_layer"] == 1) & (cloud_occurrence["noise"] == 0)
-    # new_der = new_der.where(single_layer_mask, np.nan)['der'].groupby_bins('height', new_height, labels=new_height[1:]).mean()
-    # cloud_occurrence.coords['cloud_type'] = ('time', cloud_type)
-    # cloud_props.coords['cloud_type']      = ('time', cloud_type)
     
-    date_str = cloud_occurrence.time[0].dt.strftime('%Y%m%d').values.item()
-    # Save cloud occurrence as netCDF
-    if save_files and process_all:
-        cloud_occurrence.to_netcdf(path_save + f"/cloud_occurence/{date_str}_cloud_occurrence.nc")
-        cloud_props.to_netcdf(path_save + f"/cloud_properties/{date_str}_cloud_props.nc")
-        cloud_type.to_netcdf(path_save + f"/cloud_type/{date_str}_cloud_type.nc")
+    # check if noise in cloud_type is the same as in cloud_occurrence:
+    # print(" Check if noise in cloud_type is the same as in cloud_occurrence (it must be):",
+    #       np.all(cloud_type["Noise"].values == cloud_occurrence["noise"].values))
     # new_der.to_netcdf(f"/media/matheustolen/Seagate Basic/cloudnet/der/{date_str}_new_der.nc")
-
+    # ---------------------------------------------------------------------------------------------
     array_cloud = np.zeros((data.time.shape[0], data.height.shape[0]))
     cloud_int= {
         "No Cloud": 0,
@@ -484,84 +562,74 @@ for idx_file, file in enumerate(filenames):
     ds_cloud.cloud_classification.attrs['description'] = \
     'Cloud classification based on cloudnet target classification.\nHydrometeor cluster classification algorithm. \n0: No Cloud, \n1: Liquid, \n2: Liquid-Precipitable, \n3: Ice, \n4: Ice-Precipitable, \n5: Mixed-Phase, \n6: Mixed-Phase-Precipitable, \n7: Noise'
     
-    letters = iter('abcdefghijklmnopqrstuvwxyz')
-    show_category = False
-    if not process_all or make_plot:
-
-        # Do the same as above but plot categorize["Z"] insteado of target_classification
-        fig = plt.figure(figsize=(12, 5))
-        gs  = fig.add_gridspec(1, 2, width_ratios=[1, .02], wspace=0.05, hspace=0.08)
-        ax2 = fig.add_subplot(gs[0, 0])
-        pc = ax2.pcolormesh(categorize['time'], categorize['height']/1e3, categorize['Z'].T, cmap='viridis', vmin=-40, vmax=20) 
-        ax2.set_ylabel('Altitude (km) a.s.l')
-        ax2.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
-        ax2.set_ylim([0, 12])
-        # ax2.set_title(f"Reflectivity {date_str} - {site}")
-        ax2.grid()
-
-        cax = fig.add_subplot(gs[0, 1])
-        cbar = plt.colorbar(pc, cax=cax, orientation='vertical', label='Reflectivity (dBZ)')
-
-        # fig.savefig(PATH_FIG + f"{date_str}_reflectivity.png", dpi=700, bbox_inches='tight')
-        plt.show()
-
-        fig = plt.figure(figsize=(12, 5))
-        gs  = fig.add_gridspec(1, 2, width_ratios=[1, .02], wspace=0.05, hspace=0.08)
-        ax2 = fig.add_subplot(gs[0, 0])
-        pc = ax2.pcolormesh(cloud_classification['time'], cloud_classification['height']/1e3, cloud_classification.T, cmap=manual_cmap, vmin=0, vmax=ncolors)
-        # countour = ax2.contour(categorize['model_time'], categorize['model_height'][:]/1e3,
-        #                         categorize['temperature'][:].T - 273.15,
-        #                         levels=[-40, -25, -10, 0, 5], colors='black', linewidths=0.5)
-        # countour = ax1.contour(categorize['model_time'], categorize['model_height'][:]/1e3,
-        #                 categorize['temperature'][:].T - 273.15,
-        #                 levels=[-40, -25, -10, 0, 5], colors='black', linewidths=0.5)
-        # countour.clabel(inline=True, fmt='%2.1f'+r'$^{\circ}$C', fontsize=12)
-        ax2.set_ylabel('Height (km) a.s.l')
-        ax2.set_xlabel('Time (UTC)')
-        ax2.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
-        # ax2.set_ylim([categorize['height'][0]/1e3, categorize['height'][-1]/1e3])
-
-        # ax2.set_title(f"Cloud Classification {date_str} - {site}")
-        ax2.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
-        # ax2.set_xlim(data.time.values[0], data.time.values[-1])
-        ax2.grid()
-        cax = fig.add_subplot(gs[0, 1])
-        cbar = plt.colorbar(pc, cax=cax, ticks=[], orientation='vertical')
-
-        for idx, (color, name) in enumerate(zip(manual_cmap.colors, color_names)):
-            rect = plt.Rectangle((0, idx), 1, 1, color=color)
-            cbar.ax.add_patch(rect)
-            cbar.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=14)
-        ax2.set_facecolor('white')
-        ax2.set_ylim([0, ds_cloud['height'][-1]/1e3])
-        fig.savefig(PATH_FIG + f"{date_str}_cloud_classification.png", dpi=700, bbox_inches='tight')
-        plt.show()
-
-        fig, ax = plt.subplots(figsize=(12, 5))
-        for cloud_number, indx in cloud_indx.items():
-        # for cloud_number in cloud_composition.keys:
-        #     indx= cloud_indx[cloud_number]
-            x = data.time.values[indx[:, 0]]
-            y = data.height.values[indx[:, 1]] / 1e3
-            sc = ax.scatter(x, y, color=np.random.rand(3,), s=1)
-        ax.set_ylabel('Altitude (km) a.s.l')
-        ax.set_xlabel('Time (UTC)')
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
-        # ax.set_title(f"Cloud Classification {date_str} - {site}")
-        ax.set_ylim([0, 12])
-        # show untill the 1:00 UTC of the next day
-        ax.set_xlim(data.time.values[0], data.time.values[-1])
-        ax.grid()
-        fig.savefig(PATH_FIG + f"{date_str}_cloud_identification.png", dpi=700, bbox_inches='tight')
-        plt.show()
-        
-        fig = plt.figure(figsize=(12, 5))
-        gs = fig.add_gridspec(1, 2, width_ratios=[1, .02], wspace=0.05)
+    cloud_props['lwp_radar'] = radar_lwp.resample(time='30S', skipna=True).mean().interp(time=cloud_props.time, method='nearest') 
+    
+    if not process_all:
+        if mwr_files:
+            mwr = xr.open_dataset(mwr_files[0])
+            cloud_props['lwp'] = mwr['lwp'].resample(time='30S', skipna=True).mean().interp(time=cloud_props.time, method='nearest')
+            cloud_props['lwp'].attrs['source'] = mwr.attrs['source']
+        else:
+            cloud_props['lwp'] = categorize['lwp'] # post-process LWP
+            cloud_props['lwp'].attrs['source'] = categorize['lwp'].attrs['source'] + " (categorize)"
+    # mwr['lwp'].resample(time='30S', skipna=True).mean().plot()
+    # plt.show()
+    
+    # # ---------------------------------------------------------------------------------------------
+    # # Data sliced for certain time interval to create attenuation mask: uncomment if want to do some tests
+    # # ---------------------------------------------------------------------------------------------
+    # start_time = pd.to_datetime(cloud_props.time.values[0]).strftime('%Y-%m-%d')
+    # ini= "00:00"
+    # end= "23:59"
+    # scloud_props = cloud_props.sel(time=slice(pd.to_datetime(f"{start_time} {ini}"), pd.to_datetime(f"{start_time} {end}")))
+    # scategorize  = categorize.sel(time=slice(pd.to_datetime(f"{start_time} {ini}"), pd.to_datetime(f"{start_time} {end}")))
+    # # smask        = single_layer_mask.sel(time=slice(pd.to_datetime(f"{start_time} {ini}"), pd.to_datetime(f"{start_time} {end}")))
+    # smask       = cloud_occurrence["single_layer"].sel(time=slice(pd.to_datetime(f"{start_time} {ini}"), pd.to_datetime(f"{start_time} {end}")))
+    # # ---------------------------------------------------------------------------------------------
+    att_mask = mask_attenuation(cloud_props, 
+                                ds_cloud, 
+                                cloud_cmap, 
+                                cloud_int, 
+                                time_roll="10T", 
+                                lwp_treshold=0.8, 
+                                corr_treshold=-0.5, 
+                                lwp2_treshold=1, 
+                                make_plot=make_plot)
+    # ---------------------------------------------------------------------------------------------
+    # Add attenuation mask to cloud_type and cloud_occurrence
+    # ---------------------------------------------------------------------------------------------
+    cloud_type["Attenuation"] = xr.DataArray(data=att_mask.values, coords={'time': data.time}, dims='time')
+    cloud_type["Attenuation"].attrs['long_name'] = 'Liquid attenuation QA flag'
+    cloud_type["Attenuation"].attrs['description'] = 'Liquid attenuation QA flag. 1: High attenuation, 0: No attenuation'
+    
+    cloud_occurrence["attenuation"] = xr.DataArray(data=att_mask.values, coords={'time': data.time}, dims='time')
+    cloud_occurrence["attenuation"].attrs['long_name'] = 'Liquid attenuation QA flag'
+    cloud_occurrence["attenuation"].attrs['description'] = 'Liquid attenuation QA flag. 1: High attenuation, 0: No attenuation'
+    # ---------------------------------------------------------------------------------------------
+    # Save post-processed data
+    # ---------------------------------------------------------------------------------------------
+    date_str = cloud_occurrence.time[0].dt.strftime('%Y%m%d').values.item()
+    # Save cloud occurrence as netCDF
+    if save_files and process_all:
+        cloud_occurrence.to_netcdf(path_save + f"/cloud_occurence/{date_str}_cloud_occurrence_new.nc")
+        cloud_props.to_netcdf(path_save + f"/cloud_properties/{date_str}_cloud_props_new.nc")
+        cloud_type.to_netcdf(path_save + f"/cloud_type/{date_str}_cloud_type_new.nc")
+    # ---------------------------------------------------------------------------------------------
+    
+    # ---------------------------------------------------------------------------------------------
+    # Plotting for cheking the classification 
+    # ---------------------------------------------------------------------------------------------
+    if not process_all and make_plot:
+        fig = plt.figure(figsize=(15, 10))
+        gs = fig.add_gridspec(2, 2, width_ratios=[1, .02], wspace=0.05)
         ax = fig.add_subplot(gs[0, 0])
         pc0 = ax.pcolormesh(ds_cloud['time'], ds_cloud['height']/1e3, ds_cloud['cloud_classification'].T, cmap=cloud_cmap, vmin=0, vmax=len(cloud_category))
 
-        # sc1 = ax.scatter(cloud_props['time'], cloud_props['cloud_base']/1e3, s=1, color='r', label='Cloud base')
-        # sc2 = ax.scatter(cloud_props['time'], cloud_props['cloud_top']/1e3, s=1, color='k', label='Cloud top')
+        cloud_props.cloud_base.plot(ax=ax, color='r', linestyle='-')
+        cloud_props.cloud_top.plot(ax=ax, color='k', linestyle='-')
+
+        ax.fill_between(ds_cloud.time.values, 0, 12000, where=cloud_type.Attenuation, color='red', alpha=0.2) # removed areas due to attenuation
+
         ax.set_ylabel('Height (km) a.s.l')
         ax.set_xlabel('Time (UTC)')
         ax.grid()
@@ -580,159 +648,400 @@ for idx_file, file in enumerate(filenames):
             rect = plt.Rectangle((0, idx), 1, 1, color=color)
             cbar_scat.ax.add_patch(rect)
             cbar_scat.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=14)
-        fig.savefig(PATH_FIG + f"{date_str}_cloud_classification_cluster.png", dpi=1000, bbox_inches='tight')
-        plt.show()
 
-  
-        if show_category:
-            fig = plt.figure(figsize=(14, 11))
-            gs = fig.add_gridspec(3, 2, width_ratios=[1, .02], height_ratios=[1, 1, .3], wspace=0.05, hspace=0.08)
-        else:
-            fig = plt.figure(figsize=(13, 9))
-            gs = fig.add_gridspec(3, 2, width_ratios=[1, .02], height_ratios=[1, 1, .5], wspace=0.05, hspace=0.05)
-
+        # ---------------------------------------------------------------------------------------------
         ax1 = fig.add_subplot(gs[1, 0])
-        pc0 = ax1.pcolormesh(ds_cloud['time'], ds_cloud['height']/1e3, ds_cloud['cloud_classification'].T, cmap=cloud_cmap, vmin=0, vmax=len(cloud_category))
-
-        sc1 = ax1.scatter(cloud_props['time'], cloud_props['cloud_base']/1e3, s=1, color='r', label='Cloud base')
-        sc2 = ax1.scatter(cloud_props['time'], cloud_props['cloud_top']/1e3, s=1, color='k', label='Cloud top')
-        ax1.xaxis.set_tick_params(labelbottom=False)
-        ax1.set_ylabel('Height (km) a.s.l')
-        ax1.grid()
-        # set x limitis from 17 to 18 UTC
-        # ax1.set_xlim(datetime.datetime.strptime(date_str, '%Y%m%d') + datetime.timedelta(hours=1), datetime.datetime.strptime(date_str, '%Y%m%d') + datetime.timedelta(hours=15))
-        # ax1.set_ylim([0, 4])
-
-        ax1.set_xlim(data.time.values[0], data.time.values[-1])
-        ax1.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
-
-        ax2 = fig.add_subplot(gs[0, 0], sharex=ax1, sharey=ax1)
-        pc = ax2.pcolormesh(cloud_classification['time'], cloud_classification['height']/1e3, cloud_classification.T, cmap=manual_cmap, vmin=0, vmax=ncolors)
-        countour = ax2.contour(categorize['model_time'], categorize['model_height'][:]/1e3,
-                                categorize['temperature'][:].T - 273.15,
-                                levels=[-40, -25, -10, 0, 5], colors='black', linewidths=0.5)
-        countour = ax1.contour(categorize['model_time'], categorize['model_height'][:]/1e3,
-                        categorize['temperature'][:].T - 273.15,
-                        levels=[-40, -25, -10, 0, 5], colors='black', linewidths=0.5)
-        countour.clabel(inline=True, fmt='%2.1f'+r'$^{\circ}$C', fontsize=12)
-        ax2.set_ylabel('Height (km) a.s.l')
-        ax2.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
-        # ax2.set_ylim([categorize['height'][0]/1e3, categorize['height'][-1]/1e3])
-        ax2.set_ylim([0, cloud_classification['height'][-1]/1e3])
-        ax2.xaxis.set_tick_params(labelbottom=False)
-        ax2.set_title(f"Cloud Classification {date_str} - {site}")
-        ax2.grid()
-
-        cax = fig.add_subplot(gs[0, 1])
-        cbar = plt.colorbar(pc, cax=cax, ticks=[], orientation='vertical')
-
-        for idx, (color, name) in enumerate(zip(manual_cmap.colors, color_names)):
-            rect = plt.Rectangle((0, idx), 1, 1, color=color)
-            cbar.ax.add_patch(rect)
-            cbar.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=14)
-
-        cax_scat = fig.add_subplot(gs[1, 1])
-        cbar_scat = plt.colorbar(pc0, cax=cax_scat, ticks=[], orientation='vertical')
-
-        for idx, (color, name) in enumerate(zip(cloud_cmap.colors, cloud_category)):
-            rect = plt.Rectangle((0, idx), 1, 1, color=color)
-            cbar_scat.ax.add_patch(rect)
-            cbar_scat.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=14)
-
-        if show_category:
-            ax3 = fig.add_subplot(gs[2, 0], sharex=ax1)
-            ax3.plot(data.time, cloud_occurrence['single_layer'], label='Single Layer')
-            ax3.plot(data.time, cloud_occurrence['multi_layer'], label='Multi Layer')
-            ax3.plot(data.time, cloud_occurrence['clear_sky'], label='Clear Sky')
-            ax3.plot(data.time, cloud_occurrence['noise'], label='Noise')
-            ax3.set_xlabel('Time')
-            ax3.legend()
-        else:
-            ax3 = fig.add_subplot(gs[2, 0], sharex=ax1)
-            ax3.plot(categorize['time'], categorize['lwp']*1000, 'm')
-            ax3.set_ylabel('LWP (g/m$^2$)')
-            ax3.set_xlabel('Time (UTC) HH:MM')
-            ax3.grid()
-
-        # fig.savefig(PATH_FIG_TEST + f"{date_str}_cloud_classification_zoom.png", dpi=300, bbox_inches='tight')
-        case_to_only_save = False
-        
-        plt.show()
-         
-        letters = iter('abcdefghijklmnopqrstuvwxyz')
-        fig = plt.figure(figsize=(17, 7))
-        gs = fig.add_gridspec(2, 5, width_ratios=[1, .02, .5, 1, 0.02], hspace=0.08, wspace=0.05)
-         
-        ax = fig.add_subplot(gs[0, 0])
-        pc0 = ax.pcolormesh(cloud_classification['time'], cloud_classification['height']/1e3, cloud_classification.T, cmap=manual_cmap, vmin=0, vmax=ncolors)
-        countour = ax.contour(categorize['model_time'], categorize['model_height'][:]/1e3,
-                                categorize['temperature'][:].T - 273.15,
-                                levels=[-40, -25, -10, 0, 5], colors='black', linewidths=0.5)
-        countour.clabel(inline=True, fmt='%2.1f'+r'$^{\circ}$C', fontsize=12)
-        ax.set_ylabel('Height (km) a.s.l')
-        ax.grid()
-        ax.xaxis.set_tick_params(labelbottom=False)
-        ax.set_ylim([0, 12])
-        ax.text(0.02, 0.95, next(letters)+")", transform=ax.transAxes, fontsize=16, fontweight='bold', va='top')
-
-        cax = fig.add_subplot(gs[0, 1])
-        cbar = plt.colorbar(pc, cax=cax, ticks=[], orientation='vertical')
-
-        for idx, (color, name) in enumerate(zip(manual_cmap.colors, color_names)):
-            rect = plt.Rectangle((0, idx), 1, 1, color=color)
-            cbar.ax.add_patch(rect)
-            cbar.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=14)
-
-        ax1 = fig.add_subplot(gs[1, 0], sharex=ax)
-        pc1 = ax1.pcolormesh(ds_cloud['time'], ds_cloud['height']/1e3, ds_cloud['cloud_classification'].T, cmap=cloud_cmap, vmin=0, vmax=len(cloud_category))
-
-        sc1 = ax1.scatter(cloud_props['time'], cloud_props['cloud_base']/1e3, s=10, color='r', label='Cloud base', marker='x')
-        sc2 = ax1.scatter(cloud_props['time'], cloud_props['cloud_top']/1e3, s=10, color='k', label='Cloud top', marker='x')
-
-        ax1.set_ylabel('Height (km) a.s.l')
+        p1 = (cloud_props["lwp"]).plot(ax=ax1, color='r', label=cloud_props["lwp"].source)
+        p2 = cloud_props["lwp_radar"].plot(ax=ax1, color='b', label="Radar LWP")
+        ax1.set_ylabel('LWP (kg/m^2)')
         ax1.set_xlabel('Time (UTC)')
         ax1.grid()
-        # ax1.legend()
-        ax1.text(0.02, 0.95, next(letters)+")", transform=ax1.transAxes, fontsize=16, fontweight='bold', va='top')
+        ax1.legend()
+        plt.show()
 
-        ax1.set_xlim(data.time.values[0], data.time.values[-1])
-        ax1.set_ylim([0, data.height[-1]/1e3])
-        ax1.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+        # ---------------------------------------------------------------------------------------------
+        # Plotting linear fitting of LWP (Radar x MWR)
+        # ---------------------------------------------------------------------------------------------
+        # Define the linear function
+        def linear_func(x, a, b):
+            return a * x + b
 
-        cax_scat = fig.add_subplot(gs[1, 1])
-        cbar_scat = plt.colorbar(pc1, cax=cax_scat, ticks=[], orientation='vertical')
+        # Extract LWP and LWP radar values
+        lwp_values = cloud_props["lwp"].values
+        lwp_radar_values = cloud_props["lwp_radar"].values
 
-        for idx, (color, name) in enumerate(zip(cloud_cmap.colors, cloud_category)):
-            rect = plt.Rectangle((0, idx), 1, 1, color=color)
-            cbar_scat.ax.add_patch(rect)
-            cbar_scat.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=14)
+        # Remove NaN values
+        mask1 = ~np.isnan(lwp_values) & ~np.isnan(lwp_radar_values)
+        lwp_values = lwp_values[mask1]
+        lwp_radar_values = lwp_radar_values[mask1]
+
+        mask_small  = lwp_radar_values < 0.3
+        mask_larger = lwp_radar_values > 0.8
+        mask_in_betwen  = (cloud_props["lwp_radar"] > 0.8) & (cloud_props["lwp_radar"] < 1)
+        # filtered_lwp = cloud_props["lwp_radar"].where(mask_in_betwen)
         
-        ax2 = fig.add_subplot(gs[0, 3], sharex=ax, sharey=ax)  
-        pc2 = ax2.pcolormesh(categorize['time'], categorize['height']/1e3, categorize['Z'].T, cmap='viridis', vmin=-40, vmax=15)
-        ax2.yaxis.set_tick_params(labelleft=False)
-        ax2.xaxis.set_tick_params(labelbottom=False)
+        # fig, ax = plt.subplots(figsize=(7 ,7))
+        # filtered_lwp.plot.hist(ax=ax, bins=50, color='b', alpha=0.5, label='LWP Radar')
+        # plt.show()
+
+        count_small  = np.count_nonzero(mask_small)
+        count_larger = np.count_nonzero(mask_larger)
+        count_huge  = np.count_nonzero(mask_in_betwen)
+        
+        # Perform the linear fit for small values of LWP
+        params, covariance = curve_fit(linear_func, lwp_values[mask_small], lwp_radar_values[mask_small])
+        
+        fig = plt.figure(figsize=(15, 9))
+        gs = fig.add_gridspec(2, 2, width_ratios=[1, 1], height_ratios=[1, .5], wspace=0.15, hspace=0.25)
+        ax = fig.add_subplot(gs[0, 0])
+
+        ax.scatter(lwp_values[mask_small], lwp_radar_values[mask_small], color='b', label='Data')
+        ax.plot(lwp_values[mask_small], linear_func(lwp_values[mask_small], *params), color='r', label=f'Fit: y = {params[0]:.2f}x + {params[1]:.2f}')
+        ax.set_xlabel("LWP (kg/m^2) - MWR")
+        ax.set_ylabel("LWP (kg/m^2) - Radar")
+        ax.grid()
+        ax.legend()
+        
+        # Perform the linear fit for small values of LWP
+        params, covariance = curve_fit(linear_func, lwp_values[mask_larger], lwp_radar_values[mask_larger])
+
+        ax1 = fig.add_subplot(gs[0, 1])
+        ax1.scatter(lwp_values[mask_larger], lwp_radar_values[mask_larger], color='b', label='Data')
+        ax1.plot(lwp_values[mask_larger], linear_func(lwp_values[mask_larger], *params), color='r', label=f'Fit: y = {params[0]:.2f}x + {params[1]:.2f}')
+        ax1.set_xlabel(f"LWP (kg/m^2) {cloud_props['lwp'].source}")
+        ax1.set_ylabel("LWP (kg/m^2) - Radar")
+        ax1.grid()
+        ax1.legend()
+
+        ax2 = fig.add_subplot(gs[1, :])
+        #histogram of relative difference:
+        cloud_props["lwp"].plot(ax=ax2, color='b', label = cloud_props["lwp"].attrs['source'])
+        cloud_props["lwp_radar"].plot(ax=ax2, color='r', label = 'W-Band Radar')
+        # ax2.set_ylim([-100, 100])
+        ax2.set_xlabel("Time (UTC)")
+        ax2.set_ylabel("LWP (kg/m^2)")
         ax2.grid()
-        ax2.text(0.02, 0.95, next(letters)+")", transform=ax2.transAxes, fontsize=16, fontweight='bold', va='top')
+        ax2.legend()
+        plt.show()
+    # ---------------------------------------------------------------------------------------------
+    letters = iter('abcdefghijklmnopqrstuvwxyz')
+    show_category = False
+    # if not process_all or make_plot:
+        # # -----------------------------------------------------------------------------
+        # # Plot reflectivity time serie
+        # # -----------------------------------------------------------------------------
+        # # Do the same as above but plot categorize["Z"] insteado of target_classification
+        # fig = plt.figure(figsize=(12, 5))
+        # gs  = fig.add_gridspec(1, 2, width_ratios=[1, .02], wspace=0.05, hspace=0.08)
+        # ax2 = fig.add_subplot(gs[0, 0])
+        # pc = ax2.pcolormesh(categorize['time'], categorize['height']/1e3, categorize['Z'].T, cmap='viridis', vmin=-40, vmax=20) 
+        # ax2.set_ylabel('Altitude (km) a.s.l')
+        # ax2.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+        # ax2.set_ylim([0, 12])
+        # # ax2.set_title(f"Reflectivity {date_str} - {site}")
+        # ax2.grid()
 
+        # cax = fig.add_subplot(gs[0, 1])
+        # cbar = plt.colorbar(pc, cax=cax, orientation='vertical', label='Reflectivity (dBZ)')
 
-        cax2 = fig.add_subplot(gs[0, 4])
-        cbar2 = plt.colorbar(pc2, cax=cax2, orientation='vertical', label='Reflectivity (dBZ)')
+        # # fig.savefig(PATH_FIG + f"{date_str}_reflectivity.png", dpi=700, bbox_inches='tight')
+        # plt.show()
+        # # -----------------------------------------------------------------------------
 
-        ax3 = fig.add_subplot(gs[1, 3], sharex=ax, sharey=ax)
-        pc3 = ax3.pcolormesh(categorize['time'], categorize['height']/1e3, categorize['beta'].T, cmap='jet',
-                             norm=colors.LogNorm(vmin=1e-7, vmax=1e-4))
+        # # -----------------------------------------------------------------------------
+        # # Plot Target Classification Product (T.C.P) time serie
+        # # -----------------------------------------------------------------------------
+        # fig = plt.figure(figsize=(12, 5))
+        # gs  = fig.add_gridspec(1, 2, width_ratios=[1, .02], wspace=0.05, hspace=0.08)
+        # ax2 = fig.add_subplot(gs[0, 0])
+        # pc = ax2.pcolormesh(cloud_classification['time'], cloud_classification['height']/1e3, cloud_classification.T, cmap=manual_cmap, vmin=0, vmax=ncolors)
+        # # countour = ax2.contour(categorize['model_time'], categorize['model_height'][:]/1e3,
+        # #                         categorize['temperature'][:].T - 273.15,
+        # #                         levels=[-40, -25, -10, 0, 5], colors='black', linewidths=0.5)
+        # # countour = ax1.contour(categorize['model_time'], categorize['model_height'][:]/1e3,
+        # #                 categorize['temperature'][:].T - 273.15,
+        # #                 levels=[-40, -25, -10, 0, 5], colors='black', linewidths=0.5)
+        # # countour.clabel(inline=True, fmt='%2.1f'+r'$^{\circ}$C', fontsize=12)
+        # ax2.set_ylabel('Height (km) a.s.l')
+        # ax2.set_xlabel('Time (UTC)')
+        # ax2.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+        # # ax2.set_ylim([categorize['height'][0]/1e3, categorize['height'][-1]/1e3])
+
+        # # ax2.set_title(f"Cloud Classification {date_str} - {site}")
+        # ax2.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+        # # ax2.set_xlim(data.time.values[0], data.time.values[-1])
+        # ax2.grid()
+        # cax = fig.add_subplot(gs[0, 1])
+        # cbar = plt.colorbar(pc, cax=cax, ticks=[], orientation='vertical')
+
+        # for idx, (color, name) in enumerate(zip(manual_cmap.colors, color_names)):
+        #     rect = plt.Rectangle((0, idx), 1, 1, color=color)
+        #     cbar.ax.add_patch(rect)
+        #     cbar.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=14)
+        # ax2.set_facecolor('white')
+        # ax2.set_ylim([0, ds_cloud['height'][-1]/1e3])
+        # fig.savefig(PATH_FIG + f"{date_str}_cloud_classification.png", dpi=700, bbox_inches='tight')
+        # plt.show()
+        # # -----------------------------------------------------------------------------
+
+        # # -----------------------------------------------------------------------------
+        # # Plot Cloud Clusters (C.C) time serie
+        # # -----------------------------------------------------------------------------
+        # fig, ax = plt.subplots(figsize=(12, 5))
+        # for cloud_number, indx in cloud_indx.items():
+        # # for cloud_number in cloud_composition.keys:
+        # #     indx= cloud_indx[cloud_number]
+        #     x = data.time.values[indx[:, 0]]
+        #     y = data.height.values[indx[:, 1]] / 1e3
+        #     sc = ax.scatter(x, y, color=np.random.rand(3,), s=1)
+        # ax.set_ylabel('Altitude (km) a.s.l')
+        # ax.set_xlabel('Time (UTC)')
+        # ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+        # # ax.set_title(f"Cloud Classification {date_str} - {site}")
+        # ax.set_ylim([0, 12])
+        # # show untill the 1:00 UTC of the next day
+        # ax.set_xlim(data.time.values[0], data.time.values[-1])
+        # ax.grid()
+        # fig.savefig(PATH_FIG + f"{date_str}_cloud_identification.png", dpi=700, bbox_inches='tight')
+        # plt.show()
+        # # -----------------------------------------------------------------------------
         
-        ax3.yaxis.set_tick_params(labelleft=False)
-        ax3.set_xlabel('Time (UTC)')
-        ax3.grid()
-        ax3.text(0.02, 0.95, next(letters)+") ", transform=ax3.transAxes, fontsize=16, fontweight='bold', va='top')
+        # # -----------------------------------------------------------------------------
+        # # Plot Cloud Classification Product (C.C.P) time serie
+        # # -----------------------------------------------------------------------------
+        # fig = plt.figure(figsize=(12, 5))
+        # gs = fig.add_gridspec(1, 2, width_ratios=[1, .02], wspace=0.05)
+        # ax = fig.add_subplot(gs[0, 0])
+        # pc0 = ax.pcolormesh(ds_cloud['time'], ds_cloud['height']/1e3, ds_cloud['cloud_classification'].T, cmap=cloud_cmap, vmin=0, vmax=len(cloud_category))
 
-        cax3 = fig.add_subplot(gs[1, 4])
-        cbar3 = plt.colorbar(pc3, cax=cax3, orientation='vertical',
-                              label = r"$\beta$ (m$^{-1}$ sr$^{-1}$)")
+        # # sc1 = ax.scatter(cloud_props['time'], cloud_props['cloud_base']/1e3, s=1, color='r', label='Cloud base')
+        # # sc2 = ax.scatter(cloud_props['time'], cloud_props['cloud_top']/1e3, s=1, color='k', label='Cloud top')
+        # ax.set_ylabel('Height (km) a.s.l')
+        # ax.set_xlabel('Time (UTC)')
+        # ax.grid()
+        # # set x limitis from 17 to 18 UTC
+        # # ax.set_xlim(datetime.datetime.strptime(date_str, '%Y%m%d') + datetime.timedelta(hours=1), datetime.datetime.strptime(date_str, '%Y%m%d') + datetime.timedelta(hours=15))
+        # ax.set_ylim([0, ds_cloud['height'][-1]/1e3])
+
+        # ax.set_xlim(data.time.values[0], data.time.values[-1])
+        # ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+        # ax.set_facecolor('white')
+
+        # cax_scat = fig.add_subplot(gs[0, 1])
+        # cbar_scat = plt.colorbar(pc0, cax=cax_scat, ticks=[], orientation='vertical')
+
+        # for idx, (color, name) in enumerate(zip(cloud_cmap.colors, cloud_category)):
+        #     rect = plt.Rectangle((0, idx), 1, 1, color=color)
+        #     cbar_scat.ax.add_patch(rect)
+        #     cbar_scat.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=14)
+        # # fig.savefig(PATH_FIG + f"{date_str}_cloud_classification_cluster.png", dpi=1000, bbox_inches='tight')
+        # plt.show()
+        # # -----------------------------------------------------------------------------
+
+        # # -----------------------------------------------------------------------------
+        # # Plot C.T.P, C.C.P and LWP
+        # # -----------------------------------------------------------------------------
+        # if show_category:
+        #     fig = plt.figure(figsize=(14, 11))
+        #     gs = fig.add_gridspec(3, 2, width_ratios=[1, .02], height_ratios=[1, 1, .3], wspace=0.05, hspace=0.08)
+        # else:
+        #     fig = plt.figure(figsize=(13, 9))
+        #     gs = fig.add_gridspec(3, 2, width_ratios=[1, .02], height_ratios=[1, 1, .5], wspace=0.05, hspace=0.05)
+
+        # ax1 = fig.add_subplot(gs[1, 0])
+        # pc0 = ax1.pcolormesh(ds_cloud['time'], ds_cloud['height']/1e3, ds_cloud['cloud_classification'].T, cmap=cloud_cmap, vmin=0, vmax=len(cloud_category))
+
+        # sc1 = ax1.scatter(cloud_props['time'], cloud_props['cloud_base']/1e3, s=1, color='r', label='Cloud base')
+        # sc2 = ax1.scatter(cloud_props['time'], cloud_props['cloud_top']/1e3, s=1, color='k', label='Cloud top')
+        # ax1.xaxis.set_tick_params(labelbottom=False)
+        # ax1.set_ylabel('Height (km) a.s.l')
+        # ax1.grid()
+        # # set x limitis from 17 to 18 UTC
+        # # ax1.set_xlim(datetime.datetime.strptime(date_str, '%Y%m%d') + datetime.timedelta(hours=1), datetime.datetime.strptime(date_str, '%Y%m%d') + datetime.timedelta(hours=15))
+        # # ax1.set_ylim([0, 4])
+
+        # ax1.set_xlim(data.time.values[0], data.time.values[-1])
+        # ax1.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+
+        # ax2 = fig.add_subplot(gs[0, 0], sharex=ax1, sharey=ax1)
+        # pc = ax2.pcolormesh(cloud_classification['time'], cloud_classification['height']/1e3, cloud_classification.T, cmap=manual_cmap, vmin=0, vmax=ncolors)
+        # countour = ax2.contour(categorize['model_time'], categorize['model_height'][:]/1e3,
+        #                         categorize['temperature'][:].T - 273.15,
+        #                         levels=[-40, -25, -10, 0, 5], colors='black', linewidths=0.5)
+        # countour = ax1.contour(categorize['model_time'], categorize['model_height'][:]/1e3,
+        #                 categorize['temperature'][:].T - 273.15,
+        #                 levels=[-40, -25, -10, 0, 5], colors='black', linewidths=0.5)
+        # countour.clabel(inline=True, fmt='%2.1f'+r'$^{\circ}$C', fontsize=12)
+        # ax2.set_ylabel('Height (km) a.s.l')
+        # ax2.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+        # # ax2.set_ylim([categorize['height'][0]/1e3, categorize['height'][-1]/1e3])
+        # ax2.set_ylim([0, cloud_classification['height'][-1]/1e3])
+        # ax2.xaxis.set_tick_params(labelbottom=False)
+        # ax2.set_title(f"Cloud Classification {date_str} - {site}")
+        # ax2.grid()
+
+        # cax = fig.add_subplot(gs[0, 1])
+        # cbar = plt.colorbar(pc, cax=cax, ticks=[], orientation='vertical')
+
+        # for idx, (color, name) in enumerate(zip(manual_cmap.colors, color_names)):
+        #     rect = plt.Rectangle((0, idx), 1, 1, color=color)
+        #     cbar.ax.add_patch(rect)
+        #     cbar.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=14)
+
+        # cax_scat = fig.add_subplot(gs[1, 1])
+        # cbar_scat = plt.colorbar(pc0, cax=cax_scat, ticks=[], orientation='vertical')
+
+        # for idx, (color, name) in enumerate(zip(cloud_cmap.colors, cloud_category)):
+        #     rect = plt.Rectangle((0, idx), 1, 1, color=color)
+        #     cbar_scat.ax.add_patch(rect)
+        #     cbar_scat.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=14)
+
+        # if show_category:
+        #     ax3 = fig.add_subplot(gs[2, 0], sharex=ax1)
+        #     ax3.plot(data.time, cloud_occurrence['single_layer'], label='Single Layer')
+        #     ax3.plot(data.time, cloud_occurrence['multi_layer'], label='Multi Layer')
+        #     ax3.plot(data.time, cloud_occurrence['clear_sky'], label='Clear Sky')
+        #     ax3.plot(data.time, cloud_occurrence['noise'], label='Noise')
+        #     ax3.set_xlabel('Time')
+        #     ax3.legend()
+        # else:
+        #     ax3 = fig.add_subplot(gs[2, 0], sharex=ax1)
+        #     ax3.plot(categorize['time'], categorize['lwp']*1000, 'm')
+        #     ax3.set_ylabel('LWP (g/m$^2$)')
+        #     ax3.set_xlabel('Time (UTC) HH:MM')
+        #     ax3.grid()
+
+        # # fig.savefig(PATH_FIG_TEST + f"{date_str}_cloud_classification_zoom.png", dpi=300, bbox_inches='tight')
+        # case_to_only_save = False
+        # plt.show()
+        # -----------------------------------------------------------------------------
+
+        # # -----------------------------------------------------------------------------
+        # # Plot C.T.P, C.C.P, ceilo att. backscatter and radar reflectivity (Z) 
+        # # -----------------------------------------------------------------------------
+        # letters = iter('abcdefghijklmnopqrstuvwxyz')
+        # fig = plt.figure(figsize=(17, 7))
+        # gs = fig.add_gridspec(2, 5, width_ratios=[1, .02, .5, 1, 0.02], hspace=0.08, wspace=0.05)
+         
+        # ax = fig.add_subplot(gs[0, 0])
+        # pc0 = ax.pcolormesh(cloud_classification['time'], cloud_classification['height']/1e3, cloud_classification.T, cmap=manual_cmap, vmin=0, vmax=ncolors)
+        # countour = ax.contour(categorize['model_time'], categorize['model_height'][:]/1e3,
+        #                         categorize['temperature'][:].T - 273.15,
+        #                         levels=[-40, -25, -10, 0, 5], colors='black', linewidths=0.5)
+        # countour.clabel(inline=True, fmt='%2.1f'+r'$^{\circ}$C', fontsize=12)
+        # ax.set_ylabel('Height (km) a.s.l')
+        # ax.grid()
+        # ax.xaxis.set_tick_params(labelbottom=False)
+        # ax.set_ylim([0, 12])
+        # ax.text(0.02, 0.95, next(letters)+")", transform=ax.transAxes, fontsize=16, fontweight='bold', va='top')
+
+        # cax = fig.add_subplot(gs[0, 1])
+        # cbar = plt.colorbar(pc, cax=cax, ticks=[], orientation='vertical')
+
+        # for idx, (color, name) in enumerate(zip(manual_cmap.colors, color_names)):
+        #     rect = plt.Rectangle((0, idx), 1, 1, color=color)
+        #     cbar.ax.add_patch(rect)
+        #     cbar.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=14)
+
+        # ax1 = fig.add_subplot(gs[1, 0], sharex=ax)
+        # pc1 = ax1.pcolormesh(ds_cloud['time'], ds_cloud['height']/1e3, ds_cloud['cloud_classification'].T, cmap=cloud_cmap, vmin=0, vmax=len(cloud_category))
+
+        # sc1 = ax1.scatter(cloud_props['time'], cloud_props['cloud_base']/1e3, s=10, color='r', label='Cloud base', marker='x')
+        # sc2 = ax1.scatter(cloud_props['time'], cloud_props['cloud_top']/1e3, s=10, color='k', label='Cloud top', marker='x')
+
+        # ax1.set_ylabel('Height (km) a.s.l')
+        # ax1.set_xlabel('Time (UTC)')
+        # ax1.grid()
+        # # ax1.legend()
+        # ax1.text(0.02, 0.95, next(letters)+")", transform=ax1.transAxes, fontsize=16, fontweight='bold', va='top')
+
+        # ax1.set_xlim(data.time.values[0], data.time.values[-1])
+        # ax1.set_ylim([0, data.height[-1]/1e3])
+        # ax1.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+
+        # cax_scat = fig.add_subplot(gs[1, 1])
+        # cbar_scat = plt.colorbar(pc1, cax=cax_scat, ticks=[], orientation='vertical')
+
+        # for idx, (color, name) in enumerate(zip(cloud_cmap.colors, cloud_category)):
+        #     rect = plt.Rectangle((0, idx), 1, 1, color=color)
+        #     cbar_scat.ax.add_patch(rect)
+        #     cbar_scat.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=14)
+        
+        # ax2 = fig.add_subplot(gs[0, 3], sharex=ax, sharey=ax)  
+        # pc2 = ax2.pcolormesh(categorize['time'], categorize['height']/1e3, categorize['Z'].T, cmap='viridis', vmin=-40, vmax=15)
+        # ax2.yaxis.set_tick_params(labelleft=False)
+        # ax2.xaxis.set_tick_params(labelbottom=False)
+        # ax2.grid()
+        # ax2.text(0.02, 0.95, next(letters)+")", transform=ax2.transAxes, fontsize=16, fontweight='bold', va='top')
+
+
+        # cax2 = fig.add_subplot(gs[0, 4])
+        # cbar2 = plt.colorbar(pc2, cax=cax2, orientation='vertical', label='Reflectivity (dBZ)')
+
+        # ax3 = fig.add_subplot(gs[1, 3], sharex=ax, sharey=ax)
+        # pc3 = ax3.pcolormesh(categorize['time'], categorize['height']/1e3, categorize['beta'].T, cmap='jet',
+        #                      norm=colors.LogNorm(vmin=1e-7, vmax=1e-4))
+        
+        # ax3.yaxis.set_tick_params(labelleft=False)
+        # ax3.set_xlabel('Time (UTC)')
+        # ax3.grid()
+        # ax3.text(0.02, 0.95, next(letters)+") ", transform=ax3.transAxes, fontsize=16, fontweight='bold', va='top')
+
+        # cax3 = fig.add_subplot(gs[1, 4])
+        # cbar3 = plt.colorbar(pc3, cax=cax3, orientation='vertical',
+        #                       label = r"$\beta$ (m$^{-1}$ sr$^{-1}$)")
+        
+        # # fig.savefig(PATH_FIG + f"{date_str}_cloudnet_misclassification.png", dpi=300, bbox_inches='tight')
+        # plt.show()
+        # -----------------------------------------------------------------------------
+
+        # -----------------------------------------------------------------------------
+        # Plot C.T.P and ceilo att. backscatter
+        # -----------------------------------------------------------------------------
+        # letters = iter('abcdefghijklmnopqrstuvwxyz')
+        # fig = plt.figure(figsize=(20, 5))
+        # gs = fig.add_gridspec(1, 5, width_ratios=[1, .02, .5, 1, 0.02], wspace=0.03)
+         
+        # ax = fig.add_subplot(gs[0, 0])
+        # pc0 = ax.pcolormesh(cloud_classification['time'], cloud_classification['height']/1e3, cloud_classification.T, cmap=manual_cmap, vmin=0, vmax=ncolors)
+        # countour = ax.contour(categorize['model_time'], categorize['model_height'][:]/1e3,
+        #                         categorize['temperature'][:].T - 273.15,
+        #                         levels=[-40, -25, -10, 0, 5], colors='black', linewidths=0.5)
+        # countour.clabel(inline=True, fmt='%2.1f'+r'$^{\circ}$C', fontsize=12)
+        # ax.set_ylabel('Height (km) a.s.l')
+        # ax.set_xlabel('Time (UTC)')
+        # ax.grid()
+        # ax.set_ylim([0, 12])
+        # ax.set_xlim(cloud_classification.time.values[0], cloud_classification.time.values[-1])
+        # ax.set_ylim([0, cloud_classification.height[-1]/1e3])
+        # ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+        # ax.text(0.02, 0.95, next(letters)+")", transform=ax.transAxes, fontsize=16, fontweight='bold', va='top')
+
+        # cax = fig.add_subplot(gs[0, 1])
+        # cbar = plt.colorbar(pc, cax=cax, ticks=[], orientation='vertical')
+
+        # for idx, (color, name) in enumerate(zip(manual_cmap.colors, color_names)):
+        #     rect = plt.Rectangle((0, idx), 1, 1, color=color)
+        #     cbar.ax.add_patch(rect)
+        #     cbar.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=14)
+
+
+        # ax3 = fig.add_subplot(gs[0, 3], sharex=ax, sharey=ax)
+        # pc3 = ax3.pcolormesh(categorize['time'], categorize['height']/1e3, categorize['beta'].T, cmap='jet',
+        #                      norm=colors.LogNorm(vmin=1e-7, vmax=1e-4))
+        
+        # ax3.yaxis.set_tick_params(labelleft=False)
+        # ax3.set_xlabel('Time (UTC)')
+        # ax3.grid()
+        # ax3.text(0.02, 0.95, next(letters)+") ", transform=ax3.transAxes, fontsize=16, fontweight='bold', va='top')
+
+        # cax3 = fig.add_subplot(gs[0, 4])
+        # cbar3 = plt.colorbar(pc3, cax=cax3, orientation='vertical',
+        #                       label = r"$\beta$ (m$^{-1}$ sr$^{-1}$)")
         
         # fig.savefig(PATH_FIG + f"{date_str}_cloudnet_misclassification.png", dpi=300, bbox_inches='tight')
-        plt.show()
+        # plt.show()
+        # -----------------------------------------------------------------------------
 # set_trace()
     # # Coarsen der and ier
     # target_height = np.arange(0, 14000+100, 100)
@@ -778,376 +1087,381 @@ for idx_file, file in enumerate(filenames):
 
 # Microphysical properties inside specific clouds
 # for single layer mixed phase clouds
-set_trace()
-cloud_identifier = 5
-mask_cloud_type = ds_cloud['cloud_classification'] == cloud_identifier
-# mask for single layer without noie
-mask_time_single_layer = (cloud_occurrence['single_layer'] == 1) & (cloud_occurrence['noise'] == 0)
 
-# for mixed phase clouds
-filtered_cloud = ds_cloud.where(mask_cloud_type & mask_time_single_layer)
-filtered_targ_clas = cloud_classification.where(mask_cloud_type & mask_time_single_layer)
 
-# initialize an xarray dataset to store the microphysical properties
-cloud_properties = xr.Dataset(coords={'time': ds_cloud.time, 'height': ds_cloud.height})
-cloud_properties["lwp"] = categorize["lwp"]*1e3
-cloud_properties["lwp"].attrs['units'] = r"$g/m^2$"
-cloud_properties["lwp"].attrs['long_name'] = "Liquid Water Path"
-cloud_properties["width"] = categorize["width"]
-cloud_properties["Ze"] = categorize["Z"]
-# cloud_properties["sldr"] = categorize["sldr"]
+# --------------------------------------------------------------------------------
+# ----------------------------- Doppler spectra analysis -------------------------
+# --------------------------------------------------------------------------------
+# set_trace()
+# cloud_identifier = 5
+# mask_cloud_type = ds_cloud['cloud_classification'] == cloud_identifier
+# # mask for single layer without noie
+# mask_time_single_layer = (cloud_occurrence['single_layer'] == 1) & (cloud_occurrence['noise'] == 0)
 
-# Path to microphysics retrieval from cloudnet
-path_cloudnet_retrieval = "../../tests/data/microphysics/"
-download_cloudnet_products(date_ini, date_end, path_cloudnet_retrieval, product="der", site=site)
-download_cloudnet_products(date_ini, date_end, path_cloudnet_retrieval, product="categorize", site=site)
-# Read data with xarray
-cloudnet_data = xr.open_dataset(path_cloudnet_retrieval + f"{date_str}_{site}_der.nc")
-cloudnet_data = cloudnet_data.where(mask_cloud_type & mask_time_single_layer)
+# # for mixed phase clouds
+# filtered_cloud = ds_cloud.where(mask_cloud_type & mask_time_single_layer)
+# filtered_targ_clas = cloud_classification.where(mask_cloud_type & mask_time_single_layer)
 
-cloud_properties["der_cloudnet"] = cloudnet_data['der']*1e6
-cloud_properties["der_cloudnet"].attrs['units'] = r"$\mu m$"
-cloud_properties["der_cloudnet"].attrs['long_name'] = "Effective radius by Cloudnet"
-cloud_properties["der_cloudnet_scaled"] = cloudnet_data['der_scaled']*1e6
-cloud_properties["der_cloudnet_scaled"].attrs['units'] = r"$\mu m$"
-cloud_properties["der_cloudnet_scaled"].attrs['long_name'] = "Effective radius by Cloudnet scaled"
+# # initialize an xarray dataset to store the microphysical properties
+# cloud_properties = xr.Dataset(coords={'time': ds_cloud.time, 'height': ds_cloud.height})
+# cloud_properties["lwp"] = categorize["lwp"]*1e3
+# cloud_properties["lwp"].attrs['units'] = r"$g/m^2$"
+# cloud_properties["lwp"].attrs['long_name'] = "Liquid Water Path"
+# cloud_properties["width"] = categorize["width"]
+# cloud_properties["Ze"] = categorize["Z"]
+# # cloud_properties["sldr"] = categorize["sldr"]
 
-mask = cloud_properties["der_cloudnet"].isnull().to_numpy()
-filtered_z = categorize['Z'].where(~mask)
-filtered_lwp = categorize['lwp'].where(~np.sum(mask, axis=1))
+# # Path to microphysics retrieval from cloudnet
+# path_cloudnet_retrieval = "../../tests/data/microphysics/"
+# download_cloudnet_products(date_ini, date_end, path_cloudnet_retrieval, product="der", site=site)
+# download_cloudnet_products(date_ini, date_end, path_cloudnet_retrieval, product="categorize", site=site)
+# # Read data with xarray
+# cloudnet_data = xr.open_dataset(path_cloudnet_retrieval + f"{date_str}_{site}_der.nc")
+# cloudnet_data = cloudnet_data.where(mask_cloud_type & mask_time_single_layer)
 
-ini = '2024-04-02T00:30:00'
-end = '2024-04-02T23:30:00'
-ds_cloud.cloud_classification.T.plot(cmap=cloud_cmap, figsize=(12, 5), vmin=0, vmax=len(cloud_category))
-# put colornames in the colorbar
-filtered_cloud.cloud_classification.T.plot(cmap=cloud_cmap, figsize=(12, 5), vmin=0, vmax=len(cloud_category))
+# cloud_properties["der_cloudnet"] = cloudnet_data['der']*1e6
+# cloud_properties["der_cloudnet"].attrs['units'] = r"$\mu m$"
+# cloud_properties["der_cloudnet"].attrs['long_name'] = "Effective radius by Cloudnet"
+# cloud_properties["der_cloudnet_scaled"] = cloudnet_data['der_scaled']*1e6
+# cloud_properties["der_cloudnet_scaled"].attrs['units'] = r"$\mu m$"
+# cloud_properties["der_cloudnet_scaled"].attrs['long_name'] = "Effective radius by Cloudnet scaled"
 
-cloud_properties["der_knist"] = HMmodel(filtered_lwp*1e3,
-                                        filtered_z,
-                                        v=13.51).get_re()
-cloud_properties["der_knist"].attrs['units'] = r"$\mu m$"
-cloud_properties["der_knist"].attrs['long_name'] = "Effective radius by Knist"
-cloud_properties["der_knist"].attrs['description'] = "Effective radius calculated by Knist model"
-# Calculate the Droplets effective radius
+# mask = cloud_properties["der_cloudnet"].isnull().to_numpy()
+# filtered_z = categorize['Z'].where(~mask)
+# filtered_lwp = categorize['lwp'].where(~np.sum(mask, axis=1))
 
-der_output_path = os.path.join(path_cloudnet_retrieval, date_ini.replace("-","") + "_granada_" + 'der_corrected.nc')
-path_categorize = os.path.join(path_cloudnet_retrieval, date_ini.replace("-","") + "_granada_" + 'categorize.nc')
-# params = Parameters(2.0, 200.0e6, 200.0e6, 0.35, 0.1, 5.0e-3)
-params_der = Parameters(2.0, 150.0e6, 150.0e6, 0.28, 0.1, 5.0e-3)
-generate_der(path_categorize, der_output_path, parameters=params_der)
-cloudnet_der_corrected = xr.open_dataset(der_output_path)
-cloudnet_der_corrected = cloudnet_der_corrected.where(mask_cloud_type & mask_time_single_layer)
-cloud_properties["der_cloudnet_corrected"] = cloudnet_der_corrected['der']*1e6
-cloud_properties["der_cloudnet_corrected"].attrs['units'] = r"$\mu m$"
-cloud_properties["der_cloudnet_corrected"].attrs['long_name'] = "Effective radius by Cloudnet - corrected"
+# ini = '2024-04-02T00:30:00'
+# end = '2024-04-02T23:30:00'
+# ds_cloud.cloud_classification.T.plot(cmap=cloud_cmap, figsize=(12, 5), vmin=0, vmax=len(cloud_category))
+# # put colornames in the colorbar
+# filtered_cloud.cloud_classification.T.plot(cmap=cloud_cmap, figsize=(12, 5), vmin=0, vmax=len(cloud_category))
 
-cloud_properties["der_cloudnet_scaled_corrected"] = cloudnet_der_corrected['der_scaled']*1e6
-cloud_properties["der_cloudnet_scaled_corrected"].attrs['units'] = r"$\mu m$"
-cloud_properties["der_cloudnet_scaled_corrected"].attrs['long_name'] = "Effective radius by Cloudnet scaled - corrected"
+# cloud_properties["der_knist"] = HMmodel(filtered_lwp*1e3,
+#                                         filtered_z,
+#                                         v=13.51).get_re()
+# cloud_properties["der_knist"].attrs['units'] = r"$\mu m$"
+# cloud_properties["der_knist"].attrs['long_name'] = "Effective radius by Knist"
+# cloud_properties["der_knist"].attrs['description'] = "Effective radius calculated by Knist model"
+# # Calculate the Droplets effective radius
 
-# Plot the effective radius
-cloud_properties.der_knist.T.plot(cmap='jet', figsize=(12, 5))
-cloud_properties.der_cloudnet.T.plot(cmap='jet', figsize=(12, 5))
-cloud_properties.der_cloudnet_scaled.T.plot(cmap='jet', figsize=(12, 5), vmin=0, vmax=50)
+# der_output_path = os.path.join(path_cloudnet_retrieval, date_ini.replace("-","") + "_granada_" + 'der_corrected.nc')
+# path_categorize = os.path.join(path_cloudnet_retrieval, date_ini.replace("-","") + "_granada_" + 'categorize.nc')
+# # params = Parameters(2.0, 200.0e6, 200.0e6, 0.35, 0.1, 5.0e-3)
+# params_der = Parameters(2.0, 150.0e6, 150.0e6, 0.28, 0.1, 5.0e-3)
+# generate_der(path_categorize, der_output_path, parameters=params_der)
+# cloudnet_der_corrected = xr.open_dataset(der_output_path)
+# cloudnet_der_corrected = cloudnet_der_corrected.where(mask_cloud_type & mask_time_single_layer)
+# cloud_properties["der_cloudnet_corrected"] = cloudnet_der_corrected['der']*1e6
+# cloud_properties["der_cloudnet_corrected"].attrs['units'] = r"$\mu m$"
+# cloud_properties["der_cloudnet_corrected"].attrs['long_name'] = "Effective radius by Cloudnet - corrected"
 
-filtered_targ_clas["height"] = data.height - GRANADA_ALTITUDE
-cloud_properties["height"] = data.height - GRANADA_ALTITUDE
+# cloud_properties["der_cloudnet_scaled_corrected"] = cloudnet_der_corrected['der_scaled']*1e6
+# cloud_properties["der_cloudnet_scaled_corrected"].attrs['units'] = r"$\mu m$"
+# cloud_properties["der_cloudnet_scaled_corrected"].attrs['long_name'] = "Effective radius by Cloudnet scaled - corrected"
 
-filtered_targ_clas.T.plot(cmap=manual_cmap, figsize=(12, 5), vmin=0, vmax=ncolors)
-plt.xlim(datetime.datetime.strptime(date_str, '%Y%m%d') + datetime.timedelta(hours=17), datetime.datetime.strptime(date_str, '%Y%m%d') + datetime.timedelta(hours=18))
+# # Plot the effective radius
+# cloud_properties.der_knist.T.plot(cmap='jet', figsize=(12, 5))
+# cloud_properties.der_cloudnet.T.plot(cmap='jet', figsize=(12, 5))
+# cloud_properties.der_cloudnet_scaled.T.plot(cmap='jet', figsize=(12, 5), vmin=0, vmax=50)
 
-# Plot the histograms of the effective radius
-binwidth = .5
-rmax = 200
-bins = np.arange(0, rmax + binwidth, binwidth)
-fig, ax = plt.subplots(1, 1, figsize=(7, 5))
-cloud_properties.der_cloudnet_scaled.plot.hist(ax=ax, bins=bins, alpha=0.5, label='Cloudnet scaled', color="b")
-cloud_properties.der_cloudnet_scaled_corrected.plot.hist(ax=ax, bins=bins, alpha=0.5, label='Cloudnet scaled corrected', color="y")
-# change from bin to delta reff
-ax.set_xlabel(r"R$_{eff}$, $\mu m$")
-ax.set_ylabel("Counts (#)")
-ax.legend()
-ax.set_xlim(0, rmax)
-# fig.savefig(PATH_FIG + f"{date_str}_der_scaled_cloudnet_comparison_histogram_{cloud_identifier}.png", dpi=300, bbox_inches='tight')
-plt.show()
+# filtered_targ_clas["height"] = data.height - GRANADA_ALTITUDE
+# cloud_properties["height"] = data.height - GRANADA_ALTITUDE
 
-hydrometeor_type = ICE_WITH_SUP_WATER
+# filtered_targ_clas.T.plot(cmap=manual_cmap, figsize=(12, 5), vmin=0, vmax=ncolors)
+# plt.xlim(datetime.datetime.strptime(date_str, '%Y%m%d') + datetime.timedelta(hours=17), datetime.datetime.strptime(date_str, '%Y%m%d') + datetime.timedelta(hours=18))
 
-# Plot the histograms of the effective radius
-bins = np.arange(0, rmax+ binwidth, binwidth)
-fig, ax = plt.subplots(1, 1, figsize=(7, 5))
-cloud_properties.where(filtered_targ_clas == hydrometeor_type).der_cloudnet.plot.hist(ax=ax, bins=bins, alpha=0.5, label='Cloudnet', color="m")
-cloud_properties.where(filtered_targ_clas == hydrometeor_type).der_cloudnet_corrected.plot.hist(ax=ax, bins=bins, alpha=0.5, label='Cloudnet corrected', color="g")
-# change from bin to delta reff
-ax.set_xlabel(r"R$_{eff}$, $\mu m$")
-ax.set_ylabel("Counts (#)")
-ax.legend()
-ax.set_xlim(0, rmax)
-# fig.savefig(PATH_FIG + f"{date_str}_der_cloudnet_comparison_histogram_{cloud_identifier}.png", dpi=300, bbox_inches='tight')
-plt.show()
+# # Plot the histograms of the effective radius
+# binwidth = .5
+# rmax = 200
+# bins = np.arange(0, rmax + binwidth, binwidth)
+# fig, ax = plt.subplots(1, 1, figsize=(7, 5))
+# cloud_properties.der_cloudnet_scaled.plot.hist(ax=ax, bins=bins, alpha=0.5, label='Cloudnet scaled', color="b")
+# cloud_properties.der_cloudnet_scaled_corrected.plot.hist(ax=ax, bins=bins, alpha=0.5, label='Cloudnet scaled corrected', color="y")
+# # change from bin to delta reff
+# ax.set_xlabel(r"R$_{eff}$, $\mu m$")
+# ax.set_ylabel("Counts (#)")
+# ax.legend()
+# ax.set_xlim(0, rmax)
+# # fig.savefig(PATH_FIG + f"{date_str}_der_scaled_cloudnet_comparison_histogram_{cloud_identifier}.png", dpi=300, bbox_inches='tight')
+# plt.show()
 
-# Plot the histograms of the effective radius
-bins = np.arange(0, rmax + binwidth, binwidth)
-fig, ax = plt.subplots(1, 1, figsize=(7, 5))
-cloud_properties.der_knist.plot.hist(ax=ax, bins=bins, alpha=0.5, label='Knist', color="r")
-cloud_properties.der_cloudnet_scaled_corrected.plot.hist(ax=ax, bins=bins, alpha=0.5, label='Cloudnet scaled corrected', color="y")
-cloud_properties.der_cloudnet_corrected.plot.hist(ax=ax, bins=bins, alpha=0.5, label='Cloudnet corrected', color="g")
-# change from bin to delta reff
-ax.set_xlabel(r"R$_{eff}$, $\mu m$")
-ax.set_ylabel("Counts (#)")
-ax.legend()
-ax.set_xlim(0, rmax)
-# fig.savefig(PATH_FIG + f"{date_str}_der_comparison_histogram_{cloud_identifier}.png", dpi=300, bbox_inches='tight')
-plt.show()
+# hydrometeor_type = ICE_WITH_SUP_WATER
 
-print(f" Median: {cloud_properties.der_knist.mean().values}, {cloud_properties.der_knist.median().values}, {cloud_properties.der_knist.std().values}")
-print(f" Median: {cloud_properties.der_cloudnet_scaled.mean().values}, {cloud_properties.der_cloudnet_scaled.median().values}, {cloud_properties.der_cloudnet_scaled.std().values}")
-print(f" Median: {cloud_properties.der_cloudnet_scaled_corrected.mean().values}, {cloud_properties.der_cloudnet_scaled_corrected.median().values}, {cloud_properties.der_cloudnet_scaled_corrected.std().values}")
-print(f" Median: {cloud_properties.der_cloudnet.mean().values}, {cloud_properties.der_cloudnet.median().values}, {cloud_properties.der_cloudnet.std().values}")
-print(f" Median: {cloud_properties.der_cloudnet_corrected.mean().values}, {cloud_properties.der_cloudnet_corrected.median().values}, {cloud_properties.der_cloudnet_corrected.std().values}")
-# cloud_properties.der_knist.T.sel(time=slice(ini, end)).plot(cmap='jet', figsize=(12, 5))
+# # Plot the histograms of the effective radius
+# bins = np.arange(0, rmax+ binwidth, binwidth)
+# fig, ax = plt.subplots(1, 1, figsize=(7, 5))
+# cloud_properties.where(filtered_targ_clas == hydrometeor_type).der_cloudnet.plot.hist(ax=ax, bins=bins, alpha=0.5, label='Cloudnet', color="m")
+# cloud_properties.where(filtered_targ_clas == hydrometeor_type).der_cloudnet_corrected.plot.hist(ax=ax, bins=bins, alpha=0.5, label='Cloudnet corrected', color="g")
+# # change from bin to delta reff
+# ax.set_xlabel(r"R$_{eff}$, $\mu m$")
+# ax.set_ylabel("Counts (#)")
+# ax.legend()
+# ax.set_xlim(0, rmax)
+# # fig.savefig(PATH_FIG + f"{date_str}_der_cloudnet_comparison_histogram_{cloud_identifier}.png", dpi=300, bbox_inches='tight')
+# plt.show()
 
-cloud_properties["mean_der_cloudnet_scaled"] = cloud_properties.der_cloudnet_scaled.mean(dim='height')
-fig, ax = plt.subplots(1, 1, figsize=(7, 5))
-cloud_properties.where(filtered_targ_clas == hydrometeor_type).plot.scatter(x="lwp", y="mean_der_cloudnet_scaled")
-# ax.set_ylim(0, 100)
+# # Plot the histograms of the effective radius
+# bins = np.arange(0, rmax + binwidth, binwidth)
+# fig, ax = plt.subplots(1, 1, figsize=(7, 5))
+# cloud_properties.der_knist.plot.hist(ax=ax, bins=bins, alpha=0.5, label='Knist', color="r")
+# cloud_properties.der_cloudnet_scaled_corrected.plot.hist(ax=ax, bins=bins, alpha=0.5, label='Cloudnet scaled corrected', color="y")
+# cloud_properties.der_cloudnet_corrected.plot.hist(ax=ax, bins=bins, alpha=0.5, label='Cloudnet corrected', color="g")
+# # change from bin to delta reff
+# ax.set_xlabel(r"R$_{eff}$, $\mu m$")
+# ax.set_ylabel("Counts (#)")
+# ax.legend()
+# ax.set_xlim(0, rmax)
+# # fig.savefig(PATH_FIG + f"{date_str}_der_comparison_histogram_{cloud_identifier}.png", dpi=300, bbox_inches='tight')
+# plt.show()
 
-fig, ax = plt.subplots(1, 1, figsize=(7, 5))
-cloud_properties.where(filtered_targ_clas == hydrometeor_type).plot.scatter(x="Ze", y="der_cloudnet_scaled")
-# ax.set_ylim(0, 100)
+# print(f" Median: {cloud_properties.der_knist.mean().values}, {cloud_properties.der_knist.median().values}, {cloud_properties.der_knist.std().values}")
+# print(f" Median: {cloud_properties.der_cloudnet_scaled.mean().values}, {cloud_properties.der_cloudnet_scaled.median().values}, {cloud_properties.der_cloudnet_scaled.std().values}")
+# print(f" Median: {cloud_properties.der_cloudnet_scaled_corrected.mean().values}, {cloud_properties.der_cloudnet_scaled_corrected.median().values}, {cloud_properties.der_cloudnet_scaled_corrected.std().values}")
+# print(f" Median: {cloud_properties.der_cloudnet.mean().values}, {cloud_properties.der_cloudnet.median().values}, {cloud_properties.der_cloudnet.std().values}")
+# print(f" Median: {cloud_properties.der_cloudnet_corrected.mean().values}, {cloud_properties.der_cloudnet_corrected.median().values}, {cloud_properties.der_cloudnet_corrected.std().values}")
+# # cloud_properties.der_knist.T.sel(time=slice(ini, end)).plot(cmap='jet', figsize=(12, 5))
 
-# colorplot of the effective radius from cloudnet scaled in function of Ze and width variables
-fig, ax = plt.subplots(1, 1, figsize=(7, 5))
-sc = ax.scatter(cloud_properties.where(filtered_targ_clas == hydrometeor_type).Ze,
-                cloud_properties.where(filtered_targ_clas == hydrometeor_type).width,
-                c=cloud_properties.where(filtered_targ_clas == hydrometeor_type).der_cloudnet_scaled_corrected,
-                cmap='gist_ncar',
-                vmin=0,
-                vmax=20)
-cbar = plt.colorbar(sc, ax=ax, extend='both')
-cbar.set_label(r"$\mu m$")
-ax.set_xlabel("Ze (dBZ)")
-ax.set_ylabel("Width (m/s)")
-# fig.savefig(PATH_FIG + f"{date_str}_der_cloudnet_scaled_ice_with_sup_water.png", dpi=300, bbox_inches='tight')
-plt.show()
+# cloud_properties["mean_der_cloudnet_scaled"] = cloud_properties.der_cloudnet_scaled.mean(dim='height')
+# fig, ax = plt.subplots(1, 1, figsize=(7, 5))
+# cloud_properties.where(filtered_targ_clas == hydrometeor_type).plot.scatter(x="lwp", y="mean_der_cloudnet_scaled")
+# # ax.set_ylim(0, 100)
 
-#--------------------------------------------------------------------------------
-# Start RAW data analysis
-#--------------------------------------------------------------------------------
+# fig, ax = plt.subplots(1, 1, figsize=(7, 5))
+# cloud_properties.where(filtered_targ_clas == hydrometeor_type).plot.scatter(x="Ze", y="der_cloudnet_scaled")
+# # ax.set_ylim(0, 100)
 
-start_time = pd.DatetimeIndex(cloud_properties.time.values)[0]
-instrument_name   = 'nebula_ka'
-pattern           = f"{start_time.strftime('%y%m%d')}_18*ZEN.*"
-filepath_raw      = f"/home/matheustolen/shared/RAW/UGR/{instrument_name}/{start_time.strftime('%Y/%m/%d')}"
+# # colorplot of the effective radius from cloudnet scaled in function of Ze and width variables
+# fig, ax = plt.subplots(1, 1, figsize=(7, 5))
+# sc = ax.scatter(cloud_properties.where(filtered_targ_clas == hydrometeor_type).Ze,
+#                 cloud_properties.where(filtered_targ_clas == hydrometeor_type).width,
+#                 c=cloud_properties.where(filtered_targ_clas == hydrometeor_type).der_cloudnet_scaled_corrected,
+#                 cmap='gist_ncar',
+#                 vmin=0,
+#                 vmax=20)
+# cbar = plt.colorbar(sc, ax=ax, extend='both')
+# cbar.set_label(r"$\mu m$")
+# ax.set_xlabel("Ze (dBZ)")
+# ax.set_ylabel("Width (m/s)")
+# # fig.savefig(PATH_FIG + f"{date_str}_der_cloudnet_scaled_ice_with_sup_water.png", dpi=300, bbox_inches='tight')
+# plt.show()
 
-# create the same folder structure in the product folder
-product_folder = f"../../../radar_data/PRODUCTS/{instrument_name}/"
-date_list      = filepath_raw.split("/")[-3:]
-filepath_nc    = os.path.join(product_folder, *date_list)
-os.makedirs(filepath_nc, exist_ok=True) # create the folder if it does not exist
+# #--------------------------------------------------------------------------------
+# # Start RAW data analysis
+# #--------------------------------------------------------------------------------
 
-filepaths = glob.glob(os.path.join(filepath_raw, pattern))
-for file in filepaths:
-    if os.path.basename(file).endswith('.LV0'):
-        raw_filename  = os.path.basename(file).replace('LV0', 'LV0.nc')
-        filename_nc   = os.path.join(filepath_nc, os.path.basename(file).replace('LV0', 'LV0.nc'))
-        # check if raw netcdf file exists
-        if not os.path.exists(filename_nc):
-            rpg2nc(file, output_file=filename_nc)
-            # rpg2nc_rpgpy(filepath_rawdata[0]+"/*LV0", output_file=filepath_output+"/huge_day_file.nc") # If we want to concatenate one day file
-            print(f"File created at {filename_nc}")
-        else:
-            print(f"File {filename_nc} already exists")
+# start_time = pd.DatetimeIndex(cloud_properties.time.values)[0]
+# instrument_name   = 'nebula_ka'
+# pattern           = f"{start_time.strftime('%y%m%d')}_18*ZEN.*"
+# filepath_raw      = f"/home/matheustolen/shared/RAW/UGR/{instrument_name}/{start_time.strftime('%Y/%m/%d')}"
+
+# # create the same folder structure in the product folder
+# product_folder = f"../../../radar_data/PRODUCTS/{instrument_name}/"
+# date_list      = filepath_raw.split("/")[-3:]
+# filepath_nc    = os.path.join(product_folder, *date_list)
+# os.makedirs(filepath_nc, exist_ok=True) # create the folder if it does not exist
+
+# filepaths = glob.glob(os.path.join(filepath_raw, pattern))
+# for file in filepaths:
+#     if os.path.basename(file).endswith('.LV0'):
+#         raw_filename  = os.path.basename(file).replace('LV0', 'LV0.nc')
+#         filename_nc   = os.path.join(filepath_nc, os.path.basename(file).replace('LV0', 'LV0.nc'))
+#         # check if raw netcdf file exists
+#         if not os.path.exists(filename_nc):
+#             rpg2nc(file, output_file=filename_nc)
+#             # rpg2nc_rpgpy(filepath_rawdata[0]+"/*LV0", output_file=filepath_output+"/huge_day_file.nc") # If we want to concatenate one day file
+#             print(f"File created at {filename_nc}")
+#         else:
+#             print(f"File {filename_nc} already exists")
         
-        # Read the raw data with gfatpy
-        radar_lv0 = rpg(filename_nc)
-        # radar_lv0._data = radar_lv0._data.interp(time=cloud_properties.time.values, method="nearest")
-        # do the interpolation to the cloud properties and resample for 30 seconds
+#         # Read the raw data with gfatpy
+#         radar_lv0 = rpg(filename_nc)
+#         # radar_lv0._data = radar_lv0._data.interp(time=cloud_properties.time.values, method="nearest")
+#         # do the interpolation to the cloud properties and resample for 30 seconds
         
-    else:
-        raw_filename = os.path.basename(file).replace('LV1', 'LV1.nc')
-        filename_nc  = os.path.join(filepath_nc, os.path.basename(file).replace('LV1', 'LV1.nc'))
-                # check if raw netcdf file exists
-        if not os.path.exists(filename_nc):
-            rpg2nc(file, output_file=filename_nc)
-            # rpg2nc_rpgpy(filepath_rawdata[0]+"/*LV0", output_file=filepath_output+"/huge_day_file.nc") # If we want to concatenate one day file
-            print(f"File created at {filename_nc}")
-        else:
-            print(f"File {filename_nc} already exists")
-        radar_lv1 = rpg(filename_nc)
+#     else:
+#         raw_filename = os.path.basename(file).replace('LV1', 'LV1.nc')
+#         filename_nc  = os.path.join(filepath_nc, os.path.basename(file).replace('LV1', 'LV1.nc'))
+#                 # check if raw netcdf file exists
+#         if not os.path.exists(filename_nc):
+#             rpg2nc(file, output_file=filename_nc)
+#             # rpg2nc_rpgpy(filepath_rawdata[0]+"/*LV0", output_file=filepath_output+"/huge_day_file.nc") # If we want to concatenate one day file
+#             print(f"File created at {filename_nc}")
+#         else:
+#             print(f"File {filename_nc} already exists")
+#         radar_lv1 = rpg(filename_nc)
         
-radar_lv0._data = radar_lv0.data.resample(time="30S").mean()
-radar_lv1._data = radar_lv1.data.resample(time="30S").mean()
+# radar_lv0._data = radar_lv0.data.resample(time="30S").mean()
+# radar_lv1._data = radar_lv1.data.resample(time="30S").mean()
 
-scloud_properties = cloud_properties.sel(time=radar_lv0.data.time, method="nearest")
-scloud_prop  = cloud_properties.sel(time=radar_lv0.data.time, method="nearest")
-starg_clas   = filtered_targ_clas.sel(time=radar_lv0.data.time, method="nearest")
-scategorize  = categorize.sel(time=radar_lv0.data.time, method="nearest")
+# scloud_properties = cloud_properties.sel(time=radar_lv0.data.time, method="nearest")
+# scloud_prop  = cloud_properties.sel(time=radar_lv0.data.time, method="nearest")
+# starg_clas   = filtered_targ_clas.sel(time=radar_lv0.data.time, method="nearest")
+# scategorize  = categorize.sel(time=radar_lv0.data.time, method="nearest")
 
-starg_clas.T.plot(cmap=manual_cmap, figsize=(12, 5), vmin=0, vmax=ncolors)
-# # Use radar_lv0.data.time.values[0] and radar_lv0.data.time.values[-1] to select the time slice to get cloud properties
-# scloud_prop    = cloud_properties.sel(time=slice(radar_lv0.data.time.values[0], radar_lv0.data.time.values[-1]))
-# starg_clas     = filtered_targ_clas.sel(time=slice(radar_lv0.data.time.values[0], radar_lv0.data.time.values[-1]))
-# scategorize    = categorize.sel(time=slice(radar_lv0.data.time.values[0], radar_lv0.data.time.values[-1]))
+# starg_clas.T.plot(cmap=manual_cmap, figsize=(12, 5), vmin=0, vmax=ncolors)
+# # # Use radar_lv0.data.time.values[0] and radar_lv0.data.time.values[-1] to select the time slice to get cloud properties
+# # scloud_prop    = cloud_properties.sel(time=slice(radar_lv0.data.time.values[0], radar_lv0.data.time.values[-1]))
+# # starg_clas     = filtered_targ_clas.sel(time=slice(radar_lv0.data.time.values[0], radar_lv0.data.time.values[-1]))
+# # scategorize    = categorize.sel(time=slice(radar_lv0.data.time.values[0], radar_lv0.data.time.values[-1]))
 
-# # --------------------------------------------------------------------------------------------
-# mask pixels with ice with supercooled water
-mask_ice_sup_water = starg_clas == ICE_WITH_SUP_WATER
-mask_liquid        = starg_clas == CLOUD_LIQUID
-mask_ice          = starg_clas == ICE_PARTICLES
+# # # --------------------------------------------------------------------------------------------
+# # mask pixels with ice with supercooled water
+# mask_ice_sup_water = starg_clas == ICE_WITH_SUP_WATER
+# mask_liquid        = starg_clas == CLOUD_LIQUID
+# mask_ice          = starg_clas == ICE_PARTICLES
 
-starg_clas.T.plot(cmap=manual_cmap, figsize=(12, 5), vmin=0, vmax=ncolors)
-scloud_prop.der_cloudnet_scaled.T.plot(cmap='jet', figsize=(12, 5), vmin=0, vmax=100)
-scloud_prop.lwp.T.plot(figsize=(12, 5))
-# radar_lv1.data.dBZe.T.plot(cmap='jet', figsize=(12, 5))
-# radar_lv1.data.width.resample(time="30S").mean().T.plot(cmap='jet', 
-#                                                         figsize=(12, 5))
-# radar_lv1.data.skewness.resample(time="30S").mean().T.plot(cmap='jet', 
-#                                                         figsize=(12, 5),
-#                                                         vmin=-1,
-#                                                         vmax=1)
-# radar_lv1.data.kurtosis.resample(time="30S").mean().T.plot(cmap='jet', 
-#                                                         figsize=(12, 5), 
-#                                                         vmin=0,
-#                                                         vmax=4)
-# radar_lv1.data.differential_phase.resample(time="30S").mean().T.plot(cmap='jet', 
-#                                                                      figsize=(12, 5), 
-#                                                                      vmin=2, 
-#                                                                      vmax=-2.5)
-# # scloud_prop["differential_phase"] = radar_lv1.data.differential_phase.resample(time="30S").mean().interp(method="nearest", time=scloud_prop.time.values)
-# radar_lv1.data.ldr_slanted.resample(time="30S").mean().T.plot(cmap='jet',
-#                                                                      figsize=(12, 5), 
-#                                                                      vmin=-70, 
-#                                                                      vmax=-30)
-# radar_lv1.data.correlation_coefficient.resample(time="30S").mean().T.plot(cmap='jet',
-#                                                                      figsize=(12, 5), 
-#                                                                      vmin=0, 
-#                                                                      vmax=1)
-# radar_lv1.data.differential_phase_shift.resample(time="30S").mean().T.plot(cmap='jet',
-#                                                                      figsize=(12, 5),
-#                                                                         vmin=-.2,
-#                                                                         vmax=.2)
-scloud_prop.der_cloudnet_scaled.T.plot(cmap='jet', figsize=(12, 5), vmin=0, vmax=100)
-scloud_prop.der_cloudnet.T.plot(cmap='jet', figsize=(12, 5))
+# starg_clas.T.plot(cmap=manual_cmap, figsize=(12, 5), vmin=0, vmax=ncolors)
+# scloud_prop.der_cloudnet_scaled.T.plot(cmap='jet', figsize=(12, 5), vmin=0, vmax=100)
+# scloud_prop.lwp.T.plot(figsize=(12, 5))
+# # radar_lv1.data.dBZe.T.plot(cmap='jet', figsize=(12, 5))
+# # radar_lv1.data.width.resample(time="30S").mean().T.plot(cmap='jet', 
+# #                                                         figsize=(12, 5))
+# # radar_lv1.data.skewness.resample(time="30S").mean().T.plot(cmap='jet', 
+# #                                                         figsize=(12, 5),
+# #                                                         vmin=-1,
+# #                                                         vmax=1)
+# # radar_lv1.data.kurtosis.resample(time="30S").mean().T.plot(cmap='jet', 
+# #                                                         figsize=(12, 5), 
+# #                                                         vmin=0,
+# #                                                         vmax=4)
+# # radar_lv1.data.differential_phase.resample(time="30S").mean().T.plot(cmap='jet', 
+# #                                                                      figsize=(12, 5), 
+# #                                                                      vmin=2, 
+# #                                                                      vmax=-2.5)
+# # # scloud_prop["differential_phase"] = radar_lv1.data.differential_phase.resample(time="30S").mean().interp(method="nearest", time=scloud_prop.time.values)
+# # radar_lv1.data.ldr_slanted.resample(time="30S").mean().T.plot(cmap='jet',
+# #                                                                      figsize=(12, 5), 
+# #                                                                      vmin=-70, 
+# #                                                                      vmax=-30)
+# # radar_lv1.data.correlation_coefficient.resample(time="30S").mean().T.plot(cmap='jet',
+# #                                                                      figsize=(12, 5), 
+# #                                                                      vmin=0, 
+# #                                                                      vmax=1)
+# # radar_lv1.data.differential_phase_shift.resample(time="30S").mean().T.plot(cmap='jet',
+# #                                                                      figsize=(12, 5),
+# #                                                                         vmin=-.2,
+# #                                                                         vmax=.2)
+# scloud_prop.der_cloudnet_scaled.T.plot(cmap='jet', figsize=(12, 5), vmin=0, vmax=100)
+# scloud_prop.der_cloudnet.T.plot(cmap='jet', figsize=(12, 5))
 
-# fig = plt.figure(figsize=(6, 5))
-# scloud_prop.where(mask_ice_sup_water).plot.scatter(x="width", y="der_cloudnet_scaled")
-# fig = plt.figure(figsize=(6, 5))
-# scloud_prop.where(mask_ice_sup_water).plot.scatter(x="Ze", y="der_cloudnet_scaled")
-# fig = plt.figure(figsize=(6, 5))
-# scloud_prop.where(mask_ice_sup_water).plot.scatter(x="sldr", y="der_cloudnet_scaled")
-# plt.xlim(-55, -15)
-# fig = plt.figure(figsize=(6, 5))
-# scloud_prop.where(mask_ice_sup_water).plot.scatter(x="differential_phase", y="der_cloudnet_scaled")
+# # fig = plt.figure(figsize=(6, 5))
+# # scloud_prop.where(mask_ice_sup_water).plot.scatter(x="width", y="der_cloudnet_scaled")
+# # fig = plt.figure(figsize=(6, 5))
+# # scloud_prop.where(mask_ice_sup_water).plot.scatter(x="Ze", y="der_cloudnet_scaled")
+# # fig = plt.figure(figsize=(6, 5))
+# # scloud_prop.where(mask_ice_sup_water).plot.scatter(x="sldr", y="der_cloudnet_scaled")
+# # plt.xlim(-55, -15)
+# # fig = plt.figure(figsize=(6, 5))
+# # scloud_prop.where(mask_ice_sup_water).plot.scatter(x="differential_phase", y="der_cloudnet_scaled")
 
-# starg_clas.T.where(mask_ice).plot(cmap=manual_cmap, figsize=(12, 5), vmin=0, vmax=ncolors)
-# starg_clas.T.where(mask_ice_sup_water).plot(cmap=manual_cmap, figsize=(12, 5), vmin=0, vmax=ncolors)
-# starg_clas.T.where(mask_liquid).plot(cmap=manual_cmap, figsize=(12, 5), vmin=0, vmax=ncolors)
-# # --------------------------------------------------------------------------------------------
-mask_to_ice_droplets = True
-mask_to_only_ice     = False
-mask_to_only_liquid  = False
+# # starg_clas.T.where(mask_ice).plot(cmap=manual_cmap, figsize=(12, 5), vmin=0, vmax=ncolors)
+# # starg_clas.T.where(mask_ice_sup_water).plot(cmap=manual_cmap, figsize=(12, 5), vmin=0, vmax=ncolors)
+# # starg_clas.T.where(mask_liquid).plot(cmap=manual_cmap, figsize=(12, 5), vmin=0, vmax=ncolors)
+# # # --------------------------------------------------------------------------------------------
+# mask_to_ice_droplets = True
+# mask_to_only_ice     = False
+# mask_to_only_liquid  = False
 
-if mask_to_ice_droplets:
-    mask_hydometeor = mask_ice_sup_water
-    name_hydrometeor = color_names[ICE_WITH_SUP_WATER]
-elif mask_to_only_ice:
-    mask_hydometeor = mask_ice
-    name_hydrometeor = color_names[ICE_PARTICLES]
-elif mask_to_only_liquid:
-    mask_hydometeor = mask_liquid
-    name_hydrometeor = color_names[CLOUD_LIQUID]
+# if mask_to_ice_droplets:
+#     mask_hydometeor = mask_ice_sup_water
+#     name_hydrometeor = color_names[ICE_WITH_SUP_WATER]
+# elif mask_to_only_ice:
+#     mask_hydometeor = mask_ice
+#     name_hydrometeor = color_names[ICE_PARTICLES]
+# elif mask_to_only_liquid:
+#     mask_hydometeor = mask_liquid
+#     name_hydrometeor = color_names[CLOUD_LIQUID]
 
-# Have to store the index of the pixels that are ice with supercooled water
-dic_index = {}
-for i in range(mask_hydometeor.shape[0]):
-    # if there is any true value in the row, store the index
-    # Otherwise do not store anything
-    # the dic key should be the time in datetime format
-    if np.any(mask_hydometeor[i, :]):
-        index = np.where(mask_hydometeor[i, :])[0]
-        dic_index[starg_clas.time.values[i]] = index
+# # Have to store the index of the pixels that are ice with supercooled water
+# dic_index = {}
+# for i in range(mask_hydometeor.shape[0]):
+#     # if there is any true value in the row, store the index
+#     # Otherwise do not store anything
+#     # the dic key should be the time in datetime format
+#     if np.any(mask_hydometeor[i, :]):
+#         index = np.where(mask_hydometeor[i, :])[0]
+#         dic_index[starg_clas.time.values[i]] = index
 
-list_mask_time = list(dic_index.keys())
-# # --------------------------------------------------------------------------------------------
-i=1
-rini_absl = starg_clas.height[dic_index[list_mask_time[i]]].min()
-rend_absl = starg_clas.height[dic_index[list_mask_time[i]]].max()
-height_slice = slice(rini_absl, rend_absl)
-# height_slice = slice(4000, 6500)
-# get slice time 1 min before and after list_mask_time[i]
-# slice_time = slice(list_mask_time[i] - pd.Timedelta(minutes=1), list_mask_time[i] + pd.Timedelta(minutes=1)) 
-# slice_time = slice(datetime.datetime(2024, 4, 2, 17,40,45), datetime.datetime(2024, 4, 2, 17,42,0))
-# starg_clas.T.sel(time=slice_time, height=height_slice).plot(cmap=manual_cmap, figsize=(12, 5), vmin=0, vmax=ncolors)
+# list_mask_time = list(dic_index.keys())
+# # # --------------------------------------------------------------------------------------------
+# i=1
+# rini_absl = starg_clas.height[dic_index[list_mask_time[i]]].min()
+# rend_absl = starg_clas.height[dic_index[list_mask_time[i]]].max()
+# height_slice = slice(rini_absl, rend_absl)
+# # height_slice = slice(4000, 6500)
+# # get slice time 1 min before and after list_mask_time[i]
+# # slice_time = slice(list_mask_time[i] - pd.Timedelta(minutes=1), list_mask_time[i] + pd.Timedelta(minutes=1)) 
+# # slice_time = slice(datetime.datetime(2024, 4, 2, 17,40,45), datetime.datetime(2024, 4, 2, 17,42,0))
+# # starg_clas.T.sel(time=slice_time, height=height_slice).plot(cmap=manual_cmap, figsize=(12, 5), vmin=0, vmax=ncolors)
 
-# starg_clas.where(mask_hydometeor).T.sel(time=slice_time, height=height_slice).plot(cmap=manual_cmap, figsize=(12, 5), vmin=0, vmax=ncolors)
+# # starg_clas.where(mask_hydometeor).T.sel(time=slice_time, height=height_slice).plot(cmap=manual_cmap, figsize=(12, 5), vmin=0, vmax=ncolors)
 
-# range_targets = radar_lv0.data.range.values[dic_index[list_mask_time[i]]].tolist()
-# range_slice = (range_targets[0], range_targets[-1])
-# now the range slide 100m below and above the above range slide
-# range_slice = (range_slice[0]-100, range_slice[1]+100)
-# fig, filepath = radar_lv0.plot_2D_spectrum(
-#         variable='doppler_spectrum_dBZe',
-#         target_time=list_mask_time[i],
-#         range_limits=range_slice,
-#         vmin=-10,
-#         vmax=10,
-#         **{"savefig": False}
-#     )
+# # range_targets = radar_lv0.data.range.values[dic_index[list_mask_time[i]]].tolist()
+# # range_slice = (range_targets[0], range_targets[-1])
+# # now the range slide 100m below and above the above range slide
+# # range_slice = (range_slice[0]-100, range_slice[1]+100)
+# # fig, filepath = radar_lv0.plot_2D_spectrum(
+# #         variable='doppler_spectrum_dBZe',
+# #         target_time=list_mask_time[i],
+# #         range_limits=range_slice,
+# #         vmin=-10,
+# #         vmax=10,
+# #         **{"savefig": False}
+# #     )
 
-i=1
-cloud_targets_by_time = starg_clas.sel(time=list_mask_time[i]).dropna(dim='height')
-range_cloud_by_time = cloud_targets_by_time.height.values.tolist()
-fig, filepath = radar_lv0.plot_spectra_by_range_and_hydromet(
-                                                target_time=list_mask_time[i],
-                                                range_slice=range_cloud_by_time,
-                                                targ_class=cloud_targets_by_time,
-                                                output_dir = Path("./"),
-                                                **{"savefig": True, 
-                                                   "velocity_limits": (-3, 3)}
-                                                )
-fig, filepath = radar_lv0.plot_spectra_by_range(
-                                                target_time=list_mask_time[i],
-                                                range_slice=range_cloud_by_time,
-                                                output_dir = Path("./"),
-                                                **{"savefig": False, 
-                                                   "velocity_limits": (-3, 3)}
-                                                )
-
-fig, filepath = radar_lv0.plot_2D_spectrum(
-        variable='doppler_spectrum_dBZe',
-        target_time= list_mask_time[i],
-        range_limits=(4000, 12000),
-        vmin=-50,
-        vmax=-1,
-        **{"savefig": False}
-    )
-# change axis x-limits using fig handle
-fig.axes[0].set_xlim(-3, 3)
-
-fig = plt.figure(figsize=(12, 5))
-starg_clas.T.plot(cmap=manual_cmap, figsize=(12, 5), vmin=0, vmax=ncolors)
-# plot an vertical line for list_mask_time[i]:
-plt.axvline(x=list_mask_time[i] + pd.Timedelta(seconds=15), color='b', linestyle='--')
-plt.ylim(4000, 12000)
-plt.show()
-
-# fig, filepath =  radar_lv0.plot_spectra_by_range(target_time=list_mask_time[i], 
-#                                                 range_slice=range_targets,
+# i=1
+# cloud_targets_by_time = starg_clas.sel(time=list_mask_time[i]).dropna(dim='height')
+# range_cloud_by_time = cloud_targets_by_time.height.values.tolist()
+# fig, filepath = radar_lv0.plot_spectra_by_range_and_hydromet(
+#                                                 target_time=list_mask_time[i],
+#                                                 range_slice=range_cloud_by_time,
+#                                                 targ_class=cloud_targets_by_time,
+#                                                 output_dir = Path("./"),
+#                                                 **{"savefig": True, 
+#                                                    "velocity_limits": (-3, 3)}
+#                                                 )
+# fig, filepath = radar_lv0.plot_spectra_by_range(
+#                                                 target_time=list_mask_time[i],
+#                                                 range_slice=range_cloud_by_time,
+#                                                 output_dir = Path("./"),
 #                                                 **{"savefig": False, 
-#                                                    "velocity_limits": (-1.5, 1)}
+#                                                    "velocity_limits": (-3, 3)}
 #                                                 )
 
-# # Save all spectrums in a folder
-# folder_to_save = Path( os.path.join(f"../figures/dvs_comparison/{instrument_name}/{name_hydrometeor}", *date_list) )
-# os.makedirs(folder_to_save, exist_ok=True)
+# fig, filepath = radar_lv0.plot_2D_spectrum(
+#         variable='doppler_spectrum_dBZe',
+#         target_time= list_mask_time[i],
+#         range_limits=(4000, 12000),
+#         vmin=-50,
+#         vmax=-1,
+#         **{"savefig": False}
+#     )
+# # change axis x-limits using fig handle
+# fig.axes[0].set_xlim(-3, 3)
 
-# # for i in range(len(list_mask_time)):
-# #     range_targets = radar_lv0.data.range.values[dic_index[list_mask_time[i]]].tolist()
-# #     fig, filepath =  radar_lv0.plot_spectra_by_range(target_time=list_mask_time[i], 
-# #                                                     range_slice=range_targets,
-# #                                                     **{"savefig": True, 
-# #                                                     "velocity_limits": (-4, .5),
-# #                                                     "output_dir": folder_to_save}
-# #                                                     )
+# fig = plt.figure(figsize=(12, 5))
+# starg_clas.T.plot(cmap=manual_cmap, figsize=(12, 5), vmin=0, vmax=ncolors)
+# # plot an vertical line for list_mask_time[i]:
+# plt.axvline(x=list_mask_time[i] + pd.Timedelta(seconds=15), color='b', linestyle='--')
+# plt.ylim(4000, 12000)
+# plt.show()
+
+# # fig, filepath =  radar_lv0.plot_spectra_by_range(target_time=list_mask_time[i], 
+# #                                                 range_slice=range_targets,
+# #                                                 **{"savefig": False, 
+# #                                                    "velocity_limits": (-1.5, 1)}
+# #                                                 )
+
+# # # Save all spectrums in a folder
+# # folder_to_save = Path( os.path.join(f"../figures/dvs_comparison/{instrument_name}/{name_hydrometeor}", *date_list) )
+# # os.makedirs(folder_to_save, exist_ok=True)
+
+# # # for i in range(len(list_mask_time)):
+# # #     range_targets = radar_lv0.data.range.values[dic_index[list_mask_time[i]]].tolist()
+# # #     fig, filepath =  radar_lv0.plot_spectra_by_range(target_time=list_mask_time[i], 
+# # #                                                     range_slice=range_targets,
+# # #                                                     **{"savefig": True, 
+# # #                                                     "velocity_limits": (-4, .5),
+# # #                                                     "output_dir": folder_to_save}
+# # #                                                     )
     

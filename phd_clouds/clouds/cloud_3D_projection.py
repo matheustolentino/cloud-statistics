@@ -24,7 +24,7 @@ RHI_LV1 = Path(r"/home/matheustolen/shared/RAW/UGR/nebula_w/2024/06/26")
 # RHI_LV1 = Path(r"/home/matheustolen/shared/NAS_raw_data/UGR/nebula_w/2024/06/08")
 PATH_NC = Path(r"../../tests/data/radar")
 PATH_CAT = Path(r"../../tests/data/classification")
-FIGURE_DIR = Path(r"../../papers/cloud_statistics/figures/")
+FIGURE_DIR = Path(r"../../tests/figures/")
 
 # -------------------------------------------------------------------------------------------
 # Instrument and site information
@@ -143,36 +143,34 @@ sliced_classification = ds_classification.sel(time=slice(concat_data['time'].min
 # Converting data to cartesian coordinates for all RHI data
 # -------------------------------------------------------------------------------------------
 rm, thetam, phim, xm, ym, zm = spherical_to_cartesian(concat_data['range'], concat_data['azimuth'], concat_data['elevation'])
+
+
+# -------------------------------------------------------------------------------------------
 # Usee mayavi to plot the concat_data['dBZe'] in 3D
 # Plot one plane for each azimuth
-
-mlab.figure(size=(1000, 1000), bgcolor=(0,0,0))
-for i, phi in enumerate(np.unique(concat_data['azimuth'])):
-    mask = concat_data['azimuth'] == phi
-    radar_slice = concat_data.sel(time=mask)
-    _,_,_,xi, yi, zi = spherical_to_cartesian(radar_slice['range'], radar_slice['azimuth'], radar_slice['elevation'])
-
-    mlab.mesh(xi/1e3, yi/1e3, zi/1e3, scalars=radar_slice['dBZe'].values.T, colormap='jet')
-    # mlab.volume_slice(xi/1e3, yi/1e3, zi/1e3, radar_slice['dBZe'].values.T, plane_orientation='z_axes', colormap='jet')
-    mlab.colorbar(title='dBz', orientation='vertical', nb_labels=8)
-
-
-    # mlab.savefig(FIGURE_DIR / "RHI_%f.png" % phi)
-# mlab.view(azimuth=180, elevation=90)
-# mlab.axes(xlabel='X', ylabel='Y', zlabel='Z')
-# save figure
-
-mlab.savefig(filename="../figures/RHI_cloud_measurement.png")
-mlab.show()
-
+# -------------------------------------------------------------------------------------------
 # mlab.figure(size=(1000, 1000), bgcolor=(0,0,0))
-# _,_,_,xi, yi, zi = spherical_to_cartesian(concat_data['range'], concat_data['azimuth'], concat_data['elevation'])
-# mlab.mesh(xi/1e3, yi/1e3, zi/1e3, scalars=concat_data['dBZe'].values.T, 
-#                    )
-# mlab.colorbar(title='dBz', orientation='vertical', nb_labels=8)
-# # mlab.savefig(filename="../figures/RHI_cloud_measurement_volume.png")
+# for i, phi in enumerate(np.unique(concat_data['azimuth'])):
+#     mask = concat_data['azimuth'] == phi
+#     radar_slice = concat_data.sel(time=mask)
+#     _,_,_,xi, yi, zi = spherical_to_cartesian(radar_slice['range'], radar_slice['azimuth'], radar_slice['elevation'])
+
+#     mlab.mesh(xi/1e3, yi/1e3, zi/1e3, scalars=radar_slice['dBZe'].values.T, colormap='jet')
+#     # mlab.volume_slice(xi/1e3, yi/1e3, zi/1e3, radar_slice['dBZe'].values.T, plane_orientation='z_axes', colormap='jet')
+#     mlab.colorbar(title='dBz', orientation='vertical', nb_labels=8)
+
+
+#     # mlab.savefig(FIGURE_DIR / "RHI_%f.png" % phi)
+# # mlab.view(azimuth=180, elevation=90)
+# # mlab.axes(xlabel='X', ylabel='Y', zlabel='Z')
+# # save figure
+
+# mlab.savefig(filename="../figures/RHI_cloud_measurement.png")
 # mlab.show()
 
+# -------------------------------------------------------------------------------------------
+# Remove NANs from the data
+# -------------------------------------------------------------------------------------------
 cartesian_coords = np.array([xm.ravel(), ym.ravel(), zm.ravel()]).T
 transposed_values = concat_data['dBZe'].values.T.ravel()
 
@@ -246,7 +244,7 @@ spherical_grid_cloud = cartesian_to_spherical(cartesian_grid_cloud[:, 0],
 # ax.set_ylabel('Y')
 # ax.set_zlabel('Z')
 # fig.colorbar(scat, ax=ax, label='dBZ')
-# fig.savefig(FIGURE_DIR / "RHI_cloud.png")
+# # fig.savefig(FIGURE_DIR / "RHI_cloud.png")
 
 # plt.show()
 # -------------------------------------------------------------------------------------------

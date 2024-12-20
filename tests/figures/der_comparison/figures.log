@@ -1,0 +1,436 @@
+This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2022/dev/Debian) (preloaded format=pdflatex 2024.3.15)  8 APR 2024 18:47
+entering extended mode
+ restricted \write18 enabled.
+ %&-line parsing enabled.
+**figures.tex
+(./figures.tex
+LaTeX2e <2021-11-15> patch level 1
+L3 programming layer <2022-01-21>
+(/usr/share/texlive/texmf-dist/tex/latex/base/article.cls
+Document Class: article 2021/10/04 v1.4n Standard LaTeX document class
+(/usr/share/texlive/texmf-dist/tex/latex/base/size10.clo
+File: size10.clo 2021/10/04 v1.4n Standard LaTeX file (size option)
+)
+\c@part=\count185
+\c@section=\count186
+\c@subsection=\count187
+\c@subsubsection=\count188
+\c@paragraph=\count189
+\c@subparagraph=\count190
+\c@figure=\count191
+\c@table=\count192
+\abovecaptionskip=\skip47
+\belowcaptionskip=\skip48
+\bibindent=\dimen138
+)
+(/usr/share/texlive/texmf-dist/tex/latex/geometry/geometry.sty
+Package: geometry 2020/01/02 v5.9 Page Geometry
+
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/keyval.sty
+Package: keyval 2014/10/28 v1.15 key=value parser (DPC)
+\KV@toks@=\toks16
+)
+(/usr/share/texlive/texmf-dist/tex/generic/iftex/ifvtex.sty
+Package: ifvtex 2019/10/25 v1.7 ifvtex legacy package. Use iftex instead.
+
+(/usr/share/texlive/texmf-dist/tex/generic/iftex/iftex.sty
+Package: iftex 2020/03/06 v1.0d TeX engine tests
+))
+\Gm@cnth=\count193
+\Gm@cntv=\count194
+\c@Gm@tempcnt=\count195
+\Gm@bindingoffset=\dimen139
+\Gm@wd@mp=\dimen140
+\Gm@odd@mp=\dimen141
+\Gm@even@mp=\dimen142
+\Gm@layoutwidth=\dimen143
+\Gm@layoutheight=\dimen144
+\Gm@layouthoffset=\dimen145
+\Gm@layoutvoffset=\dimen146
+\Gm@dimlist=\toks17
+)
+(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsmath.sty
+Package: amsmath 2021/10/15 v2.17l AMS math features
+\@mathmargin=\skip49
+
+For additional information on amsmath, use the `?' option.
+(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amstext.sty
+Package: amstext 2021/08/26 v2.01 AMS text
+
+(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsgen.sty
+File: amsgen.sty 1999/11/30 v2.0 generic functions
+\@emptytoks=\toks18
+\ex@=\dimen147
+))
+(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsbsy.sty
+Package: amsbsy 1999/11/29 v1.2d Bold Symbols
+\pmbraise@=\dimen148
+)
+(/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsopn.sty
+Package: amsopn 2021/08/26 v2.02 operator names
+)
+\inf@bad=\count196
+LaTeX Info: Redefining \frac on input line 234.
+\uproot@=\count197
+\leftroot@=\count198
+LaTeX Info: Redefining \overline on input line 399.
+\classnum@=\count199
+\DOTSCASE@=\count266
+LaTeX Info: Redefining \ldots on input line 496.
+LaTeX Info: Redefining \dots on input line 499.
+LaTeX Info: Redefining \cdots on input line 620.
+\Mathstrutbox@=\box50
+\strutbox@=\box51
+\big@size=\dimen149
+LaTeX Font Info:    Redeclaring font encoding OML on input line 743.
+LaTeX Font Info:    Redeclaring font encoding OMS on input line 744.
+\macc@depth=\count267
+\c@MaxMatrixCols=\count268
+\dotsspace@=\muskip16
+\c@parentequation=\count269
+\dspbrk@lvl=\count270
+\tag@help=\toks19
+\row@=\count271
+\column@=\count272
+\maxfields@=\count273
+\andhelp@=\toks20
+\eqnshift@=\dimen150
+\alignsep@=\dimen151
+\tagshift@=\dimen152
+\tagwidth@=\dimen153
+\totwidth@=\dimen154
+\lineht@=\dimen155
+\@envbody=\toks21
+\multlinegap=\skip50
+\multlinetaggap=\skip51
+\mathdisplay@stack=\toks22
+LaTeX Info: Redefining \[ on input line 2938.
+LaTeX Info: Redefining \] on input line 2939.
+)
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/graphicx.sty
+Package: graphicx 2021/09/16 v1.2d Enhanced LaTeX Graphics (DPC,SPQR)
+
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/graphics.sty
+Package: graphics 2021/03/04 v1.4d Standard LaTeX Graphics (DPC,SPQR)
+
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/trig.sty
+Package: trig 2021/08/11 v1.11 sin cos tan (DPC)
+)
+(/usr/share/texlive/texmf-dist/tex/latex/graphics-cfg/graphics.cfg
+File: graphics.cfg 2016/06/04 v1.11 sample graphics configuration
+)
+Package graphics Info: Driver file: pdftex.def on input line 107.
+
+(/usr/share/texlive/texmf-dist/tex/latex/graphics-def/pdftex.def
+File: pdftex.def 2020/10/05 v1.2a Graphics/color driver for pdftex
+))
+\Gin@req@height=\dimen156
+\Gin@req@width=\dimen157
+)
+(/usr/share/texlive/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
+File: l3backend-pdftex.def 2022-01-12 L3 backend support: PDF output (pdfTeX)
+\l__color_backend_stack_int=\count274
+\l__pdf_internal_box=\box52
+)
+No file figures.aux.
+\openout1 = `figures.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 7.
+LaTeX Font Info:    ... okay on input line 7.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 7.
+LaTeX Font Info:    ... okay on input line 7.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 7.
+LaTeX Font Info:    ... okay on input line 7.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 7.
+LaTeX Font Info:    ... okay on input line 7.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 7.
+LaTeX Font Info:    ... okay on input line 7.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 7.
+LaTeX Font Info:    ... okay on input line 7.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 7.
+LaTeX Font Info:    ... okay on input line 7.
+*geometry* driver: auto-detecting
+*geometry* detected driver: pdftex
+*geometry* verbose mode - [ preamble ] result:
+* driver: pdftex
+* paper: letterpaper
+* layout: <same size as paper>
+* layoutoffset:(h,v)=(0.0pt,0.0pt)
+* modes: 
+* h-part:(L,W,R)=(85.35826pt, 443.57848pt, 85.35826pt)
+* v-part:(T,H,B)=(56.9055pt, 681.15898pt, 56.9055pt)
+* \paperwidth=614.295pt
+* \paperheight=794.96999pt
+* \textwidth=443.57848pt
+* \textheight=681.15898pt
+* \oddsidemargin=13.08827pt
+* \evensidemargin=13.08827pt
+* \topmargin=-52.36449pt
+* \headheight=12.0pt
+* \headsep=25.0pt
+* \topskip=10.0pt
+* \footskip=30.0pt
+* \marginparwidth=49.79231pt
+* \marginparsep=11.0pt
+* \columnsep=10.0pt
+* \skip\footins=9.0pt plus 4.0pt minus 2.0pt
+* \hoffset=0.0pt
+* \voffset=0.0pt
+* \mag=1000
+* \@twocolumnfalse
+* \@twosidefalse
+* \@mparswitchfalse
+* \@reversemarginfalse
+* (1in=72.27pt=25.4mm, 1cm=28.453pt)
+
+(/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
+[Loading MPS to PDF converter (version 2006.09.02).]
+\scratchcounter=\count275
+\scratchdimen=\dimen158
+\scratchbox=\box53
+\nofMPsegments=\count276
+\nofMParguments=\count277
+\everyMPshowfont=\toks23
+\MPscratchCnt=\count278
+\MPscratchDim=\dimen159
+\MPnumerator=\count279
+\makeMPintoPDFobject=\count280
+\everyMPtoPDFconversion=\toks24
+) (/usr/share/texlive/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
+Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
+Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
+85.
+
+(/usr/share/texlive/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg
+File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
+e
+))
+[1
+
+{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}]
+
+! LaTeX Error: Unknown float option `H'.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.10 \begin{figure}[H]
+                      
+? R
+OK, entering \nonstopmode...
+<20231130_Ice_der_comparison_hist.png, id=9, 800.5107pt x 460.6008pt>
+File: 20231130_Ice_der_comparison_hist.png Graphic file (type png)
+<use 20231130_Ice_der_comparison_hist.png>
+Package pdftex.def Info: 20231130_Ice_der_comparison_hist.png  used on input li
+ne 12.
+(pdftex.def)             Requested size: 443.57848pt x 255.22884pt.
+
+! LaTeX Error: Unknown float option `H'.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.14 \begin{figure}[H]
+                      
+Option `H' ignored and `p' used.
+
+<20231130_Ice_diff_der_pcolor_mwr_temperature.png, id=11, 1109.8263pt x 869.649
+pt>
+File: 20231130_Ice_diff_der_pcolor_mwr_temperature.png Graphic file (type png)
+<use 20231130_Ice_diff_der_pcolor_mwr_temperature.png>
+Package pdftex.def Info: 20231130_Ice_diff_der_pcolor_mwr_temperature.png  used
+ on input line 16.
+(pdftex.def)             Requested size: 443.57848pt x 347.57477pt.
+
+! LaTeX Error: Unknown float option `H'.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.18 \begin{figure}[H]
+                      
+Option `H' ignored and `p' used.
+
+<20231130_Liquid_der_comparison_hist.png, id=12, 793.7655pt x 460.6008pt>
+File: 20231130_Liquid_der_comparison_hist.png Graphic file (type png)
+<use 20231130_Liquid_der_comparison_hist.png>
+Package pdftex.def Info: 20231130_Liquid_der_comparison_hist.png  used on input
+ line 20.
+(pdftex.def)             Requested size: 443.57848pt x 257.40054pt.
+
+! LaTeX Error: Unknown float option `H'.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.22 \begin{figure}[H]
+                      
+Option `H' ignored and `p' used.
+
+<20231130_Liquid_diff_der_pcolor_model_temperature.png, id=13, 1109.8263pt x 86
+9.649pt>
+File: 20231130_Liquid_diff_der_pcolor_model_temperature.png Graphic file (type 
+png)
+<use 20231130_Liquid_diff_der_pcolor_model_temperature.png>
+Package pdftex.def Info: 20231130_Liquid_diff_der_pcolor_model_temperature.png 
+ used on input line 24.
+(pdftex.def)             Requested size: 443.57848pt x 347.57477pt.
+
+! LaTeX Error: Unknown float option `H'.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.26 \begin{figure}[H]
+                      
+Option `H' ignored and `p' used.
+
+<20231130_Liquid_diff_der_pcolor_mwr_temperature.png, id=14, 1109.8263pt x 869.
+649pt>
+File: 20231130_Liquid_diff_der_pcolor_mwr_temperature.png Graphic file (type pn
+g)
+<use 20231130_Liquid_diff_der_pcolor_mwr_temperature.png>
+Package pdftex.def Info: 20231130_Liquid_diff_der_pcolor_mwr_temperature.png  u
+sed on input line 28.
+(pdftex.def)             Requested size: 443.57848pt x 347.57477pt.
+
+! LaTeX Error: Unknown float option `H'.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.30 \begin{figure}[H]
+                      
+Option `H' ignored and `p' used.
+
+<20231130_Mixed_phase_der_comparison_hist.png, id=15, 784.8522pt x 460.6008pt>
+File: 20231130_Mixed_phase_der_comparison_hist.png Graphic file (type png)
+<use 20231130_Mixed_phase_der_comparison_hist.png>
+Package pdftex.def Info: 20231130_Mixed_phase_der_comparison_hist.png  used on 
+input line 32.
+(pdftex.def)             Requested size: 443.57848pt x 260.31725pt.
+
+! LaTeX Error: Unknown float option `H'.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.34 \begin{figure}[H]
+                      
+Option `H' ignored and `p' used.
+
+<20231130_Mixed_phase_diff_der_pcolor_mwr_temperature.png, id=16, 1109.8263pt x
+ 869.649pt>
+File: 20231130_Mixed_phase_diff_der_pcolor_mwr_temperature.png Graphic file (ty
+pe png)
+<use 20231130_Mixed_phase_diff_der_pcolor_mwr_temperature.png>
+Package pdftex.def Info: 20231130_Mixed_phase_diff_der_pcolor_mwr_temperature.p
+ng  used on input line 36.
+(pdftex.def)             Requested size: 443.57848pt x 347.57477pt.
+
+! LaTeX Error: Unknown float option `H'.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.38 \begin{figure}[H]
+                      
+Option `H' ignored and `p' used.
+
+<20231130_Pre_liquid_der_comparison_hist.png, id=17, 793.7655pt x 460.6008pt>
+File: 20231130_Pre_liquid_der_comparison_hist.png Graphic file (type png)
+<use 20231130_Pre_liquid_der_comparison_hist.png>
+Package pdftex.def Info: 20231130_Pre_liquid_der_comparison_hist.png  used on i
+nput line 40.
+(pdftex.def)             Requested size: 443.57848pt x 257.40054pt.
+
+! LaTeX Error: Unknown float option `H'.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.42 \begin{figure}[H]
+                      
+Option `H' ignored and `p' used.
+
+<20231130_Pre_liquid_diff_der_pcolor_mwr_temperature.png, id=18, 1109.8263pt x 
+869.649pt>
+File: 20231130_Pre_liquid_diff_der_pcolor_mwr_temperature.png Graphic file (typ
+e png)
+<use 20231130_Pre_liquid_diff_der_pcolor_mwr_temperature.png>
+Package pdftex.def Info: 20231130_Pre_liquid_diff_der_pcolor_mwr_temperature.pn
+g  used on input line 44.
+(pdftex.def)             Requested size: 443.57848pt x 347.57477pt.
+
+! LaTeX Error: Unknown float option `H'.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.46 \begin{figure}[H]
+                      
+Option `H' ignored and `p' used.
+
+<20231130_Pre_mixed_phase_der_comparison_hist.png, id=19, 784.8522pt x 460.6008
+pt>
+File: 20231130_Pre_mixed_phase_der_comparison_hist.png Graphic file (type png)
+<use 20231130_Pre_mixed_phase_der_comparison_hist.png>
+Package pdftex.def Info: 20231130_Pre_mixed_phase_der_comparison_hist.png  used
+ on input line 48.
+(pdftex.def)             Requested size: 443.57848pt x 260.31725pt.
+
+! LaTeX Error: Unknown float option `H'.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.50 \begin{figure}[H]
+                      
+Option `H' ignored and `p' used.
+
+<20231130_Pre_mixed_phase_diff_der_pcolor_mwr_temperature.png, id=20, 1109.8263
+pt x 869.649pt>
+File: 20231130_Pre_mixed_phase_diff_der_pcolor_mwr_temperature.png Graphic file
+ (type png)
+<use 20231130_Pre_mixed_phase_diff_der_pcolor_mwr_temperature.png>
+Package pdftex.def Info: 20231130_Pre_mixed_phase_diff_der_pcolor_mwr_temperatu
+re.png  used on input line 52.
+(pdftex.def)             Requested size: 443.57848pt x 347.57477pt.
+[2 <./20231130_Ice_der_comparison_hist.png> <./20231130_Ice_diff_der_pcolor_mwr
+_temperature.png>] [3 <./20231130_Liquid_der_comparison_hist.png> <./20231130_L
+iquid_diff_der_pcolor_model_temperature.png>] [4 <./20231130_Liquid_diff_der_pc
+olor_mwr_temperature.png> <./20231130_Mixed_phase_der_comparison_hist.png>]
+[5 <./20231130_Mixed_phase_diff_der_pcolor_mwr_temperature.png> <./20231130_Pre
+_liquid_der_comparison_hist.png>] [6 <./20231130_Pre_liquid_diff_der_pcolor_mwr
+_temperature.png> <./20231130_Pre_mixed_phase_der_comparison_hist.png>]
+[7 <./20231130_Pre_mixed_phase_diff_der_pcolor_mwr_temperature.png>]
+(./figures.aux) ) 
+Here is how much of TeX's memory you used:
+ 2595 strings out of 478287
+ 42656 string characters out of 5849289
+ 337015 words of memory out of 5000000
+ 20792 multiletter control sequences out of 15000+600000
+ 472968 words of font info for 41 fonts, out of 8000000 for 9000
+ 1141 hyphenation exceptions out of 8191
+ 55i,6n,62p,224b,233s stack positions out of 5000i,500n,10000p,200000b,80000s
+</usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/
+cmr10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.p
+fb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb>
+Output written on figures.pdf (7 pages, 5513035 bytes).
+PDF statistics:
+ 66 PDF objects out of 1000 (max. 8388607)
+ 28 compressed objects within 1 object stream
+ 0 named destinations out of 1000 (max. 500000)
+ 56 words of extra memory for PDF output out of 10000 (max. 10000000)
+

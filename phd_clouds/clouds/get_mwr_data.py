@@ -15,6 +15,10 @@ import matplotlib.font_manager as fm
 import os
 from phd_clouds.mwr_class import Mwr
 from phd_clouds.utils import assign_season
+from phd_clouds.constants import SEASONS
+import matplotlib as mpl
+from IPython import get_ipython
+
 
 # Define the path to the figures directory
 PATH_FIG = '../figures/'
@@ -28,35 +32,55 @@ plt.rcParams['font.serif'] = ['Times New Roman'] + plt.rcParams['font.serif']
 
 # Set the fontsize for all elements in the plot
 plt.rcParams['font.size'] = fontsize
+
 plt.ion()
 plt.close('all')
 
+ipython = get_ipython()
+if ipython is not None:
+    ipython.run_line_magic('matplotlib', 'inline')
+
 # Test the Mwr class for one day of data
-path_daily_mwr = '/home/matheustolen/shared/NAS_raw_data/UGR/mwr/Y2016/M04/D07'
-mwr_files_lwp  = glob.glob(path_daily_mwr + '/*.LWP', recursive=True)
+path_daily_mwr = '/home/matheustolen/shared/RAW/UGR/mwr/Y2023/M10/D01'
+mwr_files  = glob.glob(path_daily_mwr + '/*.LWP', recursive=True)
+
 mwr_object = Mwr()
 
-mwd_data      = mwr_object.concatenate_mwr_files_lwp_2([mwr_files_lwp[0]])
-mwr_scan      = mwr_object.concatenate_mwr_files_lwp_2([mwr_files_lwp[1]])
-resampled_mwd = mwd_data.resample(time='30S').mean()
-resampled_mwd_scan = mwr_scan.resample(time='30S').mean()
+mwr      = mwr_object.concatenate_mwr_files_lwp(mwr_files)
+resampled_mwd = mwr.resample(time='30S').mean()
+
 # Plot LWP in function of time and its 30s average
 fig, ax = plt.subplots(figsize=(10, 5))
-ax.plot(mwd_data['time'], mwd_data['lwp'], label='LWP')
-ax.plot(resampled_mwd['time'], resampled_mwd['lwp'], label='LWP 30s average')
+resampled_mwd['lwp'].plot(ax=ax, label='LWP')
 ax.set_xlabel('Time')
 ax.set_ylabel('LWP (g/m$^{2}$)')
-# Convert time to HH:MM format
-ax.set_title(ax.get_title(), loc='left', pad=20, fontweight='bold', fontsize=16)
-# Get the day of the year
-day_of_year = mwd_data['time'].values[0]
-# convert to string  in the format dd/mm/yyyy
-day_of_year = datetime.datetime.utcfromtimestamp(day_of_year.astype('O')/1e9).strftime('%d/%m/%Y')
-# Set the title in the left corner
-ax.set_title(day_of_year, loc='left', pad=20, fontweight='bold', fontsize=16)
-ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
-ax.set_xlim([mwd_data['time'].min().values, mwd_data['time'].max().values])
 ax.legend()
+plt.show()
+
+mwr_files  = glob.glob(path_daily_mwr + '/*.TPC', recursive=True)
+
+mwr = mwr_object.concatenate_mwr_files_tpc(mwr_files)
+
+fig, ax = plt.subplots(figsize=(10, 5))
+mwr.temperature.T.plot(ax=ax, cmap='jet')
+ax.set_xlabel('Time (UTC)')
+ax.set_ylabel('Altitude (m)')
+plt.show()
+
+mwr_files  = glob.glob(path_daily_mwr + '/*.HPC', recursive=True)
+
+rh, q = mwr_object.concatenate_mwr_files_hpc(mwr_files)
+
+fig, ax = plt.subplots(figsize=(10, 5))
+rh.relative_humidity.T.plot(ax=ax, cmap='jet')
+ax.set_xlabel('Time (UTC)')
+ax.set_ylabel('Altitude (m)')
+plt.show()
+
+fig, ax = plt.subplots(figsize=(10, 5))
+q.humidity.T.plot(ax=ax, cmap='jet')
+ax.set_xlabel('Time (UTC)')
+ax.set_ylabel('Altitude (m)')
 plt.show()
 
 set_trace()

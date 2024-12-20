@@ -11,12 +11,31 @@ import operator
 import pandas as pd
 from typing import List, Tuple, Dict, Any
 import datetime
-from phd_clouds.utils import groupSequence
+from phd_clouds.utils import download_cloudnet_products, groupSequence
 import glob
 import netCDF4 as nc
 import os
+from phd_clouds.constants import CLEAR_SKY, CLOUD_LIQUID, DRIZZLE_OR_RAIN, DRIZZLE_OR_RAIN_LIQUID_DROPLETS, ICE_PARTICLES, ICE_WITH_SUP_WATER, MELTING_ICE, MELTING_ICE_LIQUID_DROPLETS, AERO_NO_CLOUD, INSECT_NO_CLOUD, AERO_WITH_INSECT_NO_CLOUD, CLASSIFICATION_TICK_LABELS, GRANADA_ALTITUDE
+from collections import Counter
+from scipy import ndimage
+import matplotlib as mpl
+from scipy.optimize import curve_fit
 
-from phd_clouds.constants import CLEAR_SKY, CLOUD_LIQUID, DRIZZLE_OR_RAIN, DRIZZLE_OR_RAIN_LIQUID_DROPLETS, ICE_PARTICLES, ICE_WITH_SUP_WATER, MELTING_ICE, MELTING_ICE_LIQUID_DROPLETS, AERO_NO_CLOUD, INSECT_NO_CLOUD, AERO_WITH_INSECT_NO_CLOUD, CLASSIFICATION_TICK_LABELS
+PATH_FIG_TEST     = '../../tests/figures/'
+
+
+
+HYDROMET_VALUES = {"CLOUD_LIQUID": CLOUD_LIQUID,
+               "DRIZZLE_OR_RAIN": DRIZZLE_OR_RAIN,
+               "DRIZZLE_OR_RAIN_LIQUID_DROPLETS": DRIZZLE_OR_RAIN_LIQUID_DROPLETS,
+               "ICE_PARTICLES": ICE_PARTICLES,
+               "ICE_WITH_SUP_WATER": ICE_WITH_SUP_WATER,
+               "MELTING_ICE": MELTING_ICE,
+               "MELTING_ICE_LIQUID_DROPLETS": MELTING_ICE_LIQUID_DROPLETS}
+
+cloud_category = ["No Cloud", "Liquid", "Liquid-Precipitable", "Ice", "Ice-Precipitable", "Mixed-Phase", "Mixed-Phase-Precipitable", "Noise"]
+list_cloud_colors = ["#FFFFFF", "#007CFF", "blue", "cyan", "grey", "yellow", "orange", "magenta"]
+cloud_cmap = plt.cm.colors.ListedColormap(list_cloud_colors)
 
 def compare_radar_chirp_configurations(start_date: datetime,
                                        end_date: datetime,
@@ -428,8 +447,691 @@ class CloudProcess:
                 current_count = 0
 
         return max_count, start_index, end_index
+    
+# Define the linear function
+def linear_func(x, a, b):
+    return a * x + b
 
+class CloudProcessing:
+    def __init__(self, path_classification = None,
+                  path_microphys = None, 
+                  path_categorize = None, 
+                  path_radar = None, 
+                  path_mwr = None, 
+                  site = 'granada',
+                  min_cloud_pixels = 100,
+                  min_rain_pixels = 10):
+        
+        self.path_classification = path_classification
+        self.path_microphys = path_microphys
+        self.path_categorize = path_categorize
+        self.path_radar = path_radar
+        self.path_mwr = path_mwr
+        self.site = site
+        self.min_cloud_pixels = min_cloud_pixels
+        self.min_rain_pixels = min_rain_pixels
 
+        self.layer_type            = ["single_layer", "multi_layer"]
+        self.cloud_structure       = ["cloud_base", "cloud_top", "cloud_thickness"]
+
+    def get_filenames(self, dic_patterns):
+        dic_files = {'classification': None, 'lwc': None, 'iwc': None, 'der': None, 'ier': None, 'categorize': None, 'radar': None, 'mwr':
+                        None}
+        if self.path_classification is not None:
+            dic_files['classification'] = glob.glob(os.path.join(self.path_classification, dic_patterns['classification']))
+        if self.path_microphys is not None:
+            dic_files['lwc'] = glob.glob(os.path.join(self.path_microphys, dic_patterns['lwc']))
+            dic_files['iwc'] = glob.glob(os.path.join(self.path_microphys, dic_patterns['iwc']))
+            dic_files['der'] = glob.glob(os.path.join(self.path_microphys, dic_patterns['der']))
+            dic_files['ier'] = glob.glob(os.path.join(self.path_microphys, dic_patterns['ier']))
+        if self.path_categorize is not None:
+            dic_files['categorize'] = glob.glob(os.path.join(self.path_categorize, dic_patterns['categorize']))
+        if self.path_radar is not None:
+            dic_files['radar'] = glob.glob(os.path.join(self.path_radar, dic_patterns['radar']))
+        if self.path_mwr is not None:
+            dic_files['mwr'] = glob.glob(os.path.join(self.path_mwr, dic_patterns['mwr']))
+        self.filenames = dic_files
+        
+    def get_filenames_from_datastr(self, datastr):
+        
+        dic_files = {'classification': None, 'lwc': None, 'iwc': None, 'der': None, 'ier': None, 'categorize': None, 'radar': None, 'mwr':
+                        None}
+        if self.path_classification is not None:
+            dic_files['classification'] = glob.glob(os.path.join(self.path_classification, f"{datastr}_{self.site}_classification.nc"))
+
+        if self.path_microphys is not None:
+            dic_files['lwc'] = glob.glob(os.path.join(self.path_microphys, f"{datastr}_{self.site}_lwc-scaled-adiabatic.nc"))
+            dic_files['iwc'] = glob.glob(os.path.join(self.path_microphys, f"{datastr}_{self.site}_iwc-Z-T-method.nc"))
+            dic_files['der'] = glob.glob(os.path.join(self.path_microphys, f"{datastr}_{self.site}_der.nc"))
+            dic_files['ier'] = glob.glob(os.path.join(self.path_microphys, f"{datastr}_{self.site}_ier.nc"))
+
+        if self.path_categorize is not None:
+            dic_files['categorize'] = glob.glob(os.path.join(self.path_categorize, f"{datastr}_{self.site}_'categorize'.nc"))
+
+        if self.path_radar is not None:
+            dic_files['radar'] = glob.glob(os.path.join(self.path_radar, f"{datastr}_{self.site}_rpg-fmcw-94*.nc"))
+
+        if self.path_mwr is not None:
+            dic_files['mwr'] = glob.glob(os.path.join(self.path_mwr, f"{datastr}_{self.site}_hatpro*.nc"))
+
+        self.filenames = dic_files
+        
+    def download_products(self, date, path_output, products):
+        for product in products:
+            download_cloudnet_products(date, date, path_output, product=product, site=self.site)
+
+    def load_lwc(self, chunk_data=False):
+        for file in self.filenames['lwc']:
+            if chunk_data:
+                self.lwc = xr.open_dataset(file, engine='netcdf4', chunks={'time': -1})
+            else:
+                self.lwc = xr.open_dataset(file)
+        
+    def load_iwc(self, chunk_data=False):
+        for file in self.filenames['iwc']:
+            if chunk_data:
+                self.iwc = xr.open_dataset(file, engine='netcdf4', chunks={'time': -1})
+            else:
+                self.iwc = xr.open_dataset(file)
+            
+    def load_der(self, chunk_data=False):
+        for file in self.filenames['der']:
+            if chunk_data:
+                self.der = xr.open_dataset(file, engine='netcdf4', chunks={'time': -1})
+            else:
+                self.der = xr.open_dataset(file)
+            
+    def load_ier(self, chunk_data=False):
+        for file in self.filenames['ier']:
+            if chunk_data:
+                self.ier = xr.open_dataset(file, engine='netcdf4', chunks={'time': -1})
+            else:
+                self.ier = xr.open_dataset(file)
+            
+    def load_classification(self, chunk_data=False, get_var=False):
+        try:
+            if self.filenames['classification']:
+                if get_var:
+                    if chunk_data:
+                        dataset_list = [xr.open_dataset(file, engine='netcdf4', chunks={'time': -1})[get_var] for file in self.filenames['classification']]
+                        self.classification = xr.concat(dataset_list, dim='time').sortby('time').chunk({'time': -1})
+                    else:
+                        dataset_list = [xr.open_dataset(file)[get_var] for file in self.filenames['classification']]
+                        self.classification = xr.concat(dataset_list, dim='time').sortby('time')
+                else:
+                    if chunk_data:
+                        dataset_list = [xr.open_dataset(file, engine='netcdf4', chunks={'time': -1}) for file in self.filenames['classification']]
+                        self.classification = xr.concat(dataset_list, dim='time').sortby('time').chunk({'time': -1})
+                    else:
+                        dataset_list = [xr.open_dataset(file) for file in self.filenames['classification']]
+                        self.classification = xr.concat(dataset_list, dim='time').sortby('time')
+        except Exception as e:
+            print(e)
+            self.classification = None
+            
+    def load_categorize(self, chunk_data=False, get_var=False):
+        try:
+            if self.filenames['categorize']:
+                if get_var:
+                    if chunk_data:
+                        dataset_list = [xr.open_dataset(file, engine='netcdf4', chunks={'time': -1})[get_var] for file in self.filenames['categorize']]
+                        self.categorize = xr.concat(dataset_list, dim='time').sortby('time').chunk({'time': -1})
+                    else:
+                        dataset_list = [xr.open_dataset(file)[get_var] for file in self.filenames['categorize']]
+                        self.categorize = xr.concat(dataset_list, dim='time').sortby('time')
+                else:
+                    if chunk_data:
+                        dataset_list = [xr.open_dataset(file, engine='netcdf4', chunks={'time': -1}) for file in self.filenames['categorize']]
+                        self.categorize = xr.concat(dataset_list, dim='time').sortby('time').chunk({'time': -1})
+                    else:
+                        dataset_list = [xr.open_dataset(file) for file in self.filenames['categorize']]
+                        self.categorize = xr.concat(dataset_list, dim='time').sortby('time')
+        except Exception as e:
+            print(e)
+            self.categorize = None
+            
+    def load_radar(self, chunk_data=False, get_var=False):
+        try:
+            if self.filenames['radar']:
+                if get_var:
+                    if chunk_data:
+                        dataset_list = [xr.open_dataset(file, engine='netcdf4', chunks={'time': -1})[get_var] for file in self.filenames['radar']]
+                        self.radar = xr.concat(dataset_list, dim='time').sortby('time').chunk({'time': -1})
+                    else:
+                        dataset_list = [xr.open_dataset(file)[get_var] for file in self.filenames['radar']]
+                        self.radar = xr.concat(dataset_list, dim='time').sortby('time')
+                else:
+                    if chunk_data:
+                        dataset_list = [xr.open_dataset(file, engine='netcdf4', chunks={'time': -1}) for file in self.filenames['radar']]
+                        self.radar = xr.concat(dataset_list, dim='time').sortby('time').chunk({'time': -1})
+                    else:
+                        dataset_list = [xr.open_dataset(file) for file in self.filenames['radar']]
+                        self.radar = xr.concat(dataset_list, dim='time').sortby('time')  
+        except Exception as e:
+            print(e)
+            self.radar = None
+
+    def load_mwr(self, chunk_data=False, get_var=False):
+        try: 
+            if self.filenames['mwr']:
+                if get_var:
+                    if chunk_data:
+                        dataset_list = [xr.open_dataset(file, engine='netcdf4', chunks={'time': -1})[get_var] for file in self.filenames['mwr']]
+                        self.mwr = xr.concat(dataset_list, dim='time').sortby('time').chunk({'time': -1})
+                    else:
+                        dataset_list = [xr.open_dataset(file)[get_var] for file in self.filenames['mwr']]
+                        self.mwr = xr.concat(dataset_list, dim='time').sortby('time')
+                else:
+                    if chunk_data:
+                        dataset_list = [xr.open_dataset(file, engine='netcdf4', chunks={'time': -1}) for file in self.filenames['mwr']]
+                        self.mwr = xr.concat(dataset_list, dim='time').sortby('time').chunk({'time': -1})
+                    else:
+                        dataset_list = [xr.open_dataset(file) for file in self.filenames['mwr']]
+                        self.mwr = xr.concat(dataset_list, dim='time').sortby('time')
+        except Exception as e:
+            print(e)
+            self.mwr = None
+        
+    def load_all_files(self, chunk_data=False):
+        return self.load_lwc(chunk_data), self.load_iwc(chunk_data), self.load_der(chunk_data), self.load_ier(chunk_data), self.load_classification(chunk_data), self.load_categorize(chunk_data), self.load_radar(chunk_data), self.load_mwr(chunk_data)
+
+    def initialize_time(self):
+        self.time = self.classification.time
+    
+    def generate_cloud_mask(self, all_hydromet_values, non_hydromet_values):
+        
+        df_data = pd.DataFrame(self.classification['target_classification'].values, columns=self.classification['target_classification']['height'].values, index=self.classification['target_classification']['time'].values)
+        classification_filter = CloudProcess(df_data,
+                                             all_hydromet_values,
+                                             non_hydromet_values,
+                                             1)
+         
+        self.cloud_mask = classification_filter.cloud_mask().to_numpy(dtype=int)
+    
+    def dilate_and_label_clouds(self, cloud_mask, distance=2):
+        """
+        Dilate the cloud mask and label connected components.
+        """
+        # Create a binary structure with specified connectivity
+        s = ndimage.generate_binary_structure(cloud_mask.ndim, connectivity=distance)
+
+        # Dilate the binary array with the structuring element
+        dilated_array = ndimage.binary_dilation(cloud_mask, structure=s)
+
+        # Label connected components
+        labels, num_features = ndimage.label(dilated_array)
+
+        # Initialize a dictionary to store indices for each label
+        indices_dict = {}
+
+        # Iterate over each unique label
+        for label_val in range(1, num_features+1):
+            # Get indices where mask equals the current label
+            indices = np.argwhere(labels == label_val)
+            # Add indices to the dictionary
+            indices_dict[label_val] = indices
+
+        return indices_dict
+
+    def classify_clusters(self):
+        cloud_indx = {}
+        indx_inside_cloud = {}
+        cloud_composition = {}
+        ds_classification = {}
+        valid_clouds = []
+        time_idx_valid_clouds = []
+        time_idx_noise = np.zeros(self.time.shape[0])
+        
+        cloud_type = xr.Dataset(coords={'time': self.time})
+        for var in cloud_category[1:]:
+            cloud_type[var] = xr.DataArray(data=np.zeros(self.time.shape), coords={'time': self.time}, dims='time')
+        
+        indices_dict = self.dilate_and_label_clouds(self.cloud_mask, distance=2)
+        indices_dict_sorted = dict(sorted(indices_dict.items()))
+
+        # Iterate over each label and calculate cloud composition
+        for cloud_number, indx in indices_dict_sorted.items():
+            mask_with_only_hydrometeor = self.cloud_mask[indx[:, 0], indx[:, 1]] == 1  # remove values that are not hydrometeors due dilatation
+            indx = indx[mask_with_only_hydrometeor]
+            cloud_indx[cloud_number] = indx
+
+            hydro_cloud = self.classification.target_classification.values[indx[:, 0], indx[:, 1]]
+            mask_withou_rain = hydro_cloud != DRIZZLE_OR_RAIN
+            indx_inside_cloud[cloud_number] = indx[mask_withou_rain]
+            n_pixels_rain = len(indx[~mask_withou_rain])
+            hydro_inside_cloud = hydro_cloud[mask_withou_rain]
+            n_pixels_inside_cloud = len(indx_inside_cloud[cloud_number])
+
+            if n_pixels_inside_cloud == 0 or n_pixels_inside_cloud < self.min_cloud_pixels:
+                ds_classification[cloud_number] = "Noise"
+                idx_noise = np.unique(indx[:, 0])
+                time_idx_noise[idx_noise] = 1
+                cloud_type["Noise"][idx_noise] = 1
+            else:
+                valid_clouds.append(cloud_number)
+                time_idx_valid_clouds.append(np.unique(indx_inside_cloud[cloud_number][:, 0]))
+                hydromet_freq = {}
+                for hydromet_name, hydromet_val in HYDROMET_VALUES.items():
+                    count = np.count_nonzero(hydro_inside_cloud == hydromet_val)
+                    hydromet_freq[hydromet_name] = 100 * (count / n_pixels_inside_cloud)
+                    cloud_composition[cloud_number] = hydromet_freq
+
+                liquid_percentage = cloud_composition[cloud_number]["CLOUD_LIQUID"] + cloud_composition[cloud_number]["DRIZZLE_OR_RAIN_LIQUID_DROPLETS"]
+
+                if liquid_percentage > 70:
+                    if n_pixels_rain > self.min_rain_pixels:
+                        ds_classification[cloud_number] = "Liquid-Precipitable"
+                        cloud_type["Liquid-Precipitable"][np.unique(indx_inside_cloud[cloud_number][:, 0])] = 1
+                    else:
+                        ds_classification[cloud_number] = "Liquid"
+                        cloud_type["Liquid"][np.unique(indx_inside_cloud[cloud_number][:, 0])] = 1
+
+                elif cloud_composition[cloud_number]["ICE_PARTICLES"] > 90 or \
+                        (cloud_composition[cloud_number]["CLOUD_LIQUID"] + cloud_composition[cloud_number]["ICE_WITH_SUP_WATER"]) < 10:
+
+                    if cloud_composition[cloud_number]["DRIZZLE_OR_RAIN_LIQUID_DROPLETS"] > 0:
+                        drizzle_index = np.where(hydro_inside_cloud == DRIZZLE_OR_RAIN_LIQUID_DROPLETS)
+                        # remove drizzle icdx from indx_inside_cloud
+                        indx_inside_cloud[cloud_number] = np.delete(indx_inside_cloud[cloud_number], drizzle_index, axis=0)
+
+                    if n_pixels_rain > self.min_rain_pixels:
+                        ds_classification[cloud_number] = "Ice-Precipitable"
+                        cloud_type["Ice-Precipitable"][np.unique(indx_inside_cloud[cloud_number][:, 0])] = 1
+                    else:
+                        ds_classification[cloud_number] = "Ice"
+                        cloud_type["Ice"][np.unique(indx_inside_cloud[cloud_number][:, 0])] = 1
+
+                elif n_pixels_rain > self.min_rain_pixels:
+                    ds_classification[cloud_number] = "Mixed-Phase-Precipitable"
+                    cloud_type["Mixed-Phase-Precipitable"][np.unique(indx_inside_cloud[cloud_number][:, 0])] = 1
+
+                    drizzle_index = np.where(hydro_inside_cloud == DRIZZLE_OR_RAIN_LIQUID_DROPLETS)
+                    indx_inside_cloud[cloud_number] = np.delete(indx_inside_cloud[cloud_number], drizzle_index, axis=0)
+
+                else:
+                    ds_classification[cloud_number] = "Mixed-Phase"
+                    cloud_type["Mixed-Phase"][np.unique(indx_inside_cloud[cloud_number][:, 0])] = 1
+
+        self.valid_cloud_number = valid_clouds
+        self.time_idx_noise     = time_idx_noise
+        self.cloud_type         = cloud_type
+        self.cloud_classification = ds_classification
+        self.indx_inside_cloud  = indx_inside_cloud
+        self.time_idx_valid_clouds = time_idx_valid_clouds
+        self.cloud_indx = cloud_indx # used by cluster classification product method
+
+        # return cloud_indx, cloud_composition
+
+    def analyze_clouds(self, filter_abl_ice_clouds=True, thick_threshold=700, base_threshold=4000):
+        
+        self.filter_abl_ice_clouds = filter_abl_ice_clouds
+        self.time_idx_noise        = np.zeros(self.time.shape[0])
+
+        for key in self.valid_cloud_number:
+            indx = self.indx_inside_cloud[key]
+            time_idx = np.unique(indx[:, 0])
+            aux_time_single_layer = []
+
+            for i in time_idx:
+                mask_time = indx[:, 0] == i
+                height_idx = indx[mask_time, :][:, 1]
+                layers = groupSequence(height_idx, 1)
+                n_layers = len(layers)
+
+                if n_layers == 1:  # single layer
+                    rain_above = self.israinabove(self.classification['target_classification'][i, layers[0][-1] + 1:].values)
+                    if rain_above:
+                        self.cloud_occurrence["multi_layer"][i] = 1
+                        self.cloud_props["cloud_base"][i] = np.nan
+                        self.cloud_props["cloud_top"][i] = np.nan
+                        self.cloud_props["cloud_thickness"][i] = np.nan
+                    else:
+                        self.cloud_occurrence["single_layer"][i] = 1
+                        aux_time_single_layer.append(i)
+                        self.cloud_props["cloud_base"][i] = self.classification.height[layers[0][0]]
+                        self.cloud_props["cloud_top"][i] = self.classification.height[layers[0][-1]]
+                        self.cloud_props["cloud_thickness"][i] = self.cloud_props["cloud_top"][i] - self.cloud_props["cloud_base"][i]
+                else:
+                    self.cloud_occurrence["multi_layer"][i] = 1
+
+            if self.filter_abl_ice_clouds:
+                self.filter_ice_clouds(key, aux_time_single_layer, thick_threshold, base_threshold)
+
+        self.correct_overlapping_clouds()
+
+    def initialize_datasets(self):
+
+        self.cloud_occurrence = xr.Dataset(coords={'time': self.time})
+        self.cloud_props = xr.Dataset(coords={'time': self.time})
+
+        for var in self.layer_type:
+            self.cloud_occurrence[var] = xr.DataArray(data=np.zeros(self.time.shape),
+                                                      coords={'time': self.time},
+                                                      dims='time')
+        for var in self.cloud_structure:
+            self.cloud_props[var] = xr.DataArray(data=np.full(self.time.shape, np.nan),
+                                                 coords={'time': self.time},
+                                                 dims='time')
+            
+    def israinabove(self, hydromet_column: np.ndarray) -> bool:
+        """
+        Check if there is rain above the cloud column
+        """
+        rain_above = False
+        for i in range(hydromet_column.shape[0]):
+            if hydromet_column[i] == DRIZZLE_OR_RAIN:
+                rain_above = True
+                return rain_above
+
+    def filter_ice_clouds(self, key, aux_time_single_layer, thick_threshold, base_threshold):
+        if len(aux_time_single_layer) > 0:
+            if self.cloud_classification[key] in ['Ice-Precipitable', 'Ice']:
+                mean_cloud_base = self.cloud_props["cloud_base"][aux_time_single_layer].mean()
+                mean_cloud_thickness = self.cloud_props["cloud_thickness"][aux_time_single_layer].mean()
+
+                is_thick_enough = mean_cloud_thickness < thick_threshold
+                is_base_enough = mean_cloud_base < base_threshold
+                if is_thick_enough and is_base_enough:
+                    self.cloud_occurrence["single_layer"][aux_time_single_layer] = 0
+                    self.time_idx_noise[aux_time_single_layer] = 1
+                    self.cloud_type["Noise"][aux_time_single_layer] = 1
+                    self.cloud_props["cloud_base"][aux_time_single_layer] = np.nan
+                    self.cloud_props["cloud_top"][aux_time_single_layer] = np.nan
+                    self.cloud_props["cloud_thickness"][aux_time_single_layer] = np.nan
+
+    def correct_overlapping_clouds(self):
+        flatenned_time_idx_cloud = [item for sublist in self.time_idx_valid_clouds for item in sublist]
+        count = Counter(flatenned_time_idx_cloud)
+        repeated_values = [value for value, frequency in count.items() if frequency > 1]
+
+        for index in repeated_values:
+            self.cloud_occurrence["multi_layer"][index] = 1
+            self.cloud_occurrence["single_layer"][index] = 0
+            self.cloud_props["cloud_base"][index] = np.nan
+            self.cloud_props["cloud_top"][index] = np.nan
+            self.cloud_props["cloud_thickness"][index] = np.nan
+
+        mask_clear_sky = self.cloud_occurrence.to_dataframe().sum(axis=1) == 0
+        mask_clear_sky = mask_clear_sky.astype(float)
+        self.cloud_occurrence["clear_sky"] = xr.DataArray(data=mask_clear_sky.values, coords={'time': self.time}, dims='time')
+        self.cloud_occurrence["noise"] = xr.DataArray(data=self.time_idx_noise, coords={'time': self.time}, dims='time')
+
+    def create_cluster_classification_product(self, cloud_values):
+        array_cloud = np.zeros((self.time.shape[0], self.classification.height.shape[0]))
+
+        for cloud_number, indx in self.cloud_indx.items():
+            cloud_name = self.cloud_classification[cloud_number]
+            integer = cloud_values[cloud_name]
+            if cloud_number in self.valid_cloud_number:
+                array_cloud[indx[:, 0], indx[:, 1]] = integer
+            else:
+                array_cloud[indx[:, 0], indx[:, 1]] = cloud_values["Noise"]
+
+        ds_cloud = xr.Dataset(data_vars={'cloud_classification': (['time', 'height'], array_cloud)},
+                              coords={'time': self.time, 'height': self.classification.height})
+        
+        ds_cloud.cloud_classification.attrs['long_name'] = 'Cloud classification'
+        ds_cloud.cloud_classification.attrs['description'] = \
+            'Cloud classification based on cloudnet target classification.\nHydrometeor cluster classification algorithm. \n0: No Cloud, \n1: Liquid, \n2: Liquid-Precipitable, \n3: Ice, \n4: Ice-Precipitable, \n5: Mixed-Phase, \n6: Mixed-Phase-Precipitable, \n7: Noise'
+        
+        self.cluster_classification  = ds_cloud
+
+    def add_radar_lwp(self):
+        self.cloud_props['lwp_radar'] = self.radar['lwp'].resample(time='30S', skipna=True).mean().interp(time=self.cloud_props.time, method='nearest')
+
+    def add_mwr_lwp(self):
+        if self.filenames['mwr']:
+            self.cloud_props['lwp'] = self.mwr['lwp'].resample(time='30S', skipna=True).mean().interp(time=self.cloud_props.time, method='nearest')
+            self.cloud_props['lwp'].attrs['source'] = self.mwr.attrs['source']
+        else:
+            self.cloud_props['lwp'] = None
+            # self.cloud_props['lwp'] = self.categorize['lwp']  # post-process LWP
+            # self.cloud_props['lwp'].attrs['source'] = self.categorize['lwp'].attrs['source'] + " (categorize)"
+
+    def create_attenuation_mask(self, cloud_cmap, cloud_values, time_roll="10T", lwp_treshold=0.8, corr_treshold=-0.5, lwp2_treshold=1, make_plot=False):
+        """
+        Apply attenuation filter to cloud properties and categorize data.
+        """
+        # ---------------------------------------------------------------------------------------------
+        # get data in cloud_props and categorize at each 5 minutes (moving mean of 5 min)
+        # and take the correlation between cloud thickness and lwp:
+        # https://pandas.pydata.org/docs/reference/api/pandas.core.window.rolling.Rolling.corr.html
+        # ---------------------------------------------------------------------------------------------
+        # Add cloud thickness and lwp in a pandas dataframe:
+        df = self.cloud_props.cloud_thickness.to_dataframe()
+        df['lwp_radar'] = self.cloud_props.lwp_radar.to_dataframe()
+        #df.dropna(inplace=True)
+        # Calculate the correlation between cloud thickness and lwp at each 5 minutes:
+        corr_pd = df['cloud_thickness'].rolling(window=time_roll, min_periods=10, center=False).corr(df['lwp_radar'])
+        # corr_pd.plot()
+        # transform the correlation to xarray dataset:
+        self.cloud_props['corr'] = xr.DataArray(corr_pd.values, coords={'time': self.cloud_props.time}, dims='time')
+        self.cloud_props['corr'].attrs['long_name'] = f'Correlation (thickness & lwp)'
+        self.cloud_props['corr'].attrs['description'] = 'Correlation between cloud thickness and lwp at each 5 minutes'
+        # self.cloud_props['corr'].attrs['units'] = '1'
+        # ---------------------------------------------------------------------------------------------
+        # Coarsen the data
+        # ---------------------------------------------------------------------------------------------
+        mask_lwp     = self.cloud_props['lwp_radar'] > lwp_treshold
+        mask_corr    = self.cloud_props['corr'] < corr_treshold
+        self.mask_att = (mask_lwp & mask_corr) | (self.cloud_props['lwp_radar'] > lwp2_treshold)
+        
+        if make_plot:
+            fig = plt.figure(figsize=(20, 10))
+            gs = fig.add_gridspec(2, 2, width_ratios=[1, .02], height_ratios=[1, .6], wspace=0.02, hspace=0.2)
+
+            ax2 = fig.add_subplot(gs[1, 0])
+            self.cloud_props.cloud_thickness.plot(ax=ax2, color='b')
+
+            ax3 = ax2.twinx()
+            self.cloud_props.lwp_radar.plot(ax=ax3, color='r')
+            ax3.spines['right'].set_color('red')
+            ax3.axhline(y=lwp_treshold, color='r', linestyle='--')
+            ax3.axhline(y=lwp2_treshold, color='k', linestyle='--')
+
+            ax5 = ax2.twinx()
+            self.cloud_props.corr.plot(ax=ax5, color='g')
+            ax5.spines['right'].set_position(('outward', 50))  # Move the y-axis outward
+            ax5.spines['right'].set_color('green')
+            # plot horizontal line at zero correlation
+            ax5.axhline(y=corr_treshold, color='g', linestyle='--')
+            
+            # self.mask_att = (mask_lwp & mask_corr)
+            ax1 = fig.add_subplot(gs[0, 0], sharex=ax2)
+            # scategorize['Z'].T.plot(ax=ax1, cmap='viridis', vmin=-40, vmax=20, add_colorbar=False)
+            self.cluster_classification.cloud_classification.T.plot(ax=ax1, cmap=cloud_cmap, vmin=0, vmax=7, add_colorbar=False)
+            # ax1.fill_between(scategorize.time.values, 0, 12000, where=smask, color='blue', alpha=0.2) # single layer
+            ax1.fill_between(self.cluster_classification.time.values, 0, 12000, where=self.mask_att, color='red', alpha=0.2) # removed areas due to attenuation
+            # put NAN in the correalation where the cloud is not single layer
+            # self.cloud_props['corr'] = self.cloud_props['corr'].where(smask)
+            self.cloud_props.cloud_base.plot(ax=ax1, color='r', linestyle='-')
+            self.cloud_props.cloud_top.plot(ax=ax1, color='k', linestyle='-')
+
+            # plot a blue area for intervals with single layer clouds
+            cbar = fig.add_subplot(gs[0, 1])
+            cbar = plt.colorbar(ax1.collections[0], cax=cbar,
+                                ticks=range(len(cloud_values)),
+                                orientation='vertical')
+            cbar.ax.set_yticklabels(list(cloud_values.keys()))
+            datestrings = self.cloud_props.time.dt.strftime('%Y%m%d').values
+            fig.savefig(f"{PATH_FIG_TEST}{datestrings[0]}_attenuation_mask.png", dpi=600, bbox_inches='tight')
+            plt.show()
+
+    def calculate_fit_parameters(self, small_than=0.2, larger_than=0.8):
+        """
+        Calculate linear fit parameters for LWP (Radar x MWR) and save them in an xarray.
+        """
+        # Extract LWP and LWP radar values
+        if not self.cloud_props['lwp'].any():
+            # print("MWR LWP is not available.")
+            self.fit_params = None
+            self.fit_mask_small_radar_lwp = None
+            self.fit_mask_larger_radar_lwp = None
+            self.count_verification = None
+            return
+        
+        lwp_values = self.cloud_props["lwp"].values
+        lwp_radar_values = self.cloud_props["lwp_radar"].values
+
+        # Remove NaN values
+        mask = ~np.isnan(lwp_values) & ~np.isnan(lwp_radar_values)
+        lwp_values = lwp_values[mask]
+        lwp_radar_values = lwp_radar_values[mask]
+
+        mask_small  = lwp_radar_values < small_than
+        mask_larger = lwp_radar_values > larger_than
+        
+        count_small       = np.count_nonzero(mask_small)
+        count_larger      = np.count_nonzero(mask_larger)
+
+        if count_small < 20 or count_larger < 20:
+            # print("Not enough data to perform linear fits")
+            self.fit_params = None
+            self.fit_mask_small_radar_lwp = None
+            self.fit_mask_larger_radar_lwp = None
+            return
+
+        # relative_difference = (count_huge - count_in_between) / count_huge
+
+        # Perform the linear fit for small values of LWP
+        params_small, _ = curve_fit(linear_func, lwp_values[mask_small], lwp_radar_values[mask_small])
+        
+        # Calculate the Chi quadrado value:
+        chi2_small = np.sum((lwp_radar_values[mask_small] - linear_func(lwp_values[mask_small], *params_small))**2 / lwp_radar_values[mask_small])
+        
+        # Perform the linear fit for larger values of LWP
+        params_larger, _ = curve_fit(linear_func, lwp_values[mask_larger], lwp_radar_values[mask_larger])
+        
+        # Calculate the Chi quadrado value:
+        chi2_larger = np.sum((lwp_radar_values[mask_larger] - linear_func(lwp_values[mask_larger], *params_larger))**2 / lwp_radar_values[mask_larger])
+
+        # Save parameters in an xarray Dataset
+        self.fit_params = xr.Dataset(
+            {
+            "params_small": (["param"], params_small),
+            "params_larger": (["param"], params_larger),
+            "chi2_small": (["date"], [chi2_small]),
+            "chi2_larger": (["date"], [chi2_larger]),
+            },
+            coords={"param": ["slope", "intercept"], "date": [pd.to_datetime(self.time[0].values).normalize()]},
+        )
+
+        # Add descriptions
+        self.fit_params["params_small"].attrs['description'] = f'Linear fit parameters (slope and intercept) for LWP < {small_than}'
+        self.fit_params["params_larger"].attrs['description'] = f'Linear fit parameters (slope and intercept) for LWP > {larger_than}'
+        self.fit_params["chi2_small"].attrs['description'] = f'Chi-squared value for the linear fit of small LWP < {small_than}'
+        self.fit_params["chi2_larger"].attrs['description'] = f'Chi-squared value for the linear fit of larger LWP > {larger_than}'
+        
+        # Save mask values
+        self.fit_mask_small_radar_lwp  = mask_small
+        self.fit_mask_larger_radar_lwp = mask_larger
+
+    def create_count_dataset_for_verification(self):
+        """
+        Create a dataset for count verification.
+        """
+
+        mask_huge = self.cloud_props["lwp_radar"].values > 1
+        mask_in_between = (self.cloud_props["lwp_radar"].values > 0.8) & (self.cloud_props["lwp_radar"].values < 1)
+
+        count_huge = np.count_nonzero(mask_huge)
+        count_in_between = np.count_nonzero(mask_in_between)
+
+        if count_huge < 20 or count_in_between < 20:
+            # print("Not enough data to perform linear fits")
+            self.count_verification = None
+            return
+        
+        self.count_verification = xr.Dataset(
+            {
+                "count_high_lwp": count_huge,
+                "count_in_between_lwp": count_in_between,
+            },
+            coords={"date": [pd.to_datetime(self.time[0].values).normalize()]},
+        )
+        # Add descriptions:
+        self.count_verification["count_high_lwp"].attrs['description'] = 'Count of high LWP values (> 1 kg/m^2)'
+        self.count_verification["count_in_between_lwp"].attrs['description'] = 'Count of LWP values between 0.8 and 1 kg/m^2'
+
+    def plot_linear_fit_lwp(self):
+        """
+        Plot linear fitting of LWP (Radar x MWR) and histogram of relative difference using saved fit parameters.
+        """
+        
+        if not self.fit_params.any():
+            print("Fit parameters are not available.")
+            return
+        
+        # Extract LWP and LWP radar values
+        lwp_values = self.cloud_props["lwp"].values
+        lwp_radar_values = self.cloud_props["lwp_radar"].values
+
+        # Remove NaN values
+        mask = ~np.isnan(lwp_values) & ~np.isnan(lwp_radar_values)
+        lwp_values = lwp_values[mask]
+        lwp_radar_values = lwp_radar_values[mask]
+
+        mask_small = self.fit_mask_small_radar_lwp
+        mask_larger = self.fit_mask_larger_radar_lwp
+
+        params_small = self.fit_params["params_small"].values
+        params_larger = self.fit_params["params_larger"].values
+
+        fig = plt.figure(figsize=(15, 9))
+        gs = fig.add_gridspec(2, 2, width_ratios=[1, 1], height_ratios=[1, 0.5], wspace=0.15, hspace=0.25)
+
+        ax = fig.add_subplot(gs[0, 0])
+        ax.scatter(lwp_values[mask_small], lwp_radar_values[mask_small], color='b', label='Data')
+        ax.plot(lwp_values[mask_small], linear_func(lwp_values[mask_small], *params_small), color='r', label=f'Fit: y = {params_small[0]:.2f}x + {params_small[1]:.2f}, $\chi^2$ = {self.fit_params["chi2_small"].values[0]:.2f}')
+        ax.set_xlabel("LWP (kg/m^2) - MWR")
+        ax.set_ylabel("LWP (kg/m^2) - Radar")
+        ax.grid()
+        ax.legend()
+
+        ax1 = fig.add_subplot(gs[0, 1])
+        ax1.scatter(lwp_values[mask_larger], lwp_radar_values[mask_larger], color='b', label='Data')
+        ax1.plot(lwp_values[mask_larger], linear_func(lwp_values[mask_larger], *params_larger), color='r', label=f'Fit: y = {params_larger[0]:.2f}x + {params_larger[1]:.2f}, $\chi^2$ = {self.fit_params["chi2_larger"].values[0]:.2f}')
+        ax1.set_xlabel(f"LWP (kg/m^2) {self.cloud_props['lwp'].source}")
+        ax1.set_ylabel("LWP (kg/m^2) - Radar")
+        ax1.grid()
+        ax1.legend()
+
+        ax2 = fig.add_subplot(gs[1, :])
+        self.cloud_props["lwp"].plot(ax=ax2, color='b', label=self.cloud_props["lwp"].attrs['source'])
+        self.cloud_props["lwp_radar"].plot(ax=ax2, color='r', label='W-Band Radar')
+        ax2.set_xlabel("Time (UTC)")
+        ax2.set_ylabel("LWP (kg/m^2)")
+        ax2.grid()
+        ax2.legend()
+        plt.show()
+
+    def add_attenuation_to_clouds(self):
+        self.cloud_type["Attenuation"] = xr.DataArray(data=self.mask_att.values, coords={'time': self.cloud_props.time}, dims='time')
+        self.cloud_type["Attenuation"].attrs['long_name'] = 'Liquid attenuation QA flag'
+        self.cloud_type["Attenuation"].attrs['description'] = 'Liquid attenuation QA flag. 1: High attenuation, 0: No attenuation'
+
+        self.cloud_occurrence["attenuation"] = xr.DataArray(data=self.mask_att.values, coords={'time': self.cloud_props.time}, dims='time')
+        self.cloud_occurrence["attenuation"].attrs['long_name'] = 'Liquid attenuation QA flag'
+        self.cloud_occurrence["attenuation"].attrs['description'] = 'Liquid attenuation QA flag. 1: High attenuation, 0: No attenuation'
+
+    def save_processed_data(self, path_to_save, products_to_store):
+        date_str = self.time[0].dt.strftime('%Y%m%d').values.item()
+        
+        if products_to_store['cloud_occurrence']:
+            self.cloud_occurrence.to_netcdf(path_to_save + f"/cloud_occurence/{date_str}_cloud_occurrence_new.nc")
+        
+        if products_to_store['cloud_props']:
+            self.cloud_props.to_netcdf(path_to_save + f"/cloud_properties/{date_str}_cloud_props_new.nc")
+
+        if products_to_store['cloud_type']:
+            self.cloud_type.to_netcdf(path_to_save + f"/cloud_type/{date_str}_cloud_type_new.nc")
+        
+        # Save fit parameters:
+        if products_to_store['fit_params'] and self.fit_params is not None:
+            self.fit_params.to_netcdf(path_to_save + f"/fit_parameters/{date_str}_fit_params.nc")
+        
+        if products_to_store['count_verification'] and self.count_verification is not None:
+            self.count_verification.to_netcdf(path_to_save + f"/fit_parameters/{date_str}_count_verification.nc")
 
 
 
