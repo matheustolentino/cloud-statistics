@@ -43,18 +43,12 @@ def calculate_skewness(group):
 load_data = True # Set to True if you want to load the data from the netCDF files
 use_old_method = False # Set to True if you want to use the old method of cloud classification
 
-if use_old_method:
-    filepath_cloud_occurence = "/media/matheustolen/Seagate Basic/cloudnet/cloud_classification_without_filtering_ice_ABL/cloud_occurence" # Path to save the cloud classification files
-    filepath_cloud_cloud_type = "/media/matheustolen/Seagate Basic/cloudnet/cloud_classification_without_filtering_ice_ABL/cloud_type" # Path to save the cloud classification files
-    filepath_cloud_prop = "/media/matheustolen/Seagate Basic/cloudnet/cloud_classification_without_filtering_ice_ABL/cloud_properties" # Path to save the cloud classification files
-    filepath_categorize = "/media/matheustolen/Seagate Basic/cloudnet/categorize" # Path to save the cloud classification files
-    filepath_microphys        = "/home/matheustolen/Documentos/matheus_doctorado/output_retrievals" # Path to save the cloud classification files
-else:
-    filepath_cloud_occurence = "/media/matheustolen/Seagate Basic/cloudnet/cloud_classification/cloud_occurence" # Path to save the cloud classification files
-    filepath_cloud_cloud_type = "/media/matheustolen/Seagate Basic/cloudnet/cloud_classification/cloud_type" # Path to save the cloud classification files
-    filepath_cloud_prop = "/media/matheustolen/Seagate Basic/cloudnet/cloud_classification/cloud_properties" # Path to save the cloud classification files
-    filepath_categorize = "/media/matheustolen/Seagate Basic/cloudnet/categorize" # Path to save the cloud classification files
-    filepath_microphys        = "/home/matheustolen/Documentos/matheus_doctorado/output_retrievals" # Path to save the cloud classification files
+filepath_cloud_occurence = "/media/matheustolen/Seagate Basic/cloudnet/cloud_classification/cloud_occurence" # Path to save the cloud classification files
+filepath_cloud_cloud_type = "/media/matheustolen/Seagate Basic/cloudnet/cloud_classification/cloud_type" # Path to save the cloud classification files
+filepath_cloud_prop = "/media/matheustolen/Seagate Basic/cloudnet/cloud_classification/cloud_properties" # Path to save the cloud classification files
+filepath_categorize = "/media/matheustolen/Seagate Basic/cloudnet/categorize" # Path to save the cloud classification files
+filepath_microphys  = "/home/matheustolen/Documentos/matheus_doctorado/output_retrievals" # Path to save the cloud classification files
+
 if load_data:
     # Get the list of netCDF files in the specified directory
     file_paths_occurence  = [os.path.join(filepath_cloud_occurence, file) for file in os.listdir(filepath_cloud_occurence) if file.endswith('new.nc')]
@@ -125,7 +119,6 @@ if load_data:
                                                                month=old_method_cloud_ava['time'].dt.month
                                                                ).compute()
     print("End of reading the netCDF files into a list of xarray datasets...")
-
 
 list_cloud_colors = ["#FFFFFF", "#007CFF", "blue", "cyan", "grey", "yellow", "orange", "magenta"]
 
@@ -213,9 +206,10 @@ if use_old_method:
     # NOTE: Old_method_cloud_ava: already single layer for old method
     #       Single_layer_cloud_type: already single layer for new method
     
-    # Filtering noise detected in new method from old method and new_method
+    # Filtering noise and attenuation detected in new method from old method and new_method
     computed_iwp = chunked_iwp.compute()
     computed_iwp= computed_iwp.where(~ds_cloud_occurence['noise'].astype(bool))
+    computed_iwp= computed_iwp.where(~ds_cloud_occurence['attenuation'].astype(bool))
 
     # IWP for the old method: Ice and Mixed-Phase
     iwc_old_method_ice   = computed_iwp.where(old_method_cloud_ava['Ice'].astype(bool)).resample(time='1D').mean()

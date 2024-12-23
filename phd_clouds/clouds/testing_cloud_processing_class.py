@@ -60,8 +60,8 @@ site = 'granada'
 # Code to get the intersection between files:
 # date_ini = datetime.datetime(2018, 4, 20)
 # date_end = datetime.datetime(2023, 12, 31)
-date_ini = datetime.datetime(2023, 12, 6) #2018-09-14
-date_end = datetime.datetime(2023, 12, 6) 
+date_ini = datetime.datetime(2024, 11, 13) # 2018-09-14
+date_end = datetime.datetime(2024, 11, 13) 
 
 cloud_processing = CloudProcessing(path_classification=path_classification,
                                 path_microphys=None,
@@ -112,11 +112,6 @@ for datastr in date_list:
 
     # Plot fit parameters
     cloud_processing.plot_linear_fit_lwp()
-
-    # Check whether fit parameters and count verification are the only producto to save, if so, save it and continue:
-    if not all([value for value in products_to_save.values()]):
-        cloud_processing.save_processed_data(path_save, products_to_save)
-        continue
     
     # Generate cloud mask
     cloud_processing.generate_cloud_mask(all_hydromet_values, 
@@ -135,7 +130,7 @@ for datastr in date_list:
     # print(cloud_processing.cluster_classification)
 
     # Mask attenuation
-    cloud_processing.create_attenuation_mask(cloud_cmap, cloud_values, time_roll="10T", lwp_treshold=0.8, corr_treshold=-0.5, lwp2_treshold=1, make_plot=False)
+    cloud_processing.create_attenuation_mask(cloud_cmap, cloud_values, time_roll="10T", lwp_treshold=0, corr_treshold=-2, lwp2_treshold=0.9, make_plot=True)
 
     # Add attenuation to clouds
     
