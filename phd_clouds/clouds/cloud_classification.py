@@ -24,6 +24,7 @@ from cloudnetpy.products import generate_der
 from cloudnetpy.products.der import Parameters
 import matplotlib as mpl
 from IPython import get_ipython
+from scipy.optimize import curve_fit
 
 fontsize = 14
 # Set the font to Times New Roman using LaTeX
@@ -33,8 +34,9 @@ plt.rcParams['font.serif'] = ['Times New Roman'] + plt.rcParams['font.serif']
 # Set the fontsize for all elements in the plot
 plt.rcParams['font.size'] = fontsize
 
-mpl.use('qtagg')
 plt.close('all')
+mpl.use('qtagg')
+
 
 # plt.ion()
 # ipython = get_ipython()
@@ -100,14 +102,91 @@ list_cloud_colors = ["blue", "cyan", "green", "yellow", "orange", "magenta"]
 all_hydromet_values = [CLOUD_LIQUID, DRIZZLE_OR_RAIN, DRIZZLE_OR_RAIN_LIQUID_DROPLETS,\
                                         ICE_PARTICLES, ICE_WITH_SUP_WATER, MELTING_ICE,\
                                                 MELTING_ICE_LIQUID_DROPLETS]
+# ---------------------------------------------------------------------------------------------
+# Functions
+# ---------------------------------------------------------------------------------------------
+def mask_attenuation(data, ds_cloud, cloud_cmap, cloud_int, time_roll="10T", lwp_treshold=0.8, corr_treshold=-0.5, lwp2_treshold=1, make_plot=False):
+    """
+    Apply attenuation filter to cloud properties and categorize data.
+    """
+    # ---------------------------------------------------------------------------------------------
+    # get data in cloud_props and categorize at each 5 minutes (moving mean of 5 min)
+    # and take the correlation between cloud thickness and lwp:
+    # https://pandas.pydata.org/docs/reference/api/pandas.core.window.rolling.Rolling.corr.html
+    # ---------------------------------------------------------------------------------------------
+    # Add cloud thickness and lwp in a pandas dataframe:
+    df = data.cloud_thickness.to_dataframe()
+    df['lwp_radar'] = data.lwp_radar.to_dataframe()
+    #df.dropna(inplace=True)
+    # Calculate the correlation between cloud thickness and lwp at each 5 minutes:
+    corr_pd = df['cloud_thickness'].rolling(window=time_roll, min_periods=10, center=False).corr(df['lwp_radar'])
+    # corr_pd.plot()
+    # transform the correlation to xarray dataset:
+    data['corr'] = xr.DataArray(corr_pd.values, coords={'time': data.time}, dims='time')
+    data['corr'].attrs['long_name'] = f'Correlation (thickness & lwp)'
+    data['corr'].attrs['description'] = 'Correlation between cloud thickness and lwp at each 5 minutes'
+    # data['corr'].attrs['units'] = '1'
+    # ---------------------------------------------------------------------------------------------
+    # Coarsen the data
+    # ---------------------------------------------------------------------------------------------
+    mask_lwp     = data['lwp_radar'] > lwp_treshold
+    mask_corr    = data['corr'] < corr_treshold
+    smask_filter = (mask_lwp & mask_corr) | (data['lwp_radar'] > lwp2_treshold)
+    
+    if make_plot:
+        fig = plt.figure(figsize=(20, 10))
+        gs = fig.add_gridspec(2, 2, width_ratios=[1, .02], height_ratios=[1, .6], wspace=0.02, hspace=0.2)
+
+        ax2 = fig.add_subplot(gs[1, 0])
+        data.cloud_thickness.plot(ax=ax2, color='b')
+
+        ax3 = ax2.twinx()
+        data.lwp_radar.plot(ax=ax3, color='r')
+        ax3.spines['right'].set_color('red')
+        ax3.axhline(y=lwp_treshold, color='r', linestyle='--')
+        ax3.axhline(y=lwp2_treshold, color='k', linestyle='--')
+
+        ax5 = ax2.twinx()
+        data.corr.plot(ax=ax5, color='g')
+        ax5.spines['right'].set_position(('outward', 50))  # Move the y-axis outward
+        ax5.spines['right'].set_color('green')
+        # plot horizontal line at zero correlation
+        ax5.axhline(y=corr_treshold, color='g', linestyle='--')
+        
+        # smask_filter = (mask_lwp & mask_corr)
+        ax1 = fig.add_subplot(gs[0, 0], sharex=ax2)
+        # scategorize['Z'].T.plot(ax=ax1, cmap='viridis', vmin=-40, vmax=20, add_colorbar=False)
+        ds_cloud['cloud_classification'].T.plot(ax=ax1, cmap=cloud_cmap, vmin=0, vmax=7, add_colorbar=False)
+        # ax1.fill_between(scategorize.time.values, 0, 12000, where=smask, color='blue', alpha=0.2) # single layer
+        ax1.fill_between(ds_cloud.time.values, 0, 12000, where=smask_filter, color='red', alpha=0.2) # removed areas due to attenuation
+        # put NAN in the correalation where the cloud is not single layer
+        # data['corr'] = data['corr'].where(smask)
+        data.cloud_base.plot(ax=ax1, color='r', linestyle='-')
+        data.cloud_top.plot(ax=ax1, color='k', linestyle='-')
+
+        # plot a blue area for intervals with single layer clouds
+        cbar = fig.add_subplot(gs[0, 1])
+        cbar = plt.colorbar(ax1.collections[0], cax=cbar,
+                            ticks=range(len(cloud_int)),
+                            orientation='vertical')
+        cbar.ax.set_yticklabels(list(cloud_int.keys()))
+        datestrings = data.time.dt.strftime('%Y%m%d').values
+        plt.tight_layout()
+        fig.savefig(f"{PATH_FIG_TEST}{datestrings[0]}_attenuation_mask.png", dpi=600, bbox_inches='tight')
+        plt.show()
+
+    return smask_filter.astype(float)
+# ---------------------------------------------------------------------------------------------
 
 path_save = "/media/matheustolen/Seagate Basic/cloudnet/cloud_classification" # Path to save the cloud classification files
 path_microphys = "/home/matheustolen/Documentos/matheus_doctorado/output_retrievals" # Path with files already downloaded
 path_categorize = "/media/matheustolen/Seagate Basic/cloudnet/categorize" # Path with files already downloaded
+path_radar = "/media/matheustolen/Seagate Basic/cloudnet/radar" # Path with files already downloaded
 site = 'granada'
 product_1 = 'classification'
 product_2 = 'categorize'
 product_3 = 'mwr'
+product_4 = 'radar'
 
 process_all = False
 save_files = False
@@ -128,42 +207,47 @@ case_to_only_save = False
 if not process_all:
     path_to_data = "../../tests/data" # Path to save cloudnet downloaded files
 
-    date_ini = "2023-05-19"
-    date_end = "2023-05-19"
+    date_ini = "2024-11-13"
+    date_end = "2024-11-13"
     date_end_new = date_end.replace("-", "")
 
     download_cloudnet_products(date_ini, date_end, path_to_data, product=product_1, site=site)
     download_cloudnet_products(date_ini, date_end, path_to_data, product=product_2, site=site)
     download_cloudnet_products(date_ini, date_end, path_to_data, product=product_3, site=site)
+    download_cloudnet_products(date_ini, date_end, path_to_data, product=product_4, site=site)
 
     # Load the NetCDF file
     filenames = [f"{date_end_new}_{site}_{product_1}.nc"]
-    lwc_filepaths = [f"{date_end_new}_{site}_lwc-scaled-adiabatic.nc"]
-    iwc_filepaths = [f"{date_end_new}_{site}_iwc-Z-T-method.nc"]
-    der_filepaths = [f"{date_end_new}_{site}_der.nc"]
-    ier_filepaths = [f"{date_end_new}_{site}_ier.nc"]
+    # lwc_filepaths = [f"{date_end_new}_{site}_lwc-scaled-adiabatic.nc"]
+    # iwc_filepaths = [f"{date_end_new}_{site}_iwc-Z-T-method.nc"]
+    # der_filepaths = [f"{date_end_new}_{site}_der.nc"]
+    # ier_filepaths = [f"{date_end_new}_{site}_ier.nc"]
 else:
     path_to_data    = "/media/matheustolen/Seagate Basic/cloudnet/classification" # Path with files already downloaded
-    lwc_filepaths = [file for file in os.listdir(path_microphys) if file.endswith("lwc-scaled-adiabatic.nc")]
-    iwc_filepaths = [file for file in os.listdir(path_microphys) if file.endswith("iwc-Z-T-method")]
-    der_filepaths = [file for file in os.listdir(path_microphys) if file.endswith("der.nc")] 
-    ier_filepaths = [file for file in os.listdir(path_microphys) if file.endswith("ier.nc")]
+    
+    # lwc_filepaths = [file for file in os.listdir(path_microphys) if file.endswith("lwc-scaled-adiabatic.nc")]
+    # iwc_filepaths = [file for file in os.listdir(path_microphys) if file.endswith("iwc-Z-T-method")]
+    # der_filepaths = [file for file in os.listdir(path_microphys) if file.endswith("der.nc")] 
+    # ier_filepaths = [file for file in os.listdir(path_microphys) if file.endswith("ier.nc")]
 
     # Get a linst of filenames of products
     filenames = os.listdir(path_to_data)
 
+mwr_files = []
 for idx_file, file in enumerate(filenames):
     # Load the downloaded with xarray pandas:
     data         = xr.open_dataset(os.path.join(path_to_data, file))
     date_end_new = pd.to_datetime(data.time.values[-1]).strftime("%Y%m%d")
     
     if process_all:
-        categorize   = xr.open_dataset(os.path.join(path_categorize, f"{date_end_new}_{site}_{product_2}.nc"))
+        categorize = xr.open_dataset(os.path.join(path_categorize, f"{date_end_new}_{site}_{product_2}.nc"))
+        radar_lwp  = xr.open_dataset(glob.glob(os.path.join(path_radar, f"{date_end_new}_{site}_rpg-fmcw-94*.nc"))[0])['lwp']
     else: 
-        categorize   = xr.open_dataset(os.path.join(path_to_data, f"{date_end_new}_{site}_{product_2}.nc"))
+        categorize = xr.open_dataset(os.path.join(path_to_data, f"{date_end_new}_{site}_{product_2}.nc"))
+        radar_lwp  = xr.open_dataset(glob.glob(os.path.join(path_to_data, f"{date_end_new}_{site}_rpg-fmcw-94*.nc"))[0])['lwp']
         mwr_files = glob.glob(os.path.join(path_to_data, f"{date_end_new}_{site}_hatpro*.nc"))
-        if mwr_files:
-            mwr = xr.open_mfdataset(mwr_files, combine='by_coords')
+
+
     # # Load the microphysical data
     # lwc = xr.open_dataset(os.path.join(path_microphys, lwc_filepaths[idx_file]))
     # iwc = xr.open_dataset(os.path.join(path_microphys, iwc_filepaths[idx_file]))
@@ -396,6 +480,7 @@ for idx_file, file in enumerate(filenames):
                     if is_thick_enough and is_base_enough:
                         cloud_occurrence["single_layer"][aux_time_single_layer] = 0
                         time_idx_noise[aux_time_single_layer] = 1
+                        cloud_type["Noise"][aux_time_single_layer] = 1
                         cloud_props["cloud_base"][aux_time_single_layer] = np.nan
                         cloud_props["cloud_top"][aux_time_single_layer]  = np.nan
                         cloud_props["cloud_thickness"][aux_time_single_layer] = np.nan
@@ -446,20 +531,10 @@ for idx_file, file in enumerate(filenames):
     mask_clear_sky = mask_clear_sky.astype(float)
     cloud_occurrence["clear_sky"] = xr.DataArray(data=mask_clear_sky.values, coords={'time': data.time}, dims='time')
     cloud_occurrence["noise"]     = xr.DataArray(data=time_idx_noise, coords={'time': data.time}, dims='time')  # not mutually exclusive with clear sky
-
-    new_height = np.arange(0, 14000+100, 100)
-    # Identify single layer and non-noise clouds in time
-    single_layer_mask = (cloud_occurrence["single_layer"] == 1) & (cloud_occurrence["noise"] == 0)
-    # new_der = new_der.where(single_layer_mask, np.nan)['der'].groupby_bins('height', new_height, labels=new_height[1:]).mean()
-    # cloud_occurrence.coords['cloud_type'] = ('time', cloud_type)
-    # cloud_props.coords['cloud_type']      = ('time', cloud_type)
     
-    date_str = cloud_occurrence.time[0].dt.strftime('%Y%m%d').values.item()
-    # Save cloud occurrence as netCDF
-    if save_files and process_all:
-        cloud_occurrence.to_netcdf(path_save + f"/cloud_occurence/{date_str}_cloud_occurrence.nc")
-        cloud_props.to_netcdf(path_save + f"/cloud_properties/{date_str}_cloud_props.nc")
-        cloud_type.to_netcdf(path_save + f"/cloud_type/{date_str}_cloud_type.nc")
+    # check if noise in cloud_type is the same as in cloud_occurrence:
+    # print(" Check if noise in cloud_type is the same as in cloud_occurrence (it must be):",
+    #       np.all(cloud_type["Noise"].values == cloud_occurrence["noise"].values))
     # new_der.to_netcdf(f"/media/matheustolen/Seagate Basic/cloudnet/der/{date_str}_new_der.nc")
     # ---------------------------------------------------------------------------------------------
     array_cloud = np.zeros((data.time.shape[0], data.height.shape[0]))
@@ -486,96 +561,168 @@ for idx_file, file in enumerate(filenames):
     ds_cloud.cloud_classification.attrs['long_name'] = 'Cloud classification'
     ds_cloud.cloud_classification.attrs['description'] = \
     'Cloud classification based on cloudnet target classification.\nHydrometeor cluster classification algorithm. \n0: No Cloud, \n1: Liquid, \n2: Liquid-Precipitable, \n3: Ice, \n4: Ice-Precipitable, \n5: Mixed-Phase, \n6: Mixed-Phase-Precipitable, \n7: Noise'
-    # 
-    # Add lwp in categorize in cloud_props(base, top, width):
-    cloud_props["lwp"] = categorize["lwp"]
-    cloud_props["rainfall_rate"] = categorize["rainfall_rate"]
-    # ---------------------------------------------------------------------------------------------
-    # Data sliced for certain time interval 
-    # ---------------------------------------------------------------------------------------------
-    start_time = pd.to_datetime(cloud_props.time.values[0]).strftime('%Y-%m-%d')
-    ini= "00:00"
-    end= "23:59"
-    scloud_props = cloud_props.sel(time=slice(pd.to_datetime(f"{start_time} {ini}"), pd.to_datetime(f"{start_time} {end}")))
-    scategorize  = categorize.sel(time=slice(pd.to_datetime(f"{start_time} {ini}"), pd.to_datetime(f"{start_time} {end}")))
-    # smask        = single_layer_mask.sel(time=slice(pd.to_datetime(f"{start_time} {ini}"), pd.to_datetime(f"{start_time} {end}")))
-    smask       = cloud_occurrence["single_layer"].sel(time=slice(pd.to_datetime(f"{start_time} {ini}"), pd.to_datetime(f"{start_time} {end}")))
-    # ---------------------------------------------------------------------------------------------
-    # get data in cloud_props and categorize at each 5 minutes (moving mean of 5 min)
-    # and take the correlation between cloud thickness and lwp:
-    # https://pandas.pydata.org/docs/reference/api/pandas.core.window.rolling.Rolling.corr.html
-    # ---------------------------------------------------------------------------------------------
-    # Add cloud thickness and lwp in a pandas dataframe:
-    df = scloud_props.cloud_thickness.to_dataframe()
-    df['lwp'] = scloud_props.lwp.to_dataframe()
-    #df.dropna(inplace=True)
-    # Calculate the correlation between cloud thickness and lwp at each 5 minutes:
-    time_roll = "10T"
-    corr_pd = df['cloud_thickness'].rolling(window=time_roll, min_periods=10, center=False).corr(df['lwp'])
-    # corr_pd.plot()
-    # transform the correlation to xarray dataset:
-    scloud_props['corr'] = xr.DataArray(corr_pd.values, coords={'time': scloud_props.time}, dims='time')
-    scloud_props['corr'].attrs['long_name'] = f'Correlation at each {time_roll} min'
-    scloud_props['corr'].attrs['description'] = 'Correlation between cloud thickness and lwp at each 5 minutes'
-    # scloud_props['corr'].attrs['units'] = '1'
-    # ---------------------------------------------------------------------------------------------
-    # Coarsen the data
-    # ---------------------------------------------------------------------------------------------
-    time_coarsen = "10min"
-    coarsen_props      = scloud_props.copy()
-    coarsen_categorize = scategorize.copy()
     
-    fig = plt.figure(figsize=(15, 9))
-    gs = fig.add_gridspec(2, 4, width_ratios=[1, .02, .2, .6], wspace=0.1, hspace=0.4)
-
-    ax1 = fig.add_subplot(gs[0, 0])
-    # scategorize['Z'].T.plot(ax=ax1, cmap='viridis', vmin=-40, vmax=20, add_colorbar=False)
-    ds_cloud['cloud_classification'].T.plot(ax=ax1, cmap=cloud_cmap, vmin=0, vmax=7, add_colorbar=False)
-    ax1.fill_between(scategorize.time.values, 0, 12000, where=smask, color='blue', alpha=0.2)
-    # put NAN in the correalation where the cloud is not single layer
-    # scloud_props['corr'] = scloud_props['corr'].where(smask)
-    scloud_props.cloud_base.plot(ax=ax1, color='r', linestyle='-')
-    scloud_props.cloud_top.plot(ax=ax1, color='k', linestyle='-')
-
-    # plot a blue area for intervals with single layer clouds
-    cbar = fig.add_subplot(gs[0, 1])
-    cbar = plt.colorbar(ax1.collections[0], cax=cbar,
-                        ticks=range(len(cloud_int)),
-                        orientation='vertical')
-    cbar.ax.set_yticklabels(list(cloud_int.keys()))
+    cloud_props['lwp_radar'] = radar_lwp.resample(time='30S', skipna=True).mean().interp(time=cloud_props.time, method='nearest') 
     
-    ax2 = fig.add_subplot(gs[1, 0], sharex=ax1)
-    coarsen_props.cloud_thickness.plot(ax=ax2, color='b', label=time_coarsen)
-    ax2.legend()
-
-    ax3 = ax2.twinx()
-    coarsen_props.lwp.plot(ax=ax3, color='r')
-    ax3.spines['right'].set_color('red')
-
-    ax4 = fig.add_subplot(gs[0, 3])
-    scloud_props.plot.scatter(x='lwp', y='cloud_thickness', ax=ax4)
-
-    ax5 = ax2.twinx()
-    scloud_props.corr.plot(ax=ax5, color='g')
-    ax5.spines['right'].set_position(('outward', 50))  # Move the y-axis outward
-    ax5.spines['right'].set_color('green')
-    # plot horizontal line at zero correlation
-    ax5.axhline(y=0, color='g', linestyle='--')
-    plt.show()
-
-    # Plot filtered cloud thickness
-    mask_lwp  = scloud_props['lwp'] > 0.5
-    mask_corr = scloud_props['corr'] < 0.0
-    fig, ax1 = plt.subplots(figsize=(12, 5))
-    ds_cloud['cloud_classification'].T.plot(ax=ax1, cmap=cloud_cmap, vmin=0, vmax=7,add_colorbar=False)
-    cbar = plt.colorbar(ax1.collections[0], ax=ax1, ticks=range(len(cloud_int)), orientation='vertical')
-    cbar.ax.set_yticklabels(list(cloud_int.keys()))
-    smask_filter = (mask_lwp & mask_corr) | (scloud_props['lwp'] > 1)
-    ax1.fill_between(scategorize.time.values, 0, 12000, where=smask_filter, color='red', alpha=0.2)
-    scloud_props.cloud_base.plot(ax=ax1, color='r', linestyle='-')
-    scloud_props.cloud_top.plot(ax=ax1, color='k', linestyle='-')
-    plt.show()
+    if not process_all:
+        if mwr_files:
+            mwr = xr.open_dataset(mwr_files[0])
+            cloud_props['lwp'] = mwr['lwp'].resample(time='30S', skipna=True).mean().interp(time=cloud_props.time, method='nearest')
+            cloud_props['lwp'].attrs['source'] = mwr.attrs['source']
+        else:
+            cloud_props['lwp'] = categorize['lwp'] # post-process LWP
+            cloud_props['lwp'].attrs['source'] = categorize['lwp'].attrs['source'] + " (categorize)"
+    # mwr['lwp'].resample(time='30S', skipna=True).mean().plot()
+    # plt.show()
     
+    # # ---------------------------------------------------------------------------------------------
+    # # Data sliced for certain time interval to create attenuation mask: uncomment if want to do some tests
+    # # ---------------------------------------------------------------------------------------------
+    # start_time = pd.to_datetime(cloud_props.time.values[0]).strftime('%Y-%m-%d')
+    # ini= "00:00"
+    # end= "23:59"
+    # scloud_props = cloud_props.sel(time=slice(pd.to_datetime(f"{start_time} {ini}"), pd.to_datetime(f"{start_time} {end}")))
+    # scategorize  = categorize.sel(time=slice(pd.to_datetime(f"{start_time} {ini}"), pd.to_datetime(f"{start_time} {end}")))
+    # # smask        = single_layer_mask.sel(time=slice(pd.to_datetime(f"{start_time} {ini}"), pd.to_datetime(f"{start_time} {end}")))
+    # smask       = cloud_occurrence["single_layer"].sel(time=slice(pd.to_datetime(f"{start_time} {ini}"), pd.to_datetime(f"{start_time} {end}")))
+    # # ---------------------------------------------------------------------------------------------
+    att_mask = mask_attenuation(cloud_props, 
+                                ds_cloud, 
+                                cloud_cmap, 
+                                cloud_int, 
+                                time_roll="10T", 
+                                lwp_treshold=0.8, 
+                                corr_treshold=-0.5, 
+                                lwp2_treshold=1, 
+                                make_plot=make_plot)
+    # ---------------------------------------------------------------------------------------------
+    # Add attenuation mask to cloud_type and cloud_occurrence
+    # ---------------------------------------------------------------------------------------------
+    cloud_type["Attenuation"] = xr.DataArray(data=att_mask.values, coords={'time': data.time}, dims='time')
+    cloud_type["Attenuation"].attrs['long_name'] = 'Liquid attenuation QA flag'
+    cloud_type["Attenuation"].attrs['description'] = 'Liquid attenuation QA flag. 1: High attenuation, 0: No attenuation'
+    
+    cloud_occurrence["attenuation"] = xr.DataArray(data=att_mask.values, coords={'time': data.time}, dims='time')
+    cloud_occurrence["attenuation"].attrs['long_name'] = 'Liquid attenuation QA flag'
+    cloud_occurrence["attenuation"].attrs['description'] = 'Liquid attenuation QA flag. 1: High attenuation, 0: No attenuation'
+    # ---------------------------------------------------------------------------------------------
+    # Save post-processed data
+    # ---------------------------------------------------------------------------------------------
+    date_str = cloud_occurrence.time[0].dt.strftime('%Y%m%d').values.item()
+    # Save cloud occurrence as netCDF
+    if save_files and process_all:
+        cloud_occurrence.to_netcdf(path_save + f"/cloud_occurence/{date_str}_cloud_occurrence_new.nc")
+        cloud_props.to_netcdf(path_save + f"/cloud_properties/{date_str}_cloud_props_new.nc")
+        cloud_type.to_netcdf(path_save + f"/cloud_type/{date_str}_cloud_type_new.nc")
+    # ---------------------------------------------------------------------------------------------
+    
+    # ---------------------------------------------------------------------------------------------
+    # Plotting for cheking the classification 
+    # ---------------------------------------------------------------------------------------------
+    if not process_all and make_plot:
+        fig = plt.figure(figsize=(15, 10))
+        gs = fig.add_gridspec(2, 2, width_ratios=[1, .02], wspace=0.05)
+        ax = fig.add_subplot(gs[0, 0])
+        pc0 = ax.pcolormesh(ds_cloud['time'], ds_cloud['height']/1e3, ds_cloud['cloud_classification'].T, cmap=cloud_cmap, vmin=0, vmax=len(cloud_category))
+
+        cloud_props.cloud_base.plot(ax=ax, color='r', linestyle='-')
+        cloud_props.cloud_top.plot(ax=ax, color='k', linestyle='-')
+
+        ax.fill_between(ds_cloud.time.values, 0, 12000, where=cloud_type.Attenuation, color='red', alpha=0.2) # removed areas due to attenuation
+
+        ax.set_ylabel('Height (km) a.s.l')
+        ax.set_xlabel('Time (UTC)')
+        ax.grid()
+        # set x limitis from 17 to 18 UTC
+        # ax.set_xlim(datetime.datetime.strptime(date_str, '%Y%m%d') + datetime.timedelta(hours=1), datetime.datetime.strptime(date_str, '%Y%m%d') + datetime.timedelta(hours=15))
+        ax.set_ylim([0, ds_cloud['height'][-1]/1e3])
+
+        ax.set_xlim(data.time.values[0], data.time.values[-1])
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+        ax.set_facecolor('white')
+
+        cax_scat = fig.add_subplot(gs[0, 1])
+        cbar_scat = plt.colorbar(pc0, cax=cax_scat, ticks=[], orientation='vertical')
+
+        for idx, (color, name) in enumerate(zip(cloud_cmap.colors, cloud_category)):
+            rect = plt.Rectangle((0, idx), 1, 1, color=color)
+            cbar_scat.ax.add_patch(rect)
+            cbar_scat.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=14)
+
+        # ---------------------------------------------------------------------------------------------
+        ax1 = fig.add_subplot(gs[1, 0])
+        p1 = (cloud_props["lwp"]).plot(ax=ax1, color='r', label=cloud_props["lwp"].source)
+        p2 = cloud_props["lwp_radar"].plot(ax=ax1, color='b', label="Radar LWP")
+        ax1.set_ylabel('LWP (kg/m^2)')
+        ax1.set_xlabel('Time (UTC)')
+        ax1.grid()
+        ax1.legend()
+        plt.show()
+
+        # ---------------------------------------------------------------------------------------------
+        # Plotting linear fitting of LWP (Radar x MWR)
+        # ---------------------------------------------------------------------------------------------
+        # Define the linear function
+        def linear_func(x, a, b):
+            return a * x + b
+
+        # Extract LWP and LWP radar values
+        lwp_values = cloud_props["lwp"].values
+        lwp_radar_values = cloud_props["lwp_radar"].values
+
+        # Remove NaN values
+        mask1 = ~np.isnan(lwp_values) & ~np.isnan(lwp_radar_values)
+        lwp_values = lwp_values[mask1]
+        lwp_radar_values = lwp_radar_values[mask1]
+
+        mask_small  = lwp_radar_values < 0.3
+        mask_larger = lwp_radar_values > 0.8
+        mask_in_betwen  = (cloud_props["lwp_radar"] > 0.8) & (cloud_props["lwp_radar"] < 1)
+        # filtered_lwp = cloud_props["lwp_radar"].where(mask_in_betwen)
+        
+        # fig, ax = plt.subplots(figsize=(7 ,7))
+        # filtered_lwp.plot.hist(ax=ax, bins=50, color='b', alpha=0.5, label='LWP Radar')
+        # plt.show()
+
+        count_small  = np.count_nonzero(mask_small)
+        count_larger = np.count_nonzero(mask_larger)
+        count_huge  = np.count_nonzero(mask_in_betwen)
+        
+        # Perform the linear fit for small values of LWP
+        params, covariance = curve_fit(linear_func, lwp_values[mask_small], lwp_radar_values[mask_small])
+        
+        fig = plt.figure(figsize=(15, 9))
+        gs = fig.add_gridspec(2, 2, width_ratios=[1, 1], height_ratios=[1, .5], wspace=0.15, hspace=0.25)
+        ax = fig.add_subplot(gs[0, 0])
+
+        ax.scatter(lwp_values[mask_small], lwp_radar_values[mask_small], color='b', label='Data')
+        ax.plot(lwp_values[mask_small], linear_func(lwp_values[mask_small], *params), color='r', label=f'Fit: y = {params[0]:.2f}x + {params[1]:.2f}')
+        ax.set_xlabel("LWP (kg/m^2) - MWR")
+        ax.set_ylabel("LWP (kg/m^2) - Radar")
+        ax.grid()
+        ax.legend()
+        
+        # Perform the linear fit for small values of LWP
+        params, covariance = curve_fit(linear_func, lwp_values[mask_larger], lwp_radar_values[mask_larger])
+
+        ax1 = fig.add_subplot(gs[0, 1])
+        ax1.scatter(lwp_values[mask_larger], lwp_radar_values[mask_larger], color='b', label='Data')
+        ax1.plot(lwp_values[mask_larger], linear_func(lwp_values[mask_larger], *params), color='r', label=f'Fit: y = {params[0]:.2f}x + {params[1]:.2f}')
+        ax1.set_xlabel(f"LWP (kg/m^2) {cloud_props['lwp'].source}")
+        ax1.set_ylabel("LWP (kg/m^2) - Radar")
+        ax1.grid()
+        ax1.legend()
+
+        ax2 = fig.add_subplot(gs[1, :])
+        #histogram of relative difference:
+        cloud_props["lwp"].plot(ax=ax2, color='b', label = cloud_props["lwp"].attrs['source'])
+        cloud_props["lwp_radar"].plot(ax=ax2, color='r', label = 'W-Band Radar')
+        # ax2.set_ylim([-100, 100])
+        ax2.set_xlabel("Time (UTC)")
+        ax2.set_ylabel("LWP (kg/m^2)")
+        ax2.grid()
+        ax2.legend()
+        plt.show()
     # ---------------------------------------------------------------------------------------------
     letters = iter('abcdefghijklmnopqrstuvwxyz')
     show_category = False

@@ -57,9 +57,9 @@ else:
     filepath_microphys        = "/home/matheustolen/Documentos/matheus_doctorado/output_retrievals" # Path to save the cloud classification files
 if load_data:
     # Get the list of netCDF files in the specified directory
-    file_paths_occurence  = [os.path.join(filepath_cloud_occurence, file) for file in os.listdir(filepath_cloud_occurence) if file.endswith('.nc')]
-    file_paths_cloud_type = [os.path.join(filepath_cloud_cloud_type, file) for file in os.listdir(filepath_cloud_cloud_type) if file.endswith('.nc')]
-    file_paths_cloud_prop = [os.path.join(filepath_cloud_prop, file) for file in os.listdir(filepath_cloud_prop) if file.endswith('.nc')]
+    file_paths_occurence  = [os.path.join(filepath_cloud_occurence, file) for file in os.listdir(filepath_cloud_occurence) if file.endswith('new.nc')]
+    file_paths_cloud_type = [os.path.join(filepath_cloud_cloud_type, file) for file in os.listdir(filepath_cloud_cloud_type) if file.endswith('new.nc')]
+    file_paths_cloud_prop = [os.path.join(filepath_cloud_prop, file) for file in os.listdir(filepath_cloud_prop) if file.endswith('new.nc')]
     file_path_categorize  = [os.path.join(filepath_categorize, file) for file in os.listdir(filepath_categorize) if file.endswith('.nc')]
     file_paths_lwc        = [os.path.join(filepath_microphys, file) for file in os.listdir(filepath_microphys) if file.endswith("lwc-scaled-adiabatic.nc")]
     file_paths_iwc        = [os.path.join(filepath_microphys, file) for file in os.listdir(filepath_microphys) if file.endswith("iwc-Z-T-method.nc")]
@@ -183,30 +183,65 @@ if use_old_method:
                                                             'Mixed_phase': 'Mixed-Phase',
                                                             'Pre_mixed_phase': 'Mixed-Phase-Precipitable'})
 
+    # -----------------------------------------------------------------------
+    # Filtering noise detected in new method from old method and new_method
+    # -----------------------------------------------------------------------
+
+    # interp time of cloud occurence to old method
+    old_method_cloud_ava = old_method_cloud_ava.interp(time=ds_cloud_occurence['time'], method='nearest')
+    
+    old_method_cloud_ava = old_method_cloud_ava.where(~ds_cloud_occurence['noise'].astype(bool))
+    single_layer_cloud_type= single_layer_cloud_type.where(~ds_cloud_occurence['noise'].astype(bool))
+    
+    #-------------------------------------------------------------------------------------------------
+    # Taking the daily mean from old and new method (single_layer_cloud_type)
+    #-------------------------------------------------------------------------------------------------
     resample_single_layer_frequency = single_layer_cloud_type.resample(time='1D').mean()
     resample_old_method_cloud_ava   = old_method_cloud_ava.resample(time='1D').mean()
+    #-------------------------------------------------------------------------------------------------
+    
+    #-------------------------------------------------------------------------------------------------
+    # Pearson correlation from old and new method (single_layer_cloud_type)
+    #-------------------------------------------------------------------------------------------------
     pearson_corr = resample_single_layer_frequency.to_dataframe().drop(columns=['Noise']).corr(method='pearson')
     pearson_corr_old_method = resample_old_method_cloud_ava.to_dataframe().drop(columns=['no_clouds', 'multilayer']).corr(method='pearson')
-    # plot upper triangle of the matrix of correlation coefficients
+    # -------------------------------------------------------------------------------------------------
     
-    # old_method_cloud_ava: already single layer for old method
-    # single_layer_cloud_type: already single layer for new method
+    #-------------------------------------------------------------------------------------------------
+    # Computing the IWP for the old and new method
+    #-------------------------------------------------------------------------------------------------
+    # NOTE: Old_method_cloud_ava: already single layer for old method
+    #       Single_layer_cloud_type: already single layer for new method
+    
+    # Filtering noise detected in new method from old method and new_method
     computed_iwp = chunked_iwp.compute()
+    computed_iwp= computed_iwp.where(~ds_cloud_occurence['noise'].astype(bool))
+
+    # IWP for the old method: Ice and Mixed-Phase
     iwc_old_method_ice   = computed_iwp.where(old_method_cloud_ava['Ice'].astype(bool)).resample(time='1D').mean()
     iwc_old_method_mixed = computed_iwp.where(old_method_cloud_ava['Mixed-Phase'].astype(bool)).resample(time='1D').mean()
     
-    # remove noise data from single layer clouds
-    condition_new_method_cloud1 = (single_layer_cloud_type['Noise']==1) & single_layer_cloud_type['Ice'].astype(bool)
-    condition_new_method_cloud2 = (single_layer_cloud_type['Noise']==1) & single_layer_cloud_type['Mixed-Phase'].astype(bool)
     # get non noise and single layer clouds 
-    iwc_new_method_ice   = computed_iwp.where(condition_new_method_cloud1).resample(time='1D').mean()
-    iwc_new_method_mixed = computed_iwp.where(condition_new_method_cloud2).resample(time='1D').mean()
+    iwc_new_method_ice   = computed_iwp.where(single_layer_cloud_type['Ice'].astype(bool)).resample(time='1D').mean()
+    iwc_new_method_mixed = computed_iwp.where(single_layer_cloud_type['Mixed-Phase'].astype(bool)).resample(time='1D').mean()
     # remove nans from both datasets
     
+    # # Uncomment the following lines to make a line plot of the IWP for the old and new methods
+    # fig, ax = plt.subplots(figsize=(12, 6))
+    # iwc_old_method_ice.plot(ax=ax, label='Ice (Old Method)', color='blue')
+    # iwc_old_method_mixed.plot(ax=ax, label='Mixed-Phase (Old Method)', color='orange')
+    # plt.show()
+
+    # fig, ax = plt.subplots(figsize=(12, 6))
+    # iwc_new_method_ice.plot(ax=ax, label='Ice (New Method)', color='blue')
+    # iwc_new_method_mixed.plot(ax=ax, label='Mixed-Phase (New Method)', color='orange')
+    # plt.show()
+
     clouds_for_pearson_plot =  ["Liquid", "Liquid-Precipitable", "Ice", "Mixed-Phase", "Mixed-Phase-Precipitable"]
     
-    # For ploting the pearson correlation, 
-
+    #-------------------------------------------------------------------------------------------------
+    # PLOT: Pearson correlation matrix for old and new method for DAILY OCCURENCE
+    #-------------------------------------------------------------------------------------------------
     fig, (ax2, ax1) = plt.subplots(1, 2, figsize=(20, 10))
 
     # Plot for pearson_corr_old_method
@@ -237,14 +272,16 @@ if use_old_method:
     fig.subplots_adjust(wspace=0.55)
     fig.savefig(PATH_FIG + 'cloud_freq_methods_comparison_correlation_matrix.png', dpi=300, bbox_inches='tight')
     plt.show()
+    # -------------------------------------------------------------------------------------------------
 
+    #-------------------------------------------------------------------------------------------------
+    # PLOT: Pearson correlation for IWP between ICE and MIXED-PHASE clouds for old and new method
+    #-------------------------------------------------------------------------------------------------
     fig, (ax3, ax4) = plt.subplots(1, 2, figsize=(15, 8))
 
     # Scatter plot comparing the IWP between ice and mixed-phase using old method
     mask_nans = np.isnan(iwc_old_method_ice.values) | np.isnan(iwc_old_method_mixed.values)
-    iwc_old_method_ice   = iwc_old_method_ice[~mask_nans]
-    iwc_old_method_mixed = iwc_old_method_mixed[~mask_nans]
-    profile_algo_correlation = np.corrcoef(iwc_old_method_ice.values, iwc_old_method_mixed.values)
+    profile_algo_correlation = np.corrcoef(iwc_old_method_ice.values[~mask_nans], iwc_old_method_mixed.values[~mask_nans])
     
     scatter1 = ax3.scatter(iwc_old_method_ice, iwc_old_method_mixed,
                            c=iwc_old_method_ice.time.dt.month, cmap='Paired', s=50, edgecolors='white')
@@ -260,9 +297,7 @@ if use_old_method:
 
     # Scatter plot comparing the IWP between ice and mixed-phase using new method
     mask_nans = np.isnan(iwc_new_method_ice.values) | np.isnan(iwc_new_method_mixed.values)
-    iwc_new_method_ice   = iwc_new_method_ice[~mask_nans]
-    iwc_new_method_mixed = iwc_new_method_mixed[~mask_nans]
-    profile_algo_correlation = np.corrcoef(iwc_new_method_ice.values, iwc_new_method_mixed.values)
+    profile_algo_correlation = np.corrcoef(iwc_new_method_ice.values[~mask_nans], iwc_new_method_mixed.values[~mask_nans])
     
     scatter2 = ax4.scatter(iwc_new_method_ice, iwc_new_method_mixed,
                            c=iwc_new_method_ice.time.dt.month, cmap='Paired', s=50, edgecolors='white')
@@ -285,6 +320,7 @@ if use_old_method:
     # fig.subplots_adjust(wspace=0.3)
     fig.savefig(PATH_FIG + 'cloud_freq_methods_comparison_scatter_plots.png', dpi=600, bbox_inches='tight')
     plt.show()
+    # -------------------------------------------------------------------------------------------------
 
     clouds_to_analyse_old_method =  ["Liquid", "Liquid-Precipitable", "Ice", "Mixed-Phase", "Mixed-Phase-Precipitable"]
     new_list_color               = ["#007CFF", "blue", "cyan", "yellow", "orange"]
@@ -387,11 +423,10 @@ else:
     # ax2.legend()
     # fig1.savefig(PATH_FIG + 'new_method_monthly_cloud_occurence.png', dpi=300, bbox_inches='tight')
     # plt.show()
-
+ 
     # -----------------------------------------------------------------------
-    # Data Availability plot
+    # PLOT: Bar plot of Data occurence and line plot of cloud occurence
     # -----------------------------------------------------------------------
-
     ds_cloud_occurence   = ds_cloud_occurence.assign_coords(year=ds_cloud_occurence['time'].dt.year, month=ds_cloud_occurence['time'].dt.month)
     count_available_data = ds_cloud_occurence['single_layer'].groupby('time.month').count(dim='time')
     time_complete            = get_complete_time(ds_cloud_occurence, start_month=True)
@@ -453,6 +488,7 @@ else:
     ax2.legend()
     fig1.savefig(PATH_FIG + 'new_method_monthly_cloud_occurence.png', dpi=300, bbox_inches='tight')
     plt.show()
+    # -----------------------------------------------------------------------
 
     # fig2 = plt.figure(figsize=(12, 6))
     # ax2 = fig2.add_subplot(111)
@@ -492,6 +528,10 @@ else:
     # ax.legend()
     # # fig.savefig(PATH_FIG + 'new_method_monthly_single_layer_frequency.png', dpi=300, bbox_inches='tight')
     # plt.show()
+    
+    # -----------------------------------------------------------------------
+    # PLOT: Line plot for monthly cloud occurence for single layer
+    # -----------------------------------------------------------------------
 
     letters = iter('abcdefghijklmnopqrstuvwxyz')
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10))
@@ -517,7 +557,7 @@ else:
     
     ax2.text(0.02, 0.93, f"{next(letters) }) ", transform=ax2.transAxes, fontsize=20, fontweight='bold', va='top')
     # Plot for monthly_single_layer_frequency
-    for i, var in enumerate(list_var_names[:-1]):
+    for i, var in enumerate(list_var_names[:-2]):
         ax2.plot(monthly_single_layer_frequency['month'], monthly_single_layer_frequency[var]*100, '-o',
                  color=list_cloud_colors[i+1], linewidth=2, markersize=8, alpha=0.8, label=var.replace('_', '-').capitalize())
     ax2.set_ylabel('Cloud Occurrence (%)', fontsize=14)
@@ -534,6 +574,7 @@ else:
     plt.tight_layout()
     fig.savefig(PATH_FIG + 'new_method_monthly_cloud_occurence_analysis.png', dpi=1000, bbox_inches='tight')
     plt.show()
+    # -----------------------------------------------------------------------
 
     # color_data_ava = sns.color_palette("deep", len(unique_years)+1).as_hex() + ["#FFFFFF"]
     # # Rest of the code...
@@ -625,8 +666,9 @@ else:
     # plt.show()
 
     # -----------------------------------------------------------------------
-    # ----------------- Hourly Single Layer Cloud Frequency -----------------
+    # PLOT: Line plot for hourly mean cloud occurence for single layer clouds
     # -----------------------------------------------------------------------
+
     # single_layer_mask = ds_cloud_occurence['single_layer']
     ds_cloud_type = assign_season(ds_cloud_type, SEASONS)
     single_layer_cloud_type = ds_cloud_type.where(ds_cloud_occurence['single_layer'], other=0)
@@ -659,6 +701,11 @@ else:
     fig.savefig(PATH_FIG + 'hourly_seasonly_single_layer_frequency.png', dpi=300, bbox_inches='tight')
     plt.show()
 
+    # -----------------------------------------------------------------------
+    
+    # -----------------------------------------------------------------------
+    # PLOT: Hourly mean cloud thickness for single layer clouds
+    # -----------------------------------------------------------------------
     single_layer_cloud_base = ds_cloud_prop['cloud_thickness'].where(ds_cloud_occurence['single_layer'], other=np.nan)
     fig = plt.figure(figsize=(14, 8))
     gs = fig.add_gridspec(len(SEASONS)//2, 2, height_ratios=[1]*(len(SEASONS)//2), hspace=0.15)
@@ -803,17 +850,25 @@ else:
     # # ax.grid()
     # # plt.show()
 
+    # -----------------------------------------------------------------------
+    # Cloud Structure Analysis
+    # -----------------------------------------------------------------------
+
+    # TEST: removing attenuation 
+    # First we should filter the attenuation from data to avoid underestimation of CBT and WIDTH
+    test = ds_cloud_prop.where(~ds_cloud_occurence['attenuation'].astype(bool))
+                                        
     fig = plt.figure(figsize=(15, 10))
     gs = fig.add_gridspec(3, 2, height_ratios=[1, 1, 1], hspace=0.4)
-
-    for i, var in enumerate(list_var_names[:-1]):
+    
+    for i, var in enumerate(list_var_names[:-2]):
         ax = fig.add_subplot(gs[i//2, i%2])
         mask_cloud_type = single_layer_cloud_type[var].astype(bool)
         freq_str = 'M'
-        base_cloud_type_mean = (ds_cloud_prop['cloud_base'].sel(time=mask_cloud_type).resample(time=freq_str).mean() - GRANADA_ALTITUDE)/1000.
-        base_cloud_type_50th = (ds_cloud_prop['cloud_base'].sel(time=mask_cloud_type).resample(time=freq_str).median() - GRANADA_ALTITUDE)/1000.
-        base_cloud_type_10th = (ds_cloud_prop['cloud_base'].sel(time=mask_cloud_type).resample(time=freq_str).quantile(0.1) - GRANADA_ALTITUDE)/1000.
-        base_cloud_type_90th = (ds_cloud_prop['cloud_base'].sel(time=mask_cloud_type).resample(time=freq_str).quantile(0.9) - GRANADA_ALTITUDE)/1000.
+        base_cloud_type_mean = (test['cloud_base'].sel(time=mask_cloud_type).resample(time=freq_str).mean() - GRANADA_ALTITUDE)/1000.
+        base_cloud_type_50th = (test['cloud_base'].sel(time=mask_cloud_type).resample(time=freq_str).median() - GRANADA_ALTITUDE)/1000.
+        base_cloud_type_10th = (test['cloud_base'].sel(time=mask_cloud_type).resample(time=freq_str).quantile(0.1) - GRANADA_ALTITUDE)/1000.
+        base_cloud_type_90th = (test['cloud_base'].sel(time=mask_cloud_type).resample(time=freq_str).quantile(0.9) - GRANADA_ALTITUDE)/1000.
 
         ax.plot(base_cloud_type_50th.time, base_cloud_type_50th, '-ok', markersize=4)
         ax.fill_between(base_cloud_type_50th.time, base_cloud_type_10th, base_cloud_type_90th, color=list_cloud_colors[i+1], alpha=0.3, label='10-90 percentile')
@@ -824,14 +879,20 @@ else:
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%y'))
         ax.xaxis.set_minor_locator(mdates.MonthLocator())
         ax.grid()
-    fig.savefig(PATH_FIG + 'new_method_cloud_base_height.png', dpi=300, bbox_inches='tight')
+    # fig.savefig(PATH_FIG + 'new_method_cloud_base_height.png', dpi=300, bbox_inches='tight')
     plt.show()
-
-    mask_cloud_type = single_layer_cloud_type['Ice-Precipitable'].astype(bool)
-    test = (ds_cloud_prop['cloud_base'].sel(time=mask_cloud_type).resample(time=freq_str).mean() - GRANADA_ALTITUDE)/1000
-    df_test = test.to_dataframe().dropna()
-    s=sm.tsa.seasonal_decompose(df_test.cloud_base, model="additive", period=3)
-    s.plot()
+    
+    # -----------------------------------------------------------------------
+    # Removing the attenuation from the data
+    # -----------------------------------------------------------------------
+    ds_cloud_prop = ds_cloud_prop.where(~ds_cloud_occurence['attenuation'].astype(bool)) # Remove the attenuation from the data
+    # -----------------------------------------------------------------------
+    # TEST: using the sm.test_decompose to decompose the time series data
+    # mask_cloud_type = single_layer_cloud_type['Ice-Precipitable'].astype(bool)
+    # test = (ds_cloud_prop['cloud_base'].sel(time=mask_cloud_type).resample(time=freq_str).mean() - GRANADA_ALTITUDE)/1000
+    # df_test = test.to_dataframe().dropna()
+    # s=sm.tsa.seasonal_decompose(df_test.cloud_base, model="additive", period=3)
+    # s.plot()
     # # -----------------------------------------------------------------------
     # # Cloud Thickness
     # # -----------------------------------------------------------------------
@@ -900,43 +961,43 @@ else:
 
     # df_cloud_prop = (single_layer_cloud_prop/1000).to_dataframe().reset_index().drop(columns=['time', 'month', 'year'])
 
-    fig = plt.figure(figsize=(15, 10))
-    gs = fig.add_gridspec(3, 2, height_ratios=[1, 1, 1], hspace=0.4)
+    # fig = plt.figure(figsize=(15, 10))
+    # gs = fig.add_gridspec(3, 2, height_ratios=[1, 1, 1], hspace=0.4)
 
-    for i, var in enumerate(list_var_names[:-1]):
-        ax = fig.add_subplot(gs[i//2, i%2])
-        mask_cloud_type = single_layer_cloud_type[var].astype(bool)
+    # for i, var in enumerate(list_var_names[:-1]):
+    #     ax = fig.add_subplot(gs[i//2, i%2])
+    #     mask_cloud_type = single_layer_cloud_type[var].astype(bool)
 
-        base_cloud_type = (ds_cloud_prop['cloud_base'].sel(time=mask_cloud_type) - GRANADA_ALTITUDE)/1000
-        # base_cloud_type = ds_cloud_prop['cloud_base'].where(mask_cloud_type)/1000.
-        df_cloud_type   = base_cloud_type.to_dataframe().reset_index().drop(columns=['time'])
+    #     base_cloud_type = (ds_cloud_prop['cloud_base'].sel(time=mask_cloud_type) - GRANADA_ALTITUDE)/1000
+    #     # base_cloud_type = ds_cloud_prop['cloud_base'].where(mask_cloud_type)/1000.
+    #     df_cloud_type   = base_cloud_type.to_dataframe().reset_index().drop(columns=['time'])
 
-        # print(f"For the cloud type: {var}, count by season are as follows: {df_cloud_type.groupby('season').size()}")
+    #     # print(f"For the cloud type: {var}, count by season are as follows: {df_cloud_type.groupby('season').size()}")
         
-        # sns.violinplot(data = df_cloud_type, 
-        #                 x='season',
-        #                 y='cloud_base', 
-        #                 ax=ax, 
-        #                 color=list_cloud_colors[i+1], 
-        #                 density_norm='count', 
-        #                 inner="quart")
-        sns.violinplot(x=base_cloud_type.season.values, 
-                    y=base_cloud_type.values, ax=ax, 
-                    color=list_cloud_colors[i+1], 
-                    scale='count', inner="quart",
-                    orient='v',
-                    alpha=0.4,
-                    linewidth=1.5)   
-        # sns.violinplot(x=base_cloud_type.time.dt.season.values, y=base_cloud_type.values, ax=ax, color=list_cloud_colors[i+1])
+    #     # sns.violinplot(data = df_cloud_type, 
+    #     #                 x='season',
+    #     #                 y='cloud_base', 
+    #     #                 ax=ax, 
+    #     #                 color=list_cloud_colors[i+1], 
+    #     #                 density_norm='count', 
+    #     #                 inner="quart")
+    #     sns.violinplot(x=base_cloud_type.season.values, 
+    #                 y=base_cloud_type.values, ax=ax, 
+    #                 color=list_cloud_colors[i+1], 
+    #                 scale='count', inner="quart",
+    #                 orient='v',
+    #                 alpha=0.4,
+    #                 linewidth=1.5)   
+    #     # sns.violinplot(x=base_cloud_type.time.dt.season.values, y=base_cloud_type.values, ax=ax, color=list_cloud_colors[i+1])
         
-        ax.set_ylabel('Cloud Base Height (m)')
-        ax.set_xlabel('Month')
-        ax.set_title(var.replace('_', '-').capitalize())
-        # ax.set_xticks(range(1, 13))
-        # ax.set_xticklabels(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
-        ax.grid()
-    fig.savefig(PATH_FIG + 'new_method_cloud_base_height_violin_season.png', dpi=300, bbox_inches='tight')
-    plt.show()
+    #     ax.set_ylabel('Cloud Base Height (m)')
+    #     ax.set_xlabel('Month')
+    #     ax.set_title(var.replace('_', '-').capitalize())
+    #     # ax.set_xticks(range(1, 13))
+    #     # ax.set_xticklabels(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
+    #     ax.grid()
+    # fig.savefig(PATH_FIG + 'new_method_cloud_base_height_violin_season.png', dpi=300, bbox_inches='tight')
+    # plt.show()
 
     list_var_names = list(ds_cloud_type.data_vars)
     split_pairs_var_names = [list_var_names[i:i+2] for i in range(0, len(list_var_names)-2, 2)]
@@ -955,8 +1016,8 @@ else:
         sliced_cloud_type['cloud_type'] = xr.DataArray(np.where(sliced_cloud_type[pair_var_names[0]] == 1,
                                                     pair_var_names[0],
                                                     pair_var_names[1]), dims= "time")
-
-        single_layer_cloud_prop = ds_cloud_prop.where(ds_cloud_occurence['single_layer'], other=np.nan)
+        
+        single_layer_cloud_prop = ds_cloud_prop.where(ds_cloud_occurence['single_layer'])
         sliced_cloud_prop = single_layer_cloud_prop.sel(time=mask_pair_var.values)/1000
         df = sliced_cloud_type.merge(sliced_cloud_prop).to_dataframe().reset_index().drop(columns=['time', 'month', 'year', pair_var_names[0], pair_var_names[1]])
         df['cloud_base'] = df['cloud_base'] - GRANADA_ALTITUDE/1000
@@ -1064,132 +1125,10 @@ else:
 
             if j == 0:
                 # Add text annotations for number of data points
-                counts = df.groupby(['season', 'cloud_type']).size().unstack()
-                for season in counts.index:
-                    for cloud_type in counts.columns:
-                        count = counts.at[season, cloud_type]
-                        x_pos = ['spring', 'summer', 'fall', 'winter'].index(season)
-                        # y_pos = ax.get_ylim()[1] * 0.9  # Position the text at 90% of the y-axis limit
-                        y_pos = 4
-                        #alter between left and right side of the violin
-                        if cloud_type == clouds[0]:
-                            x_pos += 0.3
-                            y_pos += 0.5
-                        else:
-                            x_pos -= 0.3
-                            y_pos -= 0.5
-                        ax.text(x_pos, y_pos, f'({int(count)})',
-                                 ha='center',
-                                   va='center',
-                                     fontsize=12,
-                                       color='black',
-                                         weight='bold')
-
-    fig.savefig(PATH_FIG + 'new_method_cloud_prop_violin_season.png', dpi=300, bbox_inches='tight')
-    plt.show()
-
-    ys = ['cloud_base', 'cloud_top', 'cloud_thickness']
-    colors_violin = ['Blues', 'Greys', 'YlOrBr']
-    fig = plt.figure(figsize=(23, 17))
-    gs  = fig.add_gridspec(len(dataframes), len(ys), height_ratios=[1]*len(dataframes), hspace=0.15, wspace=0.2)
-    letters = iter('abcdefghijklmnopqrstuvwxyz')
-    for i, df in enumerate(dataframes):
-        for j, y in enumerate(ys):
-            # Make a split violin plot for each dataframe
-            clouds = df['cloud_type'].unique()
-            # split this string into two parts, separated by -
-            cloud_posfix = clouds[0].split('-')
-            # the violin on the right should be for cloud_posfix == Precipitable
-            if len(cloud_posfix) > 1 and cloud_posfix[1] == 'Precipitable':
-                cloud_order = [clouds[1], clouds[0]]
-            else:
-                cloud_order = [clouds[0], clouds[1]]
-            # print(f"cloud_order: {cloud_order}")
-            ax = fig.add_subplot(gs[j, i])
-            sns.violinplot(data=df,
-                           x='season',
-                           y=y,
-                           hue='cloud_type',
-                           ax=ax,
-                           split=True,
-                           palette=colors_violin[i],
-                           inner="quartile",
-                           order=['spring', 'summer', 'fall', 'winter'],
-                           scale='count',
-                           gap=.4,
-                           hue_order=cloud_order,
-                           linecolor='black',
-                           linewidth=2.0,
-                           medianprops={"color": "r", "linewidth": 2},
-                           )  # Specify the order of x-axis categories
-            # for y-label, split the string by - and capitalize each part
-            ax.set_ylabel(f'{y.replace("_", " ").capitalize()} (km) a.g.l.')
-            # ax.tick_params(which='minor', length=4, color='r')
-            # ax.set_xlabel('Seasons')
-            ax.grid()
-            ax.spines['top'].set_visible(False)
-            ax.spines['right'].set_visible(False)
-            ax.spines['bottom'].set_visible(False)
-            ax.spines['left'].set_visible(False)
-            ax.set_facecolor('white')
-
-            # Add letter annotation
-            ax.text(0.02, 0.95, next(letters)+")", transform=ax.transAxes, 
-                    fontsize=20, fontweight='bold', va='top', ha='left', backgroundcolor='white')
-
-            if cloud_order[0] == 'Liquid' and y == 'cloud_thickness':
-                # plot a zoom between 0 and 2 km overlapping the plot with same width of original plot
-                axins = ax.inset_axes([0.2, 0.4, 0.7, 0.6], transform=ax.transAxes)
-                sns.violinplot(data=df,
-                                 x='season',
-                                 y=y,
-                                 hue='cloud_type',
-                                 ax=axins,
-                                 split=True,
-                                 palette=colors_violin[i],
-                                 inner="quartile",
-                                 order=['spring', 'summer', 'fall', 'winter'],
-                                 scale='count',
-                                 gap=.4,
-                                 hue_order=cloud_order,
-                                 linecolor='black',
-                                 linewidth=2.0,
-                                 medianprops={"color": "r", "linewidth": 2},
-                                 )  # Specify the order of x-axis categories
-                axins.set_ylim([0, 1.2])
-                axins.set_facecolor('white')
-                axins.xaxis.set_tick_params(labelbottom=False)
-                axins.xaxis.set_tick_params(labelleft=False)
-                axins.spines['top'].set_visible(False)
-                axins.spines['right'].set_visible(False)
-                # increase thick resolution
-                axins.yaxis.set_major_locator(plt.MaxNLocator(5))
-
-                axins.get_legend().remove()
-                axins.set_ylabel('')
-                axins.set_xlabel('')
-
-            if y == 'cloud_thickness':
-                ax.set_ylim([0, 10])
-            else:
-                ax.set_ylim([0, 13])
-                    # Show legend only for the first row
-            if j == 0:
-                ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.1), ncol=2)
-            else:
-                ax.get_legend().remove()
-                # remove the bottom x-axis
+                # counts = df.groupby(['season', 'cloud_type']).size().unstack()
+                counts= df.groupby(['season', 'cloud_type']).count().unstack()['cloud_base']
+                # df.groupby(['season', 'cloud_type']).count().unstack()['cloud_base'].sum().sum()
                 
-            # remove the bottom x-axis label for all but the last row
-            if j != len(ys) - 1:
-                ax.set_xlabel('')
-                ax.xaxis.set_tick_params(labelbottom=False)
-            quartiles = df.groupby(['season', 'cloud_type'])[y].quantile([0.5]).unstack()
-            print(f"{y}: {quartiles}")
-
-            if j == 0:
-                # Add text annotations for number of data points
-                counts = df.groupby(['season', 'cloud_type']).size().unstack()
                 for season in counts.index:
                     for cloud_type in counts.columns:
                         count = counts.at[season, cloud_type]
@@ -1212,19 +1151,132 @@ else:
 
     fig.savefig(PATH_FIG + 'new_method_cloud_prop_violin_season.png', dpi=300, bbox_inches='tight')
     plt.show()
-    
-    fig = plt.figure(figsize=(15, 10))
-    single_layer_lwp = chunked_lwp.where(ds_cloud_occurence['single_layer'], drop=True) / 1e3
-    single_layer_lwp.plot()
-    single_layer_lwp.resample(time='7D').mean().plot()
-    plt.show()
 
-    fig = plt.figure(figsize=(15, 10))
-    single_layer_lwp = ds_categorize.where(ds_cloud_occurence['single_layer'], drop=True) / 1e3
-    single_layer_lwp.plot()
-    single_layer_lwp.resample(time='7D').mean().plot()
-    plt.show()
-    
+    # ys = ['cloud_base', 'cloud_top', 'cloud_thickness']
+    # colors_violin = ['Blues', 'Greys', 'YlOrBr']
+    # fig = plt.figure(figsize=(23, 17))
+    # gs  = fig.add_gridspec(len(dataframes), len(ys), height_ratios=[1]*len(dataframes), hspace=0.15, wspace=0.2)
+    # letters = iter('abcdefghijklmnopqrstuvwxyz')
+    # for i, df in enumerate(dataframes):
+    #     for j, y in enumerate(ys):
+    #         # Make a split violin plot for each dataframe
+    #         clouds = df['cloud_type'].unique()
+    #         # split this string into two parts, separated by -
+    #         cloud_posfix = clouds[0].split('-')
+    #         # the violin on the right should be for cloud_posfix == Precipitable
+    #         if len(cloud_posfix) > 1 and cloud_posfix[1] == 'Precipitable':
+    #             cloud_order = [clouds[1], clouds[0]]
+    #         else:
+    #             cloud_order = [clouds[0], clouds[1]]
+    #         # print(f"cloud_order: {cloud_order}")
+    #         ax = fig.add_subplot(gs[j, i])
+    #         sns.violinplot(data=df,
+    #                        x='season',
+    #                        y=y,
+    #                        hue='cloud_type',
+    #                        ax=ax,
+    #                        split=True,
+    #                        palette=colors_violin[i],
+    #                        inner="quartile",
+    #                        order=['spring', 'summer', 'fall', 'winter'],
+    #                        scale='count',
+    #                        gap=.4,
+    #                        hue_order=cloud_order,
+    #                        linecolor='black',
+    #                        linewidth=2.0,
+    #                        medianprops={"color": "r", "linewidth": 2},
+    #                        )  # Specify the order of x-axis categories
+    #         # for y-label, split the string by - and capitalize each part
+    #         ax.set_ylabel(f'{y.replace("_", " ").capitalize()} (km) a.g.l.')
+    #         # ax.tick_params(which='minor', length=4, color='r')
+    #         # ax.set_xlabel('Seasons')
+    #         ax.grid()
+    #         ax.spines['top'].set_visible(False)
+    #         ax.spines['right'].set_visible(False)
+    #         ax.spines['bottom'].set_visible(False)
+    #         ax.spines['left'].set_visible(False)
+    #         ax.set_facecolor('white')
+
+    #         # Add letter annotation
+    #         ax.text(0.02, 0.95, next(letters)+")", transform=ax.transAxes, 
+    #                 fontsize=20, fontweight='bold', va='top', ha='left', backgroundcolor='white')
+
+    #         if cloud_order[0] == 'Liquid' and y == 'cloud_thickness':
+    #             # plot a zoom between 0 and 2 km overlapping the plot with same width of original plot
+    #             axins = ax.inset_axes([0.2, 0.4, 0.7, 0.6], transform=ax.transAxes)
+    #             sns.violinplot(data=df,
+    #                              x='season',
+    #                              y=y,
+    #                              hue='cloud_type',
+    #                              ax=axins,
+    #                              split=True,
+    #                              palette=colors_violin[i],
+    #                              inner="quartile",
+    #                              order=['spring', 'summer', 'fall', 'winter'],
+    #                              scale='count',
+    #                              gap=.4,
+    #                              hue_order=cloud_order,
+    #                              linecolor='black',
+    #                              linewidth=2.0,
+    #                              medianprops={"color": "r", "linewidth": 2},
+    #                              )  # Specify the order of x-axis categories
+    #             axins.set_ylim([0, 1.2])
+    #             axins.set_facecolor('white')
+    #             axins.xaxis.set_tick_params(labelbottom=False)
+    #             axins.xaxis.set_tick_params(labelleft=False)
+    #             axins.spines['top'].set_visible(False)
+    #             axins.spines['right'].set_visible(False)
+    #             # increase thick resolution
+    #             axins.yaxis.set_major_locator(plt.MaxNLocator(5))
+
+    #             axins.get_legend().remove()
+    #             axins.set_ylabel('')
+    #             axins.set_xlabel('')
+
+    #         if y == 'cloud_thickness':
+    #             ax.set_ylim([0, 10])
+    #         else:
+    #             ax.set_ylim([0, 13])
+    #                 # Show legend only for the first row
+    #         if j == 0:
+    #             ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.1), ncol=2)
+    #         else:
+    #             ax.get_legend().remove()
+    #             # remove the bottom x-axis
+                
+    #         # remove the bottom x-axis label for all but the last row
+    #         if j != len(ys) - 1:
+    #             ax.set_xlabel('')
+    #             ax.xaxis.set_tick_params(labelbottom=False)
+    #         quartiles = df.groupby(['season', 'cloud_type'])[y].quantile([0.5]).unstack()
+    #         print(f"{y}: {quartiles}")
+
+    #         if j == 0:
+    #             # Add text annotations for number of data points
+    #             counts = df.groupby(['season', 'cloud_type']).size().unstack()
+    #             for season in counts.index:
+    #                 for cloud_type in counts.columns:
+    #                     count = counts.at[season, cloud_type]
+    #                     x_pos = ['spring', 'summer', 'fall', 'winter'].index(season)
+    #                     # y_pos = ax.get_ylim()[1] * 0.9  # Position the text at 90% of the y-axis limit
+    #                     y_pos = 4
+    #                     #alter between left and right side of the violin
+    #                     if cloud_type == clouds[0]:
+    #                         x_pos += 0.3
+    #                         y_pos += 0.5
+    #                     else:
+    #                         x_pos -= 0.3
+    #                         y_pos -= 0.5
+    #                     ax.text(x_pos, y_pos, f'({int(count)})',
+    #                              ha='center',
+    #                                va='center',
+    #                                  fontsize=12,
+    #                                    color='black',
+    #                                      weight='bold')
+
+    # # fig.savefig(PATH_FIG + 'new_method_cloud_prop_violin_season.png', dpi=300, bbox_inches='tight')
+    # plt.show()
+
     # # Create a dataframe for liquid and liquid preicipitable
     # df_cloud_type_single_layer = ds_cloud_type_single_layer.to_dataframe().reset_index().melt(id_vars=['time'],
     #                                                                                             var_name='cloud_type',

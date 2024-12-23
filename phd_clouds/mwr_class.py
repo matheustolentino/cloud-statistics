@@ -277,7 +277,7 @@ class Mwr:
 
         return ds_mwr
 
-    def concatenate_mwr_files_tpc_2(self, filenames: list):
+    def concatenate_mwr_files_tpc(self, filenames: list):
         """
         Load MWR data from multiple files and concatenate them into a single xarray dataset.
 
@@ -303,7 +303,7 @@ class Mwr:
 
         return ds_mwr.sortby('time')
 
-    def concatenate_mwr_files_hpc_2(self, filenames: list):
+    def concatenate_mwr_files_hpc(self, filenames: list):
         """
         Load MWR data from multiple files and concatenate them into a single xarray dataset.
 
@@ -339,7 +339,7 @@ class Mwr:
 
         return ds_mwr_rh_concat.sortby('time'), ds_mwr_h_concat.sortby('time')
 
-    def concatenate_mwr_files_lwp_2(self, filenames: list):
+    def concatenate_mwr_files_lwp(self, filenames: list):
         """
         Load MWR data from multiple files and concatenate them into a single xarray dataset.
 

@@ -30,6 +30,9 @@ mayavi = "^4.8.2"
 configobj = "^5.0.8"
 pyqt5 = "^5.15.10"
 pypeako = "^0.0.2.post2"
+keras = "^2.13"
+tensorflow = "^2.13"
+opencv-python = "^4.10.0.84"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.5"
