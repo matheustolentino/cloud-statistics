@@ -531,10 +531,10 @@ else:
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10))
     
     ax1.text(0.02, 0.93, f"{next(letters)})", transform=ax1.transAxes, fontsize=20, fontweight='bold', va='top')
+    list_vars = list(monthly_cloud_occurence.data_vars)[:-1]
     # Plot for monthly_cloud_occurence
-    for var in monthly_cloud_occurence.data_vars:
-        if var != 'time':
-            ax1.plot(monthly_cloud_occurence['month'], monthly_cloud_occurence[var]*100, '-o', label=var.replace('_', '-').capitalize(), linewidth=2, markersize=8)  
+    for var in list_vars:
+        ax1.plot(monthly_cloud_occurence['month'], monthly_cloud_occurence[var]*100, '-o', label=var.replace('_', '-').capitalize(), linewidth=2, markersize=8)  
     ax1.set_ylabel('Frequency of Occurrence (%)', fontsize=14)
     # ax1.set_xlabel('Month', fontsize=14)
     ax1.grid(True, linestyle='--', alpha=0.7)
@@ -1052,6 +1052,32 @@ else:
                            linewidth=2.0,
                            medianprops={"color": "r", "linewidth": 2},
                            )  # Specify the order of x-axis categories
+            # sns.stripplot(data=df,
+            #               x='season',
+            #               y=y,
+            #               hue=y,
+            #               ax=ax,
+            #               palette=colors_violin[i],
+            #               order=['spring', 'summer', 'fall', 'winter'],
+            #               hue_order=cloud_order,
+            #               dodge=True,
+            #               jitter=0.2,
+            #               alpha=0.5,
+            #               size=2,  # Make points very small
+            #               edgecolor='black',  # Add black edges to points
+            #               )
+            # medians = df.groupby(['season', 'cloud_type'])[y].median().unstack()
+            # for season in medians.index:
+            #     for cloud_type in medians.columns:
+            #         median_val = medians.at[season, cloud_type]
+            #         x_pos = ['spring', 'summer', 'fall', 'winter'].index(season)
+            #         if cloud_type == cloud_order[0]:
+            #             x_pos -= 0.2
+            #         else:
+            #             x_pos += 0.2
+            #         ax.plot(x_pos, median_val, 'wo', markersize=8)
+ 
+            # --------------------------------------------------------------------------------------
             # for y-label, split the string by - and capitalize each part
             ax.set_ylabel(f'{y.replace("_", " ").capitalize()} (km) a.g.l.')
             # ax.tick_params(which='minor', length=4, color='r')
