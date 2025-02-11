@@ -1058,7 +1058,7 @@ class CloudProcessing:
         Plot linear fitting of LWP (Radar x MWR) and histogram of relative difference using saved fit parameters.
         """
         
-        if not self.fit_params.any():
+        if self.fit_params is None:
             print("Fit parameters are not available.")
             return
         
