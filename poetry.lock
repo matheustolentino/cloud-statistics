@@ -4222,7 +4222,6 @@ version = "0.0.2.post2"
 description = "peak detection in cloud radar Doppler spectra"
 optional = false
 python-versions = ">=3.6"
-groups = ["main"]
 files = [
     {file = "pyPEAKO-0.0.2.post2-py3-none-any.whl", hash = "sha256:cfa26074e401d275e585aeb7243915a86e325e20c62d8dc2d9757bd97f99ac39"},
     {file = "pyPEAKO-0.0.2.post2.tar.gz", hash = "sha256:1d1acea0b0e65ee47ba8a2b542c20783f5e45feadb46dc996e6e6705fbe6134f"},

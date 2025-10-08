@@ -97,11 +97,18 @@ def download_cloudnet_products(date_ini, date_end, path_output, product='model',
         'dateFrom': date_ini,
         'dateTo': date_end
     }
+    # print payload:
+    # print(f"Payload: {payload}")
+
     metadata = requests.get(url, params=payload).json()
 
     # Ensure the output folder exists; create it if not.
     os.makedirs(path_output, exist_ok=True)
     
+    if not isinstance(metadata, list) or len(metadata) == 0:
+        # print(f"No files found for the given parameters: {payload}")
+        return
+
     for row in metadata:
         res = requests.get(row['downloadUrl'])
         

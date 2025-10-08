@@ -15,15 +15,13 @@ from phd_clouds.utils import download_cloudnet_products, groupSequence
 import glob
 import netCDF4 as nc
 import os
-from phd_clouds.constants import CLEAR_SKY, CLOUD_LIQUID, DRIZZLE_OR_RAIN, DRIZZLE_OR_RAIN_LIQUID_DROPLETS, ICE_PARTICLES, ICE_WITH_SUP_WATER, MELTING_ICE, MELTING_ICE_LIQUID_DROPLETS, AERO_NO_CLOUD, INSECT_NO_CLOUD, AERO_WITH_INSECT_NO_CLOUD, CLASSIFICATION_TICK_LABELS, GRANADA_ALTITUDE
+from phd_clouds.constants import CLEAR_SKY, CLOUD_LIQUID, DRIZZLE_OR_RAIN, DRIZZLE_OR_RAIN_LIQUID_DROPLETS, ICE_PARTICLES, ICE_WITH_SUP_WATER, MELTING_ICE, MELTING_ICE_LIQUID_DROPLETS, AERO_NO_CLOUD, INSECT_NO_CLOUD, AERO_WITH_INSECT_NO_CLOUD, CLASSIFICATION_TICK_LABELS, GRANADA_ALTITUDE, CLOUD_VALUES, CLOUD_CATEGORY, CLOUD_COLORS
 from collections import Counter
 from scipy import ndimage
 import matplotlib as mpl
 from scipy.optimize import curve_fit
 
 PATH_FIG_TEST     = '../../tests/figures/'
-
-
 
 HYDROMET_VALUES = {"CLOUD_LIQUID": CLOUD_LIQUID,
                "DRIZZLE_OR_RAIN": DRIZZLE_OR_RAIN,
@@ -33,9 +31,13 @@ HYDROMET_VALUES = {"CLOUD_LIQUID": CLOUD_LIQUID,
                "MELTING_ICE": MELTING_ICE,
                "MELTING_ICE_LIQUID_DROPLETS": MELTING_ICE_LIQUID_DROPLETS}
 
-cloud_category = ["No Cloud", "Liquid", "Liquid-Precipitable", "Ice", "Ice-Precipitable", "Mixed-Phase", "Mixed-Phase-Precipitable", "Noise"]
-list_cloud_colors = ["#FFFFFF", "#007CFF", "blue", "cyan", "grey", "yellow", "orange", "magenta"]
-cloud_cmap = plt.cm.colors.ListedColormap(list_cloud_colors)
+HYDROMET_INT = [CLOUD_LIQUID, DRIZZLE_OR_RAIN, DRIZZLE_OR_RAIN_LIQUID_DROPLETS,\
+                                        ICE_PARTICLES, ICE_WITH_SUP_WATER, MELTING_ICE,\
+                                                MELTING_ICE_LIQUID_DROPLETS]
+
+NO_HYDRO_INT = [CLEAR_SKY, AERO_NO_CLOUD, INSECT_NO_CLOUD, AERO_WITH_INSECT_NO_CLOUD]
+
+cloud_cmap = plt.cm.colors.ListedColormap(CLOUD_COLORS)
 
 def compare_radar_chirp_configurations(start_date: datetime,
                                        end_date: datetime,
@@ -515,10 +517,16 @@ class CloudProcessing:
             dic_files['mwr'] = glob.glob(os.path.join(self.path_mwr, f"{datastr}_{self.site}_hatpro*.nc"))
 
         self.filenames = dic_files
-        
-    def download_products(self, date, path_output, products):
+
+    def download_products(self, date_ini, date_end, path_output, products):
         for product in products:
-            download_cloudnet_products(date, date, path_output, product=product, site=self.site)
+            if product == 'microphysics':
+                download_cloudnet_products(date_ini, date_end, path_output[product], product='lwc', site=self.site)
+                download_cloudnet_products(date_ini, date_end, path_output[product], product='iwc', site=self.site)
+                download_cloudnet_products(date_ini, date_end, path_output[product], product='der', site=self.site)
+                download_cloudnet_products(date_ini, date_end, path_output[product], product='ier', site=self.site)
+            else:
+                download_cloudnet_products(date_ini, date_end, path_output[product], product=product, site=self.site)
 
     def load_lwc(self, chunk_data=False):
         for file in self.filenames['lwc']:
@@ -637,13 +645,13 @@ class CloudProcessing:
 
     def initialize_time(self):
         self.time = self.classification.time
-    
-    def generate_cloud_mask(self, all_hydromet_values, non_hydromet_values):
-        
+
+    def generate_cloud_mask(self):
+
         df_data = pd.DataFrame(self.classification['target_classification'].values, columns=self.classification['target_classification']['height'].values, index=self.classification['target_classification']['time'].values)
         classification_filter = CloudProcess(df_data,
-                                             all_hydromet_values,
-                                             non_hydromet_values,
+                                             HYDROMET_INT,
+                                             NO_HYDRO_INT,
                                              1)
          
         self.cloud_mask = classification_filter.cloud_mask().to_numpy(dtype=int)
@@ -683,7 +691,7 @@ class CloudProcessing:
         time_idx_noise = np.zeros(self.time.shape[0])
         
         cloud_type = xr.Dataset(coords={'time': self.time})
-        for var in cloud_category[1:]:
+        for var in CLOUD_CATEGORY[1:]:
             cloud_type[var] = xr.DataArray(data=np.zeros(self.time.shape), coords={'time': self.time}, dims='time')
         
         indices_dict = self.dilate_and_label_clouds(self.cloud_mask, distance=2)
@@ -703,10 +711,10 @@ class CloudProcessing:
             n_pixels_inside_cloud = len(indx_inside_cloud[cloud_number])
 
             if n_pixels_inside_cloud == 0 or n_pixels_inside_cloud < self.min_cloud_pixels:
-                ds_classification[cloud_number] = "Noise"
+                ds_classification[cloud_number] = "Not Classified"
                 idx_noise = np.unique(indx[:, 0])
                 time_idx_noise[idx_noise] = 1
-                cloud_type["Noise"][idx_noise] = 1
+                cloud_type["Not Classified"][idx_noise] = 1
             else:
                 valid_clouds.append(cloud_number)
                 time_idx_valid_clouds.append(np.unique(indx_inside_cloud[cloud_number][:, 0]))
@@ -720,8 +728,8 @@ class CloudProcessing:
 
                 if liquid_percentage > 70:
                     if n_pixels_rain > self.min_rain_pixels:
-                        ds_classification[cloud_number] = "Liquid-Precipitable"
-                        cloud_type["Liquid-Precipitable"][np.unique(indx_inside_cloud[cloud_number][:, 0])] = 1
+                        ds_classification[cloud_number] = "Precipitating-Liquid"
+                        cloud_type["Precipitating-Liquid"][np.unique(indx_inside_cloud[cloud_number][:, 0])] = 1
                     else:
                         ds_classification[cloud_number] = "Liquid"
                         cloud_type["Liquid"][np.unique(indx_inside_cloud[cloud_number][:, 0])] = 1
@@ -735,15 +743,15 @@ class CloudProcessing:
                         indx_inside_cloud[cloud_number] = np.delete(indx_inside_cloud[cloud_number], drizzle_index, axis=0)
 
                     if n_pixels_rain > self.min_rain_pixels:
-                        ds_classification[cloud_number] = "Ice-Precipitable"
-                        cloud_type["Ice-Precipitable"][np.unique(indx_inside_cloud[cloud_number][:, 0])] = 1
+                        ds_classification[cloud_number] = "Precipitating-Ice"
+                        cloud_type["Precipitating-Ice"][np.unique(indx_inside_cloud[cloud_number][:, 0])] = 1
                     else:
                         ds_classification[cloud_number] = "Ice"
                         cloud_type["Ice"][np.unique(indx_inside_cloud[cloud_number][:, 0])] = 1
 
                 elif n_pixels_rain > self.min_rain_pixels:
-                    ds_classification[cloud_number] = "Mixed-Phase-Precipitable"
-                    cloud_type["Mixed-Phase-Precipitable"][np.unique(indx_inside_cloud[cloud_number][:, 0])] = 1
+                    ds_classification[cloud_number] = "Precipitating-Mixed-Phase"
+                    cloud_type["Precipitating-Mixed-Phase"][np.unique(indx_inside_cloud[cloud_number][:, 0])] = 1
 
                     drizzle_index = np.where(hydro_inside_cloud == DRIZZLE_OR_RAIN_LIQUID_DROPLETS)
                     indx_inside_cloud[cloud_number] = np.delete(indx_inside_cloud[cloud_number], drizzle_index, axis=0)
@@ -825,7 +833,7 @@ class CloudProcessing:
 
     def filter_ice_clouds(self, key, aux_time_single_layer, thick_threshold, base_threshold):
         if len(aux_time_single_layer) > 0:
-            if self.cloud_classification[key] in ['Ice-Precipitable', 'Ice']:
+            if self.cloud_classification[key] in ['Precipitating-Ice', 'Ice']:
                 mean_cloud_base = self.cloud_props["cloud_base"][aux_time_single_layer].mean()
                 mean_cloud_thickness = self.cloud_props["cloud_thickness"][aux_time_single_layer].mean()
 
@@ -834,7 +842,7 @@ class CloudProcessing:
                 if is_thick_enough and is_base_enough:
                     self.cloud_occurrence["single_layer"][aux_time_single_layer] = 0
                     self.time_idx_noise[aux_time_single_layer] = 1
-                    self.cloud_type["Noise"][aux_time_single_layer] = 1
+                    self.cloud_type["Not Classified"][aux_time_single_layer] = 1
                     self.cloud_props["cloud_base"][aux_time_single_layer] = np.nan
                     self.cloud_props["cloud_top"][aux_time_single_layer] = np.nan
                     self.cloud_props["cloud_thickness"][aux_time_single_layer] = np.nan
@@ -856,23 +864,23 @@ class CloudProcessing:
         self.cloud_occurrence["clear_sky"] = xr.DataArray(data=mask_clear_sky.values, coords={'time': self.time}, dims='time')
         self.cloud_occurrence["noise"] = xr.DataArray(data=self.time_idx_noise, coords={'time': self.time}, dims='time')
 
-    def create_cluster_classification_product(self, cloud_values):
+    def create_cluster_classification_product(self):
         array_cloud = np.zeros((self.time.shape[0], self.classification.height.shape[0]))
 
         for cloud_number, indx in self.cloud_indx.items():
             cloud_name = self.cloud_classification[cloud_number]
-            integer = cloud_values[cloud_name]
+            integer = CLOUD_VALUES[cloud_name]
             if cloud_number in self.valid_cloud_number:
                 array_cloud[indx[:, 0], indx[:, 1]] = integer
             else:
-                array_cloud[indx[:, 0], indx[:, 1]] = cloud_values["Noise"]
+                array_cloud[indx[:, 0], indx[:, 1]] = CLOUD_VALUES["Not Classified"]
 
         ds_cloud = xr.Dataset(data_vars={'cloud_classification': (['time', 'height'], array_cloud)},
                               coords={'time': self.time, 'height': self.classification.height})
         
         ds_cloud.cloud_classification.attrs['long_name'] = 'Cloud classification'
         ds_cloud.cloud_classification.attrs['description'] = \
-            'Cloud classification based on cloudnet target classification.\nHydrometeor cluster classification algorithm. \n0: No Cloud, \n1: Liquid, \n2: Liquid-Precipitable, \n3: Ice, \n4: Ice-Precipitable, \n5: Mixed-Phase, \n6: Mixed-Phase-Precipitable, \n7: Noise'
+            'Cloud classification based on cloudnet target classification.\nHydrometeor cluster classification algorithm. \n0: No Cloud, \n1: Liquid, \n2: Liquid-Precipitable, \n3: Ice, \n4: Ice-Precipitable, \n5: Mixed-Phase, \n6: Mixed-Phase-Precipitable, \n7: Not Classified'
         
         self.cluster_classification  = ds_cloud
 
@@ -888,7 +896,7 @@ class CloudProcessing:
             # self.cloud_props['lwp'] = self.categorize['lwp']  # post-process LWP
             # self.cloud_props['lwp'].attrs['source'] = self.categorize['lwp'].attrs['source'] + " (categorize)"
 
-    def create_attenuation_mask(self, cloud_cmap, cloud_values, time_roll="10T", lwp_treshold=0.8, corr_treshold=-0.5, lwp2_treshold=1, make_plot=False):
+    def create_attenuation_mask(self, cloud_cmap, time_roll="10T", lwp_treshold=0.8, corr_treshold=-0.5, lwp2_treshold=1, make_plot=False):
         """
         Apply attenuation filter to cloud properties and categorize data.
         """
@@ -917,7 +925,7 @@ class CloudProcessing:
         self.mask_att = (mask_lwp & mask_corr) | (self.cloud_props['lwp_radar'] > lwp2_treshold)
         
         if make_plot:
-            fig = plt.figure(figsize=(20, 10))
+            fig = plt.figure(figsize=(15, 7))
             gs = fig.add_gridspec(2, 2, width_ratios=[1, .02], height_ratios=[1, .6], wspace=0.02, hspace=0.2)
 
             ax2 = fig.add_subplot(gs[1, 0])
@@ -938,23 +946,48 @@ class CloudProcessing:
             
             # self.mask_att = (mask_lwp & mask_corr)
             ax1 = fig.add_subplot(gs[0, 0], sharex=ax2)
-            # scategorize['Z'].T.plot(ax=ax1, cmap='viridis', vmin=-40, vmax=20, add_colorbar=False)
-            self.cluster_classification.cloud_classification.T.plot(ax=ax1, cmap=cloud_cmap, vmin=0, vmax=7, add_colorbar=False)
-            # ax1.fill_between(scategorize.time.values, 0, 12000, where=smask, color='blue', alpha=0.2) # single layer
-            ax1.fill_between(self.cluster_classification.time.values, 0, 12000, where=self.mask_att, color='red', alpha=0.2) # removed areas due to attenuation
-            # put NAN in the correalation where the cloud is not single layer
-            # self.cloud_props['corr'] = self.cloud_props['corr'].where(smask)
-            self.cloud_props.cloud_base.plot(ax=ax1, color='r', linestyle='-')
-            self.cloud_props.cloud_top.plot(ax=ax1, color='k', linestyle='-')
 
-            # plot a blue area for intervals with single layer clouds
-            cbar = fig.add_subplot(gs[0, 1])
-            cbar = plt.colorbar(ax1.collections[0], cax=cbar,
-                                ticks=range(len(cloud_values)),
-                                orientation='vertical')
-            cbar.ax.set_yticklabels(list(cloud_values.keys()))
-            datestrings = self.cloud_props.time.dt.strftime('%Y%m%d').values
-            fig.savefig(f"{PATH_FIG_TEST}{datestrings[0]}_attenuation_mask.png", dpi=600, bbox_inches='tight')
+            self.cluster_classification.cloud_classification.T.plot(ax=ax1, cmap=cloud_cmap, vmin=0, vmax=7, add_colorbar=False)
+            ax1.fill_between(self.cluster_classification.time.values, 0, 12000, where=self.mask_att, color='red', alpha=0.2) # removed areas due to attenuation
+            # self.cloud_props['corr'] = self.cloud_props['corr'].where(smask)
+            # self.cloud_props.cloud_base.plot(ax=ax1, color='r', linestyle='-')
+            # self.cloud_props.cloud_top.plot(ax=ax1, color='k', linestyle='-')
+
+            # Set up colorbar with ticks centered in each color
+            cbar_ax = fig.add_subplot(gs[0, 1])
+            n_colors = len(CLOUD_VALUES)
+            # Ticks at centers: 0.5, 1.5, ..., n-0.5
+            ticks = np.arange(n_colors) + 0.5
+            # Set boundaries so each color is centered
+            boundaries = np.arange(n_colors + 1)
+            norm = mpl.colors.BoundaryNorm(boundaries, cloud_cmap.N)
+            cb = mpl.colorbar.ColorbarBase(cbar_ax, cmap=cloud_cmap, norm=norm, boundaries=boundaries, ticks=ticks, orientation='vertical')
+            cb.ax.set_yticklabels(list(CLOUD_VALUES.keys()))
+            cb.ax.tick_params(length=0)  # Remove tick lines for clarity
+            plt.show()
+            
+            fig, ax = plt.subplots(figsize=(12, 5))
+
+            im = self.cluster_classification.cloud_classification.T.plot(ax=ax, cmap=cloud_cmap, vmin=0, vmax=7, add_colorbar=False)
+            ax.fill_between(self.cluster_classification.time.values, 0, 12000, where=self.mask_att, color='red', alpha=0.2) # removed areas due to attenuation
+            
+            ax.grid(True, linestyle=':')
+            ax.set_ylim(0, 12000)
+            ax.set_ylabel('Height (km) a.s.l')
+            n_colors = len(CLOUD_VALUES)
+            ticks = np.arange(n_colors) + 0.5
+            boundaries = np.arange(n_colors + 1)
+            norm = mpl.colors.BoundaryNorm(boundaries, cloud_cmap.N)
+            cb = plt.colorbar(
+                mpl.cm.ScalarMappable(norm=norm, cmap=cloud_cmap),
+                ax=ax,
+                boundaries=boundaries,
+                ticks=ticks,
+                orientation='vertical',
+                pad=0.02
+            )
+            cb.ax.set_yticklabels(list(CLOUD_VALUES.keys()))
+            cb.ax.tick_params(length=0)
             plt.show()
 
     def calculate_fit_parameters(self, small_than=0.2, larger_than=0.8):
@@ -1053,13 +1086,13 @@ class CloudProcessing:
         self.count_verification["count_high_lwp"].attrs['description'] = 'Count of high LWP values (> 1 kg/m^2)'
         self.count_verification["count_in_between_lwp"].attrs['description'] = 'Count of LWP values between 0.8 and 1 kg/m^2'
 
-    def plot_linear_fit_lwp(self):
+    def plot_linear_fit_lwp(self, make_plot=False):
         """
         Plot linear fitting of LWP (Radar x MWR) and histogram of relative difference using saved fit parameters.
         """
         
-        if not self.fit_params.any():
-            print("Fit parameters are not available.")
+        if self.fit_params is None:
+            print("Fit parameters are not available. It does not interfere in the attenuation mask, where we use the radar LWP.")
             return
         
         # Extract LWP and LWP radar values
@@ -1076,34 +1109,34 @@ class CloudProcessing:
 
         params_small = self.fit_params["params_small"].values
         params_larger = self.fit_params["params_larger"].values
+        if make_plot:
+            fig = plt.figure(figsize=(15, 9))
+            gs = fig.add_gridspec(2, 2, width_ratios=[1, 1], height_ratios=[1, 0.5], wspace=0.15, hspace=0.25)
 
-        fig = plt.figure(figsize=(15, 9))
-        gs = fig.add_gridspec(2, 2, width_ratios=[1, 1], height_ratios=[1, 0.5], wspace=0.15, hspace=0.25)
+            ax = fig.add_subplot(gs[0, 0])
+            ax.scatter(lwp_values[mask_small], lwp_radar_values[mask_small], color='b', label='Data')
+            ax.plot(lwp_values[mask_small], linear_func(lwp_values[mask_small], *params_small), color='r', label=f'Fit: y = {params_small[0]:.2f}x + {params_small[1]:.2f}, $\chi^2$ = {self.fit_params["chi2_small"].values[0]:.2f}')
+            ax.set_xlabel("LWP (kg/m^2) - MWR")
+            ax.set_ylabel("LWP (kg/m^2) - Radar")
+            ax.grid()
+            ax.legend()
 
-        ax = fig.add_subplot(gs[0, 0])
-        ax.scatter(lwp_values[mask_small], lwp_radar_values[mask_small], color='b', label='Data')
-        ax.plot(lwp_values[mask_small], linear_func(lwp_values[mask_small], *params_small), color='r', label=f'Fit: y = {params_small[0]:.2f}x + {params_small[1]:.2f}, $\chi^2$ = {self.fit_params["chi2_small"].values[0]:.2f}')
-        ax.set_xlabel("LWP (kg/m^2) - MWR")
-        ax.set_ylabel("LWP (kg/m^2) - Radar")
-        ax.grid()
-        ax.legend()
+            ax1 = fig.add_subplot(gs[0, 1])
+            ax1.scatter(lwp_values[mask_larger], lwp_radar_values[mask_larger], color='b', label='Data')
+            ax1.plot(lwp_values[mask_larger], linear_func(lwp_values[mask_larger], *params_larger), color='r', label=f'Fit: y = {params_larger[0]:.2f}x + {params_larger[1]:.2f}, $\chi^2$ = {self.fit_params["chi2_larger"].values[0]:.2f}')
+            ax1.set_xlabel(f"LWP (kg/m^2) {self.cloud_props['lwp'].source}")
+            ax1.set_ylabel("LWP (kg/m^2) - Radar")
+            ax1.grid()
+            ax1.legend()
 
-        ax1 = fig.add_subplot(gs[0, 1])
-        ax1.scatter(lwp_values[mask_larger], lwp_radar_values[mask_larger], color='b', label='Data')
-        ax1.plot(lwp_values[mask_larger], linear_func(lwp_values[mask_larger], *params_larger), color='r', label=f'Fit: y = {params_larger[0]:.2f}x + {params_larger[1]:.2f}, $\chi^2$ = {self.fit_params["chi2_larger"].values[0]:.2f}')
-        ax1.set_xlabel(f"LWP (kg/m^2) {self.cloud_props['lwp'].source}")
-        ax1.set_ylabel("LWP (kg/m^2) - Radar")
-        ax1.grid()
-        ax1.legend()
-
-        ax2 = fig.add_subplot(gs[1, :])
-        self.cloud_props["lwp"].plot(ax=ax2, color='b', label=self.cloud_props["lwp"].attrs['source'])
-        self.cloud_props["lwp_radar"].plot(ax=ax2, color='r', label='W-Band Radar')
-        ax2.set_xlabel("Time (UTC)")
-        ax2.set_ylabel("LWP (kg/m^2)")
-        ax2.grid()
-        ax2.legend()
-        plt.show()
+            ax2 = fig.add_subplot(gs[1, :])
+            self.cloud_props["lwp"].plot(ax=ax2, color='b', label=self.cloud_props["lwp"].attrs['source'])
+            self.cloud_props["lwp_radar"].plot(ax=ax2, color='r', label='W-Band Radar')
+            ax2.set_xlabel("Time (UTC)")
+            ax2.set_ylabel("LWP (kg/m^2)")
+            ax2.grid()
+            ax2.legend()
+            plt.show()
 
     def add_attenuation_to_clouds(self):
         self.cloud_type["Attenuation"] = xr.DataArray(data=self.mask_att.values, coords={'time': self.cloud_props.time}, dims='time')
@@ -1116,22 +1149,37 @@ class CloudProcessing:
 
     def save_processed_data(self, path_to_save, products_to_store):
         date_str = self.time[0].dt.strftime('%Y%m%d').values.item()
-        
+
+        # Helper to create directory if it does not exist
+        def ensure_dir(path):
+            if not os.path.exists(path):
+                os.makedirs(path, exist_ok=True)
+
         if products_to_store['cloud_occurrence']:
-            self.cloud_occurrence.to_netcdf(path_to_save + f"/cloud_occurence/{date_str}_cloud_occurrence_new.nc")
-        
+            dir_path = os.path.join(path_to_save, "cloud_occurrence")
+            ensure_dir(dir_path)
+            self.cloud_occurrence.to_netcdf(os.path.join(dir_path, f"{date_str}_cloud_occurrence_new.nc"))
+
         if products_to_store['cloud_props']:
-            self.cloud_props.to_netcdf(path_to_save + f"/cloud_properties/{date_str}_cloud_props_new.nc")
+            dir_path = os.path.join(path_to_save, "cloud_properties")
+            ensure_dir(dir_path)
+            self.cloud_props.to_netcdf(os.path.join(dir_path, f"{date_str}_cloud_props_new.nc"))
 
         if products_to_store['cloud_type']:
-            self.cloud_type.to_netcdf(path_to_save + f"/cloud_type/{date_str}_cloud_type_new.nc")
-        
+            dir_path = os.path.join(path_to_save, "cloud_type")
+            ensure_dir(dir_path)
+            self.cloud_type.to_netcdf(os.path.join(dir_path, f"{date_str}_cloud_type_new.nc"))
+
         # Save fit parameters:
         if products_to_store['fit_params'] and self.fit_params is not None:
-            self.fit_params.to_netcdf(path_to_save + f"/fit_parameters/{date_str}_fit_params.nc")
-        
+            dir_path = os.path.join(path_to_save, "fit_parameters")
+            ensure_dir(dir_path)
+            self.fit_params.to_netcdf(os.path.join(dir_path, f"{date_str}_fit_params.nc"))
+
         if products_to_store['count_verification'] and self.count_verification is not None:
-            self.count_verification.to_netcdf(path_to_save + f"/fit_parameters/{date_str}_count_verification.nc")
+            dir_path = os.path.join(path_to_save, "fit_parameters")
+            ensure_dir(dir_path)
+            self.count_verification.to_netcdf(os.path.join(dir_path, f"{date_str}_count_verification.nc"))
 
 
 

@@ -636,40 +636,37 @@ def save_stats(sliced_microphys,
                 cloud_type=None, 
                 var_short_name='lwc',
                 axes=None,
-                fig=None):
-
+                fig=None,
+                path_to_save="/media/matheustolen/Seagate Basic/paper_post_processed_data"):
 
     if sliced_integrated is not None:
         number_profiles = sliced_integrated.groupby("time.month").count(dim='time')
     else:
         number_profiles = sliced_microphys.any(dim="height").groupby("time.month").count()
-    
-    print(f"Calculating mean {var_short_name} by month and season")
-    mean_by_month = sliced_microphys.groupby('time.month').median(dim='time', skipna=True, keep_attrs=True).compute()
-    # mean_by_month = mean_by_month.dropna(dim='height', how='all')
-    mean_by_season = sliced_microphys.groupby('time.season').median(dim='time', skipna=True, keep_attrs=True).compute()
+
+    print(f"Grouping data {var_short_name} by month and season for statistics")
+
+    median_group_month = sliced_microphys.groupby('time.month').median(dim='time', skipna=True, keep_attrs=True).compute()
+    median_group_season = sliced_microphys.groupby('time.season').median(dim='time', skipna=True, keep_attrs=True).compute()
     q25 = sliced_microphys.chunk({'time': -1}).groupby('time.season').quantile(0.25, dim='time', skipna=True, keep_attrs=True).compute()
     q75 = sliced_microphys.chunk({'time': -1}).groupby('time.season').quantile(0.75, dim='time', skipna=True, keep_attrs=True).compute()
     
+    print(f"Resampling data {var_short_name} by month and season for statistics")
+
+    median_resampled_month = sliced_microphys.chunk({'time': -1}).resample(time='1M').median(dim='time', skipna=True, keep_attrs=True).compute()
+
     # -----------------------------------------------------------------------------------------------------------------------------------
     # Calculating number of data points per height
     # -----------------------------------------------------------------------------------------------------------------------------------
-    monthly_ndata_per_height_orig           = sliced_microphys.chunk({'time': -1}).groupby('time.month').count(dim='time', keep_attrs=True).compute()
-    monthly_ndata_resampled_per_height_orig = sliced_microphys.chunk({'time': -1}).resample(time='1M').count(dim='time', keep_attrs=True).compute()
-
+    monthly_ndata_per_height_orig  = sliced_microphys.chunk({'time': -1}).groupby('time.month').count(dim='time', keep_attrs=True).compute()
+    seasonal_ndata_per_height_orig = sliced_microphys.chunk({'time': -1}).groupby('time.season').count(dim='time', keep_attrs=True).compute()
+    
+    # monthly_ndata_resampled_per_height_orig = sliced_microphys.chunk({'time': -1}).resample(time='1M').count(dim='time', keep_attrs=True).compute()
     # number_nan_per_height = sliced_microphys.isnull().sum(dim='time', keep_attrs=True).compute()
     # number_not_nan_per_height = sliced_microphys.notnull().sum(dim='time', keep_attrs=True).compute()
     # number_zeros_per_height = (sliced_microphys == 0).sum(dim='time', keep_attrs=True).compute()
-    
-    
-    seasonal_ndata_per_height_orig = sliced_microphys.chunk({'time': -1}).groupby('time.season').count(dim='time', keep_attrs=True).compute()
     # ------------------------------------------------------------------------------------------------------------------------------------
-    # sliced_coarsen = sliced_microphys.coarsen(height=10, boundary='trim').mean()
-    # monthly_ndata_per_height_carsen = sliced_coarsen.chunk({'time': -1}).groupby('time.month').count(dim='time', keep_attrs=True).compute()
-    # seasonal_ndata_per_height_carsen = sliced_coarsen.chunk({'time': -1}).groupby('time.season').count(dim='time', keep_attrs=True).compute()
-
-    # ------------------------------------------------------------------------------------------------------------------------------------
-    unique_months = np.unique(mean_by_month.month.values)
+    unique_months = np.unique(median_group_month.month.values)
     monthly_medians = []
     monthly_percentiles = []
     
@@ -694,6 +691,7 @@ def save_stats(sliced_microphys,
 
     percentiles_25 = [percentiles[0] for percentiles in monthly_percentiles]
     percentiles_75 = [percentiles[1] for percentiles in monthly_percentiles]
+
     # --------------------------------------------------------------------------------------------
     # saving statistics for further analysis
     # --------------------------------------------------------------------------------------------
@@ -706,24 +704,29 @@ def save_stats(sliced_microphys,
         integrated_long_name = sliced_microphys.attrs['long_name']
         integrated_units = sliced_microphys.attrs['units']
     
-    mean_by_month = mean_by_month.to_dataset(name=f"{var_short_name}_median")
+    # --------------------------------------------------------------------------------------------
+    # Convert to Dataset and include monthly medians
+    # --------------------------------------------------------------------------------------------
+    median_group_month     = median_group_month.to_dataset(name=f"{var_short_name}_median")
+    median_resampled_month = median_resampled_month.to_dataset(name=f"{var_short_name}_median")
+    
     # include monthly medians
-    mean_by_month[f"integrated_{var_short_name}_month_median"] = xr.DataArray(monthly_medians,
+    median_group_month[f"integrated_{var_short_name}_month_median"] = xr.DataArray(monthly_medians,
                                                      dims='month', 
                                                      coords={'month': unique_months})
 
-    mean_by_month[f"integrated_{var_short_name}_annual_median"] = xr.DataArray(np.float32(annual_median))
-
+    median_group_month[f"integrated_{var_short_name}_annual_median"] = xr.DataArray(np.float32(annual_median))
+   
     # -------------------------------------------------------------------------------------------
-    # Combine mean_by_season, q25, and q75 into a single Dataset for season
-    mean_by_season_ds = xr.Dataset({
-        f"{var_short_name}_median": mean_by_season,
+    # Combine median_group_season, q25, and q75 into a single Dataset for season
+    median_group_season_ds = xr.Dataset({
+        f"{var_short_name}_median": median_group_season,
         f"{var_short_name}_q25": q25.drop_vars('quantile'),
         f"{var_short_name}_q75": q75.drop_vars('quantile')
     })
 
-    mean_by_month_ds = xr.Dataset({
-        f"{var_short_name}_median": mean_by_month[var_short_name + '_median'],
+    median_group_month_ds = xr.Dataset({
+        f"{var_short_name}_median": median_group_month[var_short_name + '_median'],
         f"integrated_{var_short_name}_median": xr.DataArray(
             monthly_medians, dims='month', coords={'month': unique_months},
             attrs={'long_name': integrated_long_name, 'units': integrated_units}
@@ -742,20 +745,29 @@ def save_stats(sliced_microphys,
         ),
     })
 
+    median_resampled_month_ds = xr.Dataset({
+        f"{var_short_name}_median": median_resampled_month[f"{var_short_name}_median"],
+        f"integrated_{var_short_name}_annual_median": xr.DataArray(
+            np.float32(annual_median),
+            attrs={'long_name': integrated_long_name, 'units': integrated_units}
+        ),
+    })
+
     # dictionary with datasets to save:
     dict_to_save_orig = { 
-        f"medians_{var_short_name}_for_{cloud_type}_by_month": mean_by_month,
-        f"stats_{var_short_name}_for_{cloud_type}_by_season": mean_by_season_ds,
-        f"stats_{var_short_name}_for_{cloud_type}_by_month": mean_by_month_ds,
+        f"stats_{var_short_name}_for_{cloud_type}_by_season": median_group_season_ds,
+        f"stats_{var_short_name}_for_{cloud_type}_by_month": median_group_month_ds,
         f"monthly_{var_short_name}_for_{cloud_type}_ndata_per_height_orig": monthly_ndata_per_height_orig,
         f"seasonal_{var_short_name}_for_{cloud_type}_ndata_per_height_orig": seasonal_ndata_per_height_orig,
+        f"monthly_{var_short_name}_nprofile_for_{cloud_type}": number_profiles,
+        f"monthly_resampled_{var_short_name}_for_{cloud_type}": median_resampled_month_ds,
         # f"monthly_{var_short_name}_for_{cloud_type}_ndata_per_height_coarsen": monthly_ndata_per_height_carsen,
         # f"seasonal_{var_short_name}_for_{cloud_type}_ndata_per_height_coarsen": seasonal_ndata_per_height_carsen,
-        f"monthly_{var_short_name}_for_{cloud_type}_ndata_per_height_resampled": monthly_ndata_resampled_per_height_orig,
-        f"monthly_{var_short_name}_nprofile_for_{cloud_type}": number_profiles,
     }
-    
-    path_to_save = "/media/matheustolen/Seagate Basic/paper_post_processed_data"
+    if var_short_name in ['lwc', 'iwc']:
+        # save sliced integrated in dictionary
+        dict_to_save_orig[f"integrated_{var_short_name}_for_{cloud_type}"] = sliced_integrated.to_dataset(name=f"integrated_{var_short_name}")
+        
     for key, datasets in dict_to_save_orig.items():
         datasets.to_netcdf(f"{path_to_save}/{key}.nc")
     # ------------------------------------------------------------------------------------------------------------------------------------
@@ -805,42 +817,6 @@ def get_var_endswith(var_short_name):
         raise ValueError("Variable not recognized")
     return endswith
 
-def get_fig_axes_variable(variable):
-    if variable == 'lwc':
-        fig_axes = lwc_axes
-    elif variable == 'iwc':
-        fig_axes = iwc_axes
-    elif variable == 'der':
-        fig_axes = der_axes
-    elif variable == 'ier':
-        fig_axes = ier_axes
-    return fig_axes
-
-def get_fig_axes_cloud(variable, cloud):
-    if cloud == 'Liquid':
-        if variable == 'lwc':
-            fig_axes = lwc_or_iwc_non_prep_axes
-        elif variable == 'der':
-            fig_axes = der_or_ier_non_prep_axes
-    elif cloud == 'Liquid-Precipitable':
-        if variable == 'lwc':
-            fig_axes = lwc_or_iwc_prep_axes
-        elif variable == 'der':
-            fig_axes = der_or_ier_prep_axes
-    elif cloud == 'Ice':
-        if variable == 'iwc':
-            fig_axes = lwc_or_iwc_non_prep_axes
-        elif variable == 'ier':
-            fig_axes = der_or_ier_non_prep_axes
-    elif cloud == 'Ice-Precipitable':
-        if variable == 'iwc':
-            fig_axes = lwc_or_iwc_prep_axes
-        elif variable == 'ier':
-            fig_axes = der_or_ier_prep_axes
-    else:
-        raise ValueError("Cloud type not recognized")
-    return fig_axes
-
 def read_cloud_files_2D(filepath_cloud_occurence, filepath_cloud_cloud_type):
     
     # Get the list of netCDF files in the specified directory
@@ -885,26 +861,6 @@ def read_microphysics(filepath_microphys, get_var, endswith, cloud_macrophysics=
             ds_0 = data[get_var].where(~(data[f'{get_var}_retrieval_status']==2))
         else:
             ds_0 = data[get_var]
-        
-        # if get_var == "iwc" or get_var == "ier":
-        #     # number of not null values per height after removing unreliable data
-        #     ndata_per_height_after = ds_0.notnull().sum(dim='time', keep_attrs=True).compute()
-        #     # compare the number of not null values before and after removing unreliable data
-        #     # Calculate the total number of valid data points per day before and after filtering
-        #     ndata_per_height_before = data[get_var].notnull().sum(dim='time', keep_attrs=True).compute()
-        #     ndata_per_height_after = ds_0.notnull().sum(dim='time', keep_attrs=True).compute()
-        #     if not ndata_per_height_before.equals(ndata_per_height_after):
-        #         # Group by date and sum over height to get daily totals
-        #         daily_before = data[get_var].notnull().groupby('time.date').sum(dim=['time', 'height']).compute()
-        #         daily_after = ds_0.notnull().groupby('time.date').sum(dim=['time', 'height']).compute()
-        #         decrease = daily_before - daily_after
-        #         print(f"Data decrease per day for {get_var} in {os.path.basename(file_path)}:")
-        #         for date in decrease.date.values:
-        #             removed = decrease.sel(date=date).item()
-        #             total = daily_before.sel(date=date).item()
-        #             fraction = removed / total if total != 0 else 0
-        #             print(f"{str(date)}: {removed} points removed ({fraction:.2%} of before)")
-
 
         if cloud_macrophysics is not None:
             cloud_base = cloud_macrophysics.sel(time=ds_0.time, method='nearest', tolerance=np.timedelta64(30, 's'))['cloud_base']
@@ -912,37 +868,6 @@ def read_microphysics(filepath_microphys, get_var, endswith, cloud_macrophysics=
             ds_1 = ds_0.where((ds_0.height >= cloud_base) & (ds_0.height <= cloud_top))
         
         datasets_microphys.append(ds_1)
-        # # check if there is any differences in ds_1 and ds_0:
-        # if cloud_macrophysics is not None:
-        #     if not ds_0.equals(ds_1):
-        #         print("There are differences between ds_0 and ds_1")
-
-        # # make a pcolormash of ds and scatter plot of cloud_base and cloud_top
-        # fig, ax = plt.subplots()
-        # mesh = ax.pcolormesh(ds_1.time, ds_1.height, ds_1.T*1e6, shading='nearest', cmap='jet')
-        # ax.scatter(ds_1.time, cloud_base, color='black', marker='x', label='cloud_base')
-        # ax.scatter(ds_1.time, cloud_top, color='black', marker='x', label='cloud_top')
-        # ax.set_xlabel("Time")
-        # ax.set_ylabel("Height")
-        # ax.set_title(f"{get_var} for {os.path.basename(file_path)}")
-        # ax.legend()
-        # plt.colorbar(mesh, ax=ax, label=f"{ds_1.attrs['units']}")
-        # plt.show()
-
-        # fig, ax = plt.subplots()
-        # mesh = ax.pcolormesh(ds_0.time, ds_0.height, ds_0.T*1e6, shading='nearest', cmap='jet')
-        # ax.scatter(ds_0.time, cloud_base, color='black', marker='x', label='cloud_base')
-        # ax.scatter(ds_0.time, cloud_top, color='black', marker='x', label='cloud_top')
-        # ax.set_xlabel("Time")
-        # ax.set_ylabel("Height")
-        # ax.set_title(f"{get_var} for {os.path.basename(file_path)}")
-        # ax.legend()
-        # plt.colorbar(mesh, ax=ax, label=f"{ds_0.attrs['units']}")
-        # plt.show()
-
-        # set_trace()
-
-    # datasets_microphys = [xr.open_dataset(file_path, engine='netcdf4', chunks={'time': -1})[get_var].assign_coords(height=lambda ds: ds.height - GRANADA_ALTITUDE) for file_path in filepaths_microphys]
 
     print("Interpolating microphysics datasets")
     # Set the same height resolution for all datasets
@@ -953,11 +878,6 @@ def read_microphysics(filepath_microphys, get_var, endswith, cloud_macrophysics=
     chunked_microphys = xr.concat(datasets_microphys, dim='time').sortby('time')
     chunked_microphys = chunked_microphys.where(chunked_microphys > 0)
     
-    # Next steps:
-    # Compute the profile of number of data per season
-    # Create a mask where the number of data are not enough
-    # Filter all data corresponding to these levels 
-
     chunked_microphys.chunk({'time': 'auto'})
 
     if get_var == "lwc":
@@ -983,18 +903,7 @@ def read_microphysics(filepath_microphys, get_var, endswith, cloud_macrophysics=
     else:
         print("Integrating microphysics in the column")
 
-        # if get_var == "iwc":
-        #     set_trace()
-        #     datasets_integrated = [ds.fillna(0.).integrate('height') for ds in datasets_microphys]
-        #     x = [np.max(ds.fillna(0.).integrate('height')).values for ds in datasets_microphys]
-        #     y = [ds.max().values for ds in datasets_microphys]
-        #     z1 = datasets_microphys[0].any(dim='height').values 
-        #     z2 = (datasets_microphys[0].fillna(0.).integrate('height') > 0).values
-        #     print( np.sum((z2 == z1))  + np.sum(~(z2 == z1)) == z2.size)
-
         datasets_integrated = [ds.fillna(0.).integrate('height') for ds in datasets_microphys]
-        # datasets_integrated = [ds.integrate('height') for ds in datasets_microphys]
-        # min_dataset       = [ds.min(dim='height', skipna=True) for ds in datasets_microphys]
         chunked_integrated  = xr.concat(datasets_integrated, dim='time').sortby('time')
         chunked_integrated.chunk({'time': 'auto'})
         chunked_integrated  = chunked_integrated*1e3 # Convert to g m^-2
@@ -1010,74 +919,42 @@ def read_microphysics(filepath_microphys, get_var, endswith, cloud_macrophysics=
 # --------------------------------------------------------------
 # Main code
 # --------------------------------------------------------------
-filepath_cloud_occurence  = "/media/matheustolen/Seagate Basic/cloudnet/cloud_classification/cloud_occurence" # Path to save the cloud classification files
-filepath_cloud_cloud_type = "/media/matheustolen/Seagate Basic/cloudnet/cloud_classification/cloud_type" # Path to save the cloud classification files
-filepath_microphys        = "/home/matheustolen/Documentos/matheus_doctorado/output_retrievals" # Path to save the cloud classification files
-filepath_cloud_prop       = "/media/matheustolen/Seagate Basic/cloudnet/cloud_classification/cloud_properties" # Path to save the cloud classification files
+
+filepath_cloud_occurence  = "/media/matheustolen/Seagate Basic/data_to_jaba/cloudnet/cloud_classification/cloud_occurrence" 
+filepath_cloud_cloud_type = "/media/matheustolen/Seagate Basic/data_to_jaba/cloudnet/cloud_classification/cloud_type" 
+filepath_microphys        = "/media/matheustolen/Seagate Basic/data_to_jaba/cloudnet/microphysics" 
+filepath_cloud_prop       = "/media/matheustolen/Seagate Basic/data_to_jaba/cloudnet/cloud_classification/cloud_properties" 
+path_to_save_post_processed = "/media/matheustolen/Seagate Basic/data_to_jaba/cloudnet/cloud_classification/microphysics_stats" 
 
 ds_cloud_occurence, ds_cloud_type = read_cloud_files_2D(filepath_cloud_occurence, 
                                                         filepath_cloud_cloud_type)
                                                         
 file_paths_cloud_prop     = [os.path.join(filepath_cloud_prop, file) for file in os.listdir(filepath_cloud_prop) if file.endswith('new.nc')]
-mixed_phase_cloud         = True
+mixed_phase_cloud         = False
 
-clouds = ['Mixed-Phase']
+# clouds = ['Mixed-Phase']
 
-# clouds = ['Liquid', 'Liquid-Precipitable']
+clouds = ['Liquid', 'Liquid-Precipitable']
 
 # clouds = ['Ice', 'Ice-Precipitable']
 
 letters = iter('abcdefghijklmnopqrstuvwxyz')
 print("read cloud macrophysics")
+
 # read cloud prop but convert altitud to height using granada altitude
 datasets_cloud_prop = [xr.open_dataset(file_path)-GRANADA_ALTITUDE for file_path in file_paths_cloud_prop]
 ds_cloud_prop       = xr.concat(datasets_cloud_prop, dim='time').sortby('time')
 
 if mixed_phase_cloud:
     for cloud in clouds:
-        print(f"Ploting {cloud} clouds")
+        print(f"Processing {cloud} clouds")
         variables = get_vars(cloud)
         condition = (ds_cloud_occurence['single_layer'] == 1) &\
             (ds_cloud_occurence['noise'] == 0) &\
              (ds_cloud_occurence['attenuation'] == 0) &\
                 (ds_cloud_type[cloud].astype(bool))
         
-        if cloud == 'Mixed-Phase' or cloud == 'Mixed-Phase-Precipitable':
-            fig = plt.figure(figsize=(24, 15))
-            gs  = fig.add_gridspec(5, 7, 
-                                hspace=0.2,
-                                wspace=0.08, 
-                                width_ratios=[.4, 1.2, .05, .3, .4, 1.2, .05],
-                                height_ratios=[1, .3, .2, 1, 0.3])
-            
-            # Use these axes for lwc
-            ax1  = fig.add_subplot(gs[0,0]) # vertical profiles
-            ax2  = fig.add_subplot(gs[0,1], sharey=ax1) # contour plot
-            ax3  = fig.add_subplot(gs[1,1], sharex=ax2) # monthly boxplots
-            cax2 = fig.add_subplot(gs[0,2]) # colorbar
-            lwc_axes = [ax1, ax2, ax3, cax2]
-            
-            # Use these axes for iwc
-            ax4  = fig.add_subplot(gs[0,4], sharey=ax1) # vertical profiles
-            ax5  = fig.add_subplot(gs[0,5], sharey=ax1) # contour plot
-            ax6  = fig.add_subplot(gs[1,5], sharex=ax5) # monthly boxplots
-            cax5 = fig.add_subplot(gs[0,6]) # colorbar
-            iwc_axes = [ax4, ax5, ax6, cax5]
-
-            # Use these axes for der
-            ax7  = fig.add_subplot(gs[3,0]) # vertical profiles
-            ax8  = fig.add_subplot(gs[3,1], sharey=ax7) # contour plot
-            ax9  = fig.add_subplot(gs[4,1], sharex=ax8) # monthly boxplots
-            cax8 = fig.add_subplot(gs[3,2]) # colorbar
-            der_axes = [ax7, ax8, ax9, cax8]
-
-            # Use these axes for ier
-            ax10  = fig.add_subplot(gs[3,4], sharey=ax7) # vertical profiles
-            ax11  = fig.add_subplot(gs[3,5], sharey=ax7) # contour plot
-            ax12  = fig.add_subplot(gs[4,5], sharex=ax11) # monthly boxplots
-            cax11 = fig.add_subplot(gs[3,6]) # colorbar
-            ier_axes = [ax10, ax11, ax12, cax11]
-
+        
         for i, variable in enumerate(variables):
             var_endswith = get_var_endswith(variable)
             print(f"Reading {variable} variable for {cloud} clouds...")
@@ -1085,57 +962,34 @@ if mixed_phase_cloud:
                                                                     variable, 
                                                                     var_endswith,
                                                                     ds_cloud_prop)
+            # NOTE: chunked microphys has no zeros
+            # NOTE: chunked have zeros instead of NaNs
+
             print("Finished reading microphysics files...")
             sliced_microphys = chunked_microphys.sel(time=condition)
+            # (sliced_microphys == 0.0).sum().compute()
+            # sliced_microphys.isnull().sum().compute()
 
-            # plot one month of microphysics
-            # Select January data for all years
-            # if variable == 'lwc' or variable == 'iwc':
-            #     set_trace()
-            #     # Select January data for just one year (e.g., 2019)
-            #     tsliced_microphys_one_year = sliced_microphys.sel(time=(sliced_microphys['time.month'] == 1) & (sliced_microphys['time.year'] == 2019))
-                
-            #     # Plot a histogram of all values in January for this variable and cloud
-            #     data_january = tsliced_microphys_one_year.values.flatten()
-            #     data_january = data_january[~np.isnan(data_january)]
-            #     fig, ax = plt.subplots(figsize=(8, 5))
-            #     ax.hist(data_january, bins=50, color='skyblue', edgecolor='black')
-            #     ax.set_xlabel(f"{variable} ({tsliced_microphys_one_year.attrs['units']})")
-            #     ax.set_ylabel("Frequency")
-            #     ax.set_title(f"Histogram of {variable} for {cloud} clouds in January 2019")
-            #     plt.tight_layout()
-            #     plt.show()
-
-            print(f"Plotting {variable} for {cloud} clouds")
-            fig_axes = get_fig_axes_variable(variable)
-            fig_axes[0].text(-0.1, 1.1, f"{next(letters)})", transform=fig_axes[0].transAxes, fontsize=18, fontweight='bold', va='top', ha='right')
-            
             if chunked_integrated is not None:
                 computed_integrated = chunked_integrated.compute()
                 mask = (computed_integrated != 0)
                 sliced_integrated_microphys = computed_integrated.sel(time=condition).where(mask, drop=True)
-                # if variable == "iwc":
-                #     set_trace()
-                #     x = sliced_integrated_microphys.compute()
-                #     # Drop zeros before calculating median for January
-                #     median_january = x.sel(time=x['time.month'] == 1).where(x != 0, drop=True)
-                #     # print(median_january)
-
+                # NOTE: In mixed-phase clouds, clouds can have ice, which contribute to zeros in integrated microphysics
+                # removing this zeros, will let integrated variables with less time steps than microphysics profiles
+                
                 save_stats(sliced_microphys, 
-                                                            sliced_integrated_microphys, 
-                                                            cloud_type=cloud, 
-                                                            var_short_name=variable,
-                                                            axes=fig_axes,
-                                                            fig=fig)
+                            sliced_integrated_microphys, 
+                            cloud_type=cloud, 
+                            var_short_name=variable,
+                            path_to_save=path_to_save_post_processed,
+                            )
             else:
                 save_stats(sliced_microphys, 
-                                                            cloud_type=cloud, 
-                                                            var_short_name=variable,
-                                                            axes=fig_axes,
-                                                            fig=fig)
+                            cloud_type=cloud, 
+                            var_short_name=variable,
+                            path_to_save=path_to_save_post_processed,
+                            )
                 
-        # fig.savefig(f"{PATH_FIG}monthly_evolution_for_{cloud}_clouds_filtered.png", dpi=500, bbox_inches='tight')
-        plt.show()
 else:
     for cloud in clouds:
         print(f"Ploting {cloud} clouds")
@@ -1145,45 +999,6 @@ else:
             (ds_cloud_occurence['attenuation'] == 0) &\
                 (ds_cloud_type[cloud].astype(bool))
         
-        if cloud == 'Liquid' or cloud == 'Ice':
-            fig = plt.figure(figsize=(24, 15))
-            gs  = fig.add_gridspec(5, 7, 
-                                hspace=0.2,
-                                wspace=0.08, 
-                                width_ratios=[.4, 1.2, .05, .3, .4, 1.2, .05],
-                                height_ratios=[1, .3, .2, 1, 0.3])
-            
-            # If non-precipitating cloud
-            # Use these axes for lwc or iwc
-            ax1  = fig.add_subplot(gs[0,0]) # vertical profiles
-            ax2  = fig.add_subplot(gs[0,1], sharey=ax1) # contour plot
-            ax3  = fig.add_subplot(gs[1,1], sharex=ax2) # monthly boxplots
-            cax2 = fig.add_subplot(gs[0,2]) # colorbar
-            lwc_or_iwc_non_prep_axes = [ax1, ax2, ax3, cax2]
-            
-            # If precipitating cloud
-            # Use these axes for lwc or iwc
-            ax4  = fig.add_subplot(gs[0,4], sharey=ax1) # vertical profiles
-            ax5  = fig.add_subplot(gs[0,5], sharey=ax1) # contour plot
-            ax6  = fig.add_subplot(gs[1,5], sharex=ax5) # monthly boxplots
-            cax5 = fig.add_subplot(gs[0,6]) # colorbar
-            lwc_or_iwc_prep_axes = [ax4, ax5, ax6, cax5]
-            
-            # If non-precipitating cloud
-            # Use these axes for der or ier
-            ax7  = fig.add_subplot(gs[3,0]) # vertical profiles
-            ax8  = fig.add_subplot(gs[3,1], sharey=ax7) # contour plot
-            ax9  = fig.add_subplot(gs[4,1], sharex=ax8) # monthly boxplots
-            cax8 = fig.add_subplot(gs[3,2]) # colorbar
-            der_or_ier_non_prep_axes = [ax7, ax8, ax9, cax8]    
-            
-            # If precipitating cloud
-            # Use these axes for der or ier
-            ax10  = fig.add_subplot(gs[3,4], sharey=ax7) # vertical profiles
-            ax11  = fig.add_subplot(gs[3,5], sharey=ax7) # contour plot
-            ax12  = fig.add_subplot(gs[4,5], sharex=ax11) # monthly boxplots
-            cax11 = fig.add_subplot(gs[3,6]) # colorbar
-            der_or_ier_prep_axes = [ax10, ax11, ax12, cax11]
 
         for i, variable in enumerate(variables):
             var_endswith = get_var_endswith(variable)
@@ -1195,9 +1010,6 @@ else:
             print("Finished reading microphysics files...")
             sliced_microphys = chunked_microphys.sel(time=condition)
             
-            print(f"Plotting {variable} for {cloud} clouds")
-            fig_axes = get_fig_axes_cloud(variable, cloud)
-            fig_axes[0].text(-0.1, 1.1, f"{next(letters)})", transform=fig_axes[0].transAxes, fontsize=18, fontweight='bold', va='top', ha='right')
             # set_trace()
             if chunked_integrated is not None:
                 computed_integrated = chunked_integrated.compute()
@@ -1205,18 +1017,14 @@ else:
                 sliced_integrated_microphys = computed_integrated.sel(time=condition).where(mask, drop=True)
                 
                 save_stats(sliced_microphys, 
-                                                            sliced_integrated_microphys, 
-                                                            cloud_type=cloud, 
-                                                            var_short_name=variable,
-                                                            axes=fig_axes,
-                                                            fig=fig)
-                    
+                            sliced_integrated_microphys, 
+                            cloud_type=cloud, 
+                            var_short_name=variable,
+                            path_to_save=path_to_save_post_processed,
+                            )
             else:
                 save_stats(sliced_microphys, 
-                                                            cloud_type=cloud, 
-                                                            var_short_name=variable,
-                                                            axes=fig_axes,
-                                                            fig=fig)
-        if cloud == 'Liquid-Precipitable' or cloud == 'Ice-Precipitable':    
-            # fig.savefig(f"{PATH_FIG}monthly_evolution_for_{cloud}_clouds_filtered.png", dpi=500, bbox_inches='tight')
-            plt.show()
+                            cloud_type=cloud, 
+                            var_short_name=variable,
+                            path_to_save=path_to_save_post_processed,
+                            )
