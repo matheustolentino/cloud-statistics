@@ -39,3 +39,17 @@ SEASONS = {
 CLASSIFICATION_COLORS = ["#FFFFFF","#007CFF", "#0A2658", "#FFFF00", "#4EF6C1",\
                     "#D05BAC", "#BFBD8D", "#118527","#8794B3", "#DA6F49", "#88183E", "#DDDEDA"]
 
+CLOUD_VALUES = {
+    "Non-Cloud": 0,
+    "Liquid": 1,
+    "Precipitating-Liquid": 2,
+    "Ice": 3,
+    "Precipitating-Ice": 4,
+    "Mixed-Phase": 5,
+    "Precipitating-Mixed-Phase": 6,
+    "Not Classified": 7,
+}
+
+CLOUD_CATEGORY = list(CLOUD_VALUES.keys())
+
+CLOUD_COLORS = ["#FFFFFF", "#007CFF", "blue", "cyan", "grey", "yellow", "orange", "magenta"]

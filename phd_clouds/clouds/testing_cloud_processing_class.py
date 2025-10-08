@@ -3,16 +3,15 @@ from phd_clouds.clouds import CloudProcessing
 import matplotlib.pyplot as plt
 from pdb import set_trace
 import matplotlib as mpl
-from phd_clouds.constants import CLEAR_SKY, CLOUD_LIQUID, DRIZZLE_OR_RAIN, DRIZZLE_OR_RAIN_LIQUID_DROPLETS, ICE_PARTICLES, ICE_WITH_SUP_WATER, MELTING_ICE, MELTING_ICE_LIQUID_DROPLETS, AERO_NO_CLOUD, INSECT_NO_CLOUD, AERO_WITH_INSECT_NO_CLOUD
 import pandas as pd
+import calendar
 
-fontsize = 14
 # Set the font to Times New Roman using LaTeX
 plt.rcParams['font.family'] = 'serif'
 plt.rcParams['font.serif'] = ['Times New Roman'] + plt.rcParams['font.serif']
 
 # Set the fontsize for all elements in the plot
-plt.rcParams['font.size'] = fontsize
+plt.rcParams['font.size'] = 14
 
 plt.close('all')
 mpl.use('qtagg')
@@ -26,27 +25,47 @@ PATH_FIG_TEST     = '../../tests/figures/'
 # Testing the class
 # ---------------------------------------------------------------------------------------------
 
-path_save = "/media/matheustolen/Seagate Basic/cloudnet/cloud_classification" # Path to save the cloud classification files
+path_save = "/media/matheustolen/Seagate Basic/cloudnet/products/cloud_classification" # Path to save the cloud classification files
 path_microphys = "/home/matheustolen/Documentos/matheus_doctorado/output_retrievals" # Path with files already downloaded
 path_categorize = "/media/matheustolen/Seagate Basic/cloudnet/categorize" # Path with files already downloaded
 path_radar = "/media/matheustolen/Seagate Basic/cloudnet/radar" # Path with files already downloaded
 path_classification = "/media/matheustolen/Seagate Basic/cloudnet/classification" # Path with files already downloaded
 path_mwr = "/media/matheustolen/Seagate Basic/cloudnet/mwr" # Path with files already downloaded
 
-all_hydromet_values = [CLOUD_LIQUID, DRIZZLE_OR_RAIN, DRIZZLE_OR_RAIN_LIQUID_DROPLETS,\
-                                        ICE_PARTICLES, ICE_WITH_SUP_WATER, MELTING_ICE,\
-                                                MELTING_ICE_LIQUID_DROPLETS]
-cloud_values = {
-        "No Cloud": 0,
-        "Liquid": 1,
-        "Liquid-Precipitable": 2,
-        "Ice": 3,
-        "Ice-Precipitable": 4,
-        "Mixed-Phase": 5,
-        "Mixed-Phase-Precipitable": 6,
-        "Noise": 7,
-    }
+# --------------------------------------------------------------------------------------------
+# JABA experiment:
+# ---------------------------------------------------------------------------------------------
+# path_save = "/media/matheustolen/Seagate Basic/data_to_jaba/cloudnet/cloud_classification"
+# path_microphys = "/media/matheustolen/Seagate Basic/data_to_jaba/cloudnet/microphysics" 
+# path_categorize = "/media/matheustolen/Seagate Basic/data_to_jaba/cloudnet/categorize" 
+# path_radar = "/media/matheustolen/Seagate Basic/data_to_jaba/cloudnet/radar" 
+# path_classification = "/media/matheustolen/Seagate Basic/data_to_jaba/cloudnet/classification" 
+# path_mwr = "/media/matheustolen/Seagate Basic/data_to_jaba/cloudnet/mwr"
+# path_disdrometer = "/media/matheustolen/Seagate Basic/data_to_jaba/cloudnet/disdrometer" # Path with files already downloaded
 
+# products_to_download = ["classification", 
+#                         "categorize", 
+#                         "radar", 
+#                         "mwr", 
+#                         "microphysics",
+#                         "disdrometer"]
+
+# path_to_download = {
+#     products_to_download[0]: path_classification,
+#     products_to_download[1]: path_categorize,
+#     products_to_download[2]: path_radar,
+#     products_to_download[3]: path_mwr,
+#     products_to_download[4]: path_microphys,
+#     products_to_download[5]: path_disdrometer
+# }
+
+# products_to_download = ["disdrometer"]
+
+# path_to_download = {
+#     products_to_download[0]: path_disdrometer,
+# }
+
+# ---------------------------------------------------------------------------------------------------
 products_to_save = {
     "cloud_occurrence": False,
     "cloud_props": False,
@@ -55,13 +74,12 @@ products_to_save = {
     "count_verification": False,
 }
 
-
 site = 'granada'
 # Code to get the intersection between files:
 # date_ini = datetime.datetime(2018, 4, 20)
 # date_end = datetime.datetime(2023, 12, 31)
-date_ini = datetime.datetime(2023, 12, 6) #2018-09-14
-date_end = datetime.datetime(2023, 12, 6) 
+date_ini = datetime.datetime(2023, 5, 6) # 2018-09-14
+date_end = datetime.datetime(2023, 5, 6)
 
 cloud_processing = CloudProcessing(path_classification=path_classification,
                                 path_microphys=None,
@@ -73,15 +91,40 @@ cloud_processing = CloudProcessing(path_classification=path_classification,
 # cloud_processing.get_filenames(dic_patterns)
 # make datestring list from date ini to date end with 1 day step, in the format YYYYMMDD :
 date_list = [datetime.datetime.strftime(date, "%Y%m%d") for date in pd.date_range(date_ini.strftime("%Y-%m-%d"), date_end.strftime("%Y-%m-%d"), freq='1D')]
+# --------------------------------------------------------------------------------------------
+# JABA experiment:
+# ---------------------------------------------------------------------------------------------
+# print(f"Classification product not found. Downloading...")
+# years = ["2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025"]
+# months = ["02", "03", "04"]
+# # For each year, download data for the month of February, March and April
+# for year in years:
+#     for month in months:
+#         print(f"Downloading data for {year}-{month}...")
+#         date_ini = f"{year}-{month}-01"
+#         date_end = f"{year}-{month}-31"
+
+#         cloud_processing.download_products(date_ini=date_ini, date_end=date_end, path_output=path_to_download, products=products_to_download)
+# 
+# date_list = []
+# for year in range(2018, 2026):
+#     for month in range(2, 5):
+#         days_in_month = calendar.monthrange(year, month)[1]
+#         for day in range(1, days_in_month + 1):
+#             date_list.append(f"{year}{month:02d}{day:02d}")
+# 
+# set_trace()
+# --------------------------------------------------------------------------------------------
 
 for datastr in date_list:
     # Get filenames
     cloud_processing.get_filenames_from_datastr(datastr)
 
     if not cloud_processing.filenames['classification']:
+        print(f"Classification product not found for {datastr}. You should download it first.\nSkipping...")
         continue
 
-    # Load the downloaded with xarray pandas:
+    # Load the downloaded with xarray:
     cloud_processing.load_classification()
     cloud_processing.load_categorize()
     cloud_processing.load_radar()
@@ -111,17 +154,11 @@ for datastr in date_list:
     # print(cloud_processing.count_verification)
 
     # Plot fit parameters
-    cloud_processing.plot_linear_fit_lwp()
-
-    # Check whether fit parameters and count verification are the only producto to save, if so, save it and continue:
-    if not all([value for value in products_to_save.values()]):
-        cloud_processing.save_processed_data(path_save, products_to_save)
-        continue
+    cloud_processing.plot_linear_fit_lwp(make_plot=False)
     
     # Generate cloud mask
-    cloud_processing.generate_cloud_mask(all_hydromet_values, 
-                                         non_hydromet_values=[CLEAR_SKY, AERO_NO_CLOUD, INSECT_NO_CLOUD, AERO_WITH_INSECT_NO_CLOUD])
-    
+    cloud_processing.generate_cloud_mask()
+
     # Classify clusters
     cloud_processing.classify_clusters()
     
@@ -129,13 +166,13 @@ for datastr in date_list:
     cloud_processing.analyze_clouds(filter_abl_ice_clouds=True, thick_threshold=700, base_threshold=4000)
     
     # Create cluster classification product
-    cloud_processing.create_cluster_classification_product(cloud_values)
+    cloud_processing.create_cluster_classification_product()
 
     # Print variables
     # print(cloud_processing.cluster_classification)
 
     # Mask attenuation
-    cloud_processing.create_attenuation_mask(cloud_cmap, cloud_values, time_roll="10T", lwp_treshold=0.8, corr_treshold=-0.5, lwp2_treshold=1, make_plot=False)
+    cloud_processing.create_attenuation_mask(cloud_cmap, time_roll="10T", lwp_treshold=0.8, corr_treshold=-.5, lwp2_treshold=1, make_plot=True)
 
     # Add attenuation to clouds
     
