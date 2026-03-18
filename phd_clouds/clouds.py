@@ -1,3 +1,4 @@
+import pickle
 import xarray as xr
 from pdb import set_trace
 import matplotlib.pyplot as plt
@@ -979,12 +980,21 @@ class CloudProcessing:
 
     def create_cluster_classification_product(self):
         array_cloud = np.zeros((self.time.shape[0], self.classification.height.shape[0]))
-
+        # make a dictionary where keys are the cloud type and values are the duration of each cloud type in hours:
+        dic_time_duration = { "Liquid": [], 
+                             "Precipitating-Liquid": [], 
+                             "Ice": [], 
+                             "Precipitating-Ice": [], 
+                             "Mixed-Phase": [], 
+                             "Precipitating-Mixed-Phase": [], 
+                             }
+        
         for cloud_number, indx in self.cloud_indx.items():
             cloud_name = self.cloud_classification[cloud_number]
             integer = CLOUD_VALUES[cloud_name]
             if cloud_number in self.valid_cloud_number:
                 array_cloud[indx[:, 0], indx[:, 1]] = integer
+                dic_time_duration[cloud_name].append(len(np.unique(indx[:, 0])) * 30 / 3600)  # in hours, assuming 30s time resolution          
             else:
                 array_cloud[indx[:, 0], indx[:, 1]] = CLOUD_VALUES["Not Classified"]
 
@@ -996,6 +1006,7 @@ class CloudProcessing:
             'Cloud classification based on cloudnet target classification.\nHydrometeor cluster classification algorithm. \n0: No Cloud, \n1: Liquid, \n2: Liquid-Precipitable, \n3: Ice, \n4: Ice-Precipitable, \n5: Mixed-Phase, \n6: Mixed-Phase-Precipitable, \n7: Not Classified'
         
         self.cluster_classification  = ds_cloud
+        self.time_duration_cloud_type = dic_time_duration
 
     def add_radar_lwp(self):
         self.cloud_props['lwp_radar'] = self.radar['lwp'].resample(time='30S', skipna=True).mean().interp(time=self.cloud_props.time, method='nearest')
@@ -1464,6 +1475,16 @@ class CloudProcessing:
             dir_path = os.path.join(path_to_save, "fit_parameters")
             ensure_dir(dir_path)
             self.count_verification.to_netcdf(os.path.join(dir_path, f"{date_str}_count_verification.nc"))
+        
+        if products_to_store['time_duration_cloud_type']:
+            dir_path = os.path.join(path_to_save, "time_duration_cloud_type")
+            ensure_dir(dir_path)
+            # Save as pickle file:
+            with open(os.path.join(dir_path, f"{date_str}_time_duration_cloud_type.pkl"), 'wb') as f:
+                pickle.dump(self.time_duration_cloud_type, f)
+            # # now read the pickle file and save it as a csv file:
+            # with open(os.path.join(dir_path, f"{date_str}_time_duration_cloud_type.pkl"), 'rb') as f:
+            #     time_duration_cloud_type = pickle.load(f)
 
 
 

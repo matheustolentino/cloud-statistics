@@ -17,7 +17,7 @@ import matplotlib as mpl
 # if ipython is not None:
 #     ipython.run_line_magic('matplotlib', 'inline')
 
-PATH_FIG          = '/media/matheustolen/Seagate Basic/cloudnet/products/figures/'
+PATH_FIG  = '/media/matheustolen/Seagate Basic/cloud-statistics-data/figures_old_classification_analysis/' # Path to save the figures
 # Define here plot configuration
 plt.rcParams['figure.figsize'] = (10, 5)
 plt.rcParams['font.size'] = 14
@@ -41,12 +41,12 @@ def calculate_skewness(group):
     )
 
 load_data = True # Set to True if you want to load the data from the netCDF files
-use_old_method = False # Set to True if you want to use the old method of cloud classification
+use_old_method = True # Set to True if you want to use the old method of cloud classification
 
-filepath_cloud_occurence = "/media/matheustolen/Seagate Basic/cloudnet/cloud_classification/cloud_occurence" # Path to save the cloud classification files
-filepath_cloud_cloud_type = "/media/matheustolen/Seagate Basic/cloudnet/cloud_classification/cloud_type" # Path to save the cloud classification files
-filepath_cloud_prop = "/media/matheustolen/Seagate Basic/cloudnet/cloud_classification/cloud_properties" # Path to save the cloud classification files
-filepath_categorize = "/media/matheustolen/Seagate Basic/cloudnet/categorize" # Path to save the cloud classification files
+filepath_cloud_occurence = "/media/matheustolen/Seagate Basic/cloud-statistics-data/cloud_classification/cloud_occurence" # Path to save the cloud classification files
+filepath_cloud_cloud_type = "/media/matheustolen/Seagate Basic/cloud-statistics-data/cloud_classification/cloud_type" # Path to save the cloud classification files
+filepath_cloud_prop = "/media/matheustolen/Seagate Basic/cloud-statistics-data/cloud_classification/cloud_properties" # Path to save the cloud classification files
+filepath_categorize = "/media/matheustolen/Seagate Basic/cloud-statistics-data/categorize" # Path to save the cloud classification files
 filepath_microphys  = "/home/matheustolen/Documentos/matheus_doctorado/output_retrievals" # Path to save the cloud classification files
 
 if load_data:
@@ -93,7 +93,7 @@ if load_data:
     # Old Method of cloud classification 
     # -----------------------------------------------------------------------
     # " DASK: >=2022.7.1,<2023.0.0"
-    root_folder = '../../../processed_data/'
+    root_folder = '/home/matheustolen/Documentos/matheus_doctorado/profile-based-processing/'
     target_parent_folder = "number_of_layers"
     # chirp_lwp = reading_dataset_chunking(root_folder, target_parent_folder)
     print("Reading the netCDF files into a list of xarray datasets of old method...")
