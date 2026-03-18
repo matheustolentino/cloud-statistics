@@ -1,3 +1,4 @@
+import pickle
 import xarray as xr
 from pdb import set_trace
 import matplotlib.pyplot as plt
@@ -504,8 +505,8 @@ class CloudProcessing:
         if self.path_microphys is not None:
             dic_files['lwc'] = glob.glob(os.path.join(self.path_microphys, f"{datastr}_{self.site}_lwc-scaled-adiabatic.nc"))
             dic_files['iwc'] = glob.glob(os.path.join(self.path_microphys, f"{datastr}_{self.site}_iwc-Z-T-method.nc"))
-            dic_files['der'] = glob.glob(os.path.join(self.path_microphys, f"{datastr}_{self.site}_der.nc"))
-            dic_files['ier'] = glob.glob(os.path.join(self.path_microphys, f"{datastr}_{self.site}_ier.nc"))
+            # dic_files['der'] = glob.glob(os.path.join(self.path_microphys, f"{datastr}_{self.site}_der.nc"))
+            # dic_files['ier'] = glob.glob(os.path.join(self.path_microphys, f"{datastr}_{self.site}_ier.nc"))
 
         if self.path_categorize is not None:
             dic_files['categorize'] = glob.glob(os.path.join(self.path_categorize, f"{datastr}_{self.site}_'categorize'.nc"))
@@ -597,6 +598,26 @@ class CloudProcessing:
         except Exception as e:
             print(e)
             self.categorize = None
+    
+    def load_lwc_scaled_adiabatic(self, chunk_data=False, get_var=False):
+        try:
+            if self.filenames['lwc']:
+                dataset_list = [xr.open_dataset(file)['lwc'] for file in self.filenames['lwc']]
+                self.lwc     = xr.concat(dataset_list, dim='time').sortby('time')
+        except Exception as e:
+            print(e)
+            self.lwc = None
+
+    def load_iwc_Z_T_method(self, chunk_data=False, get_var=False):
+        try:
+            if self.filenames['iwc']:
+                dataset_list = [xr.open_dataset(file)[['iwc','iwc_retrieval_status']] for file in self.filenames['iwc']]
+                ds = xr.concat(dataset_list, dim='time').sortby('time')
+                ds = ds['iwc'].where(~(ds[f'iwc_retrieval_status']==2))
+                self.iwc = ds.copy()
+        except Exception as e:
+            print(e)
+            self.iwc = None
             
     def load_radar(self, chunk_data=False, get_var=False):
         try:
@@ -770,6 +791,99 @@ class CloudProcessing:
 
         # return cloud_indx, cloud_composition
 
+    def classify_clusters_user_defined_thresholds(self, 
+                                                  min_cloudp=100, 
+                                                  min_rainp=10, 
+                                                  min_liquid_percentage=70, 
+                                                  min_ice_percentage=90):
+        # print threshold values
+        # print(f"min_cloudp={min_cloudp},\nmin_rainp={min_rainp},\nmin_liquid_percentage={min_liquid_percentage},\nmin_ice_percentage={min_ice_percentage}")
+        cloud_indx = {}
+        indx_inside_cloud = {}
+        cloud_composition = {}
+        ds_classification = {}
+        valid_clouds = []
+        time_idx_valid_clouds = []
+        time_idx_noise = np.zeros(self.time.shape[0])
+        
+        cloud_type = xr.Dataset(coords={'time': self.time})
+        for var in CLOUD_CATEGORY[1:]:
+            cloud_type[var] = xr.DataArray(data=np.zeros(self.time.shape), coords={'time': self.time}, dims='time')
+        
+        indices_dict = self.dilate_and_label_clouds(self.cloud_mask, distance=2)
+        indices_dict_sorted = dict(sorted(indices_dict.items()))
+
+        # Iterate over each label and calculate cloud composition
+        for cloud_number, indx in indices_dict_sorted.items():
+            mask_with_only_hydrometeor = self.cloud_mask[indx[:, 0], indx[:, 1]] == 1  # remove values that are not hydrometeors due dilatation
+            indx = indx[mask_with_only_hydrometeor]
+            cloud_indx[cloud_number] = indx
+
+            hydro_cloud = self.classification.target_classification.values[indx[:, 0], indx[:, 1]]
+            mask_withou_rain = hydro_cloud != DRIZZLE_OR_RAIN
+            indx_inside_cloud[cloud_number] = indx[mask_withou_rain]
+            n_pixels_rain = len(indx[~mask_withou_rain])
+            hydro_inside_cloud = hydro_cloud[mask_withou_rain]
+            n_pixels_inside_cloud = len(indx_inside_cloud[cloud_number])
+
+            if n_pixels_inside_cloud == 0 or n_pixels_inside_cloud < min_cloudp:
+                ds_classification[cloud_number] = "Not Classified"
+                idx_noise = np.unique(indx[:, 0])
+                time_idx_noise[idx_noise] = 1
+                cloud_type["Not Classified"][idx_noise] = 1
+            else:
+                valid_clouds.append(cloud_number)
+                time_idx_valid_clouds.append(np.unique(indx_inside_cloud[cloud_number][:, 0]))
+                hydromet_freq = {}
+                for hydromet_name, hydromet_val in HYDROMET_VALUES.items():
+                    count = np.count_nonzero(hydro_inside_cloud == hydromet_val)
+                    hydromet_freq[hydromet_name] = 100 * (count / n_pixels_inside_cloud)
+                    cloud_composition[cloud_number] = hydromet_freq
+
+                liquid_percentage = cloud_composition[cloud_number]["CLOUD_LIQUID"] + cloud_composition[cloud_number]["DRIZZLE_OR_RAIN_LIQUID_DROPLETS"]
+
+                if liquid_percentage > min_liquid_percentage:
+                    if n_pixels_rain > min_rainp:
+                        ds_classification[cloud_number] = "Precipitating-Liquid"
+                        cloud_type["Precipitating-Liquid"][np.unique(indx_inside_cloud[cloud_number][:, 0])] = 1
+                    else:
+                        ds_classification[cloud_number] = "Liquid"
+                        cloud_type["Liquid"][np.unique(indx_inside_cloud[cloud_number][:, 0])] = 1
+
+                elif cloud_composition[cloud_number]["ICE_PARTICLES"] > min_ice_percentage or \
+                        (cloud_composition[cloud_number]["CLOUD_LIQUID"] + cloud_composition[cloud_number]["ICE_WITH_SUP_WATER"]) < 10:
+
+                    if cloud_composition[cloud_number]["DRIZZLE_OR_RAIN_LIQUID_DROPLETS"] > 0:
+                        drizzle_index = np.where(hydro_inside_cloud == DRIZZLE_OR_RAIN_LIQUID_DROPLETS)
+                        # remove drizzle icdx from indx_inside_cloud
+                        indx_inside_cloud[cloud_number] = np.delete(indx_inside_cloud[cloud_number], drizzle_index, axis=0)
+
+                    if n_pixels_rain > min_rainp:
+                        ds_classification[cloud_number] = "Precipitating-Ice"
+                        cloud_type["Precipitating-Ice"][np.unique(indx_inside_cloud[cloud_number][:, 0])] = 1
+                    else:
+                        ds_classification[cloud_number] = "Ice"
+                        cloud_type["Ice"][np.unique(indx_inside_cloud[cloud_number][:, 0])] = 1
+
+                elif n_pixels_rain > min_rainp:
+                    ds_classification[cloud_number] = "Precipitating-Mixed-Phase"
+                    cloud_type["Precipitating-Mixed-Phase"][np.unique(indx_inside_cloud[cloud_number][:, 0])] = 1
+
+                    drizzle_index = np.where(hydro_inside_cloud == DRIZZLE_OR_RAIN_LIQUID_DROPLETS)
+                    indx_inside_cloud[cloud_number] = np.delete(indx_inside_cloud[cloud_number], drizzle_index, axis=0)
+
+                else:
+                    ds_classification[cloud_number] = "Mixed-Phase"
+                    cloud_type["Mixed-Phase"][np.unique(indx_inside_cloud[cloud_number][:, 0])] = 1
+
+        self.valid_cloud_number = valid_clouds
+        self.time_idx_noise     = time_idx_noise
+        self.cloud_type         = cloud_type
+        self.cloud_classification = ds_classification
+        self.indx_inside_cloud  = indx_inside_cloud
+        self.time_idx_valid_clouds = time_idx_valid_clouds
+        self.cloud_indx = cloud_indx # used by cluster classification product method
+
     def analyze_clouds(self, filter_abl_ice_clouds=True, thick_threshold=700, base_threshold=4000):
         
         self.filter_abl_ice_clouds = filter_abl_ice_clouds
@@ -866,12 +980,21 @@ class CloudProcessing:
 
     def create_cluster_classification_product(self):
         array_cloud = np.zeros((self.time.shape[0], self.classification.height.shape[0]))
-
+        # make a dictionary where keys are the cloud type and values are the duration of each cloud type in hours:
+        dic_time_duration = { "Liquid": [], 
+                             "Precipitating-Liquid": [], 
+                             "Ice": [], 
+                             "Precipitating-Ice": [], 
+                             "Mixed-Phase": [], 
+                             "Precipitating-Mixed-Phase": [], 
+                             }
+        
         for cloud_number, indx in self.cloud_indx.items():
             cloud_name = self.cloud_classification[cloud_number]
             integer = CLOUD_VALUES[cloud_name]
             if cloud_number in self.valid_cloud_number:
                 array_cloud[indx[:, 0], indx[:, 1]] = integer
+                dic_time_duration[cloud_name].append(len(np.unique(indx[:, 0])) * 30 / 3600)  # in hours, assuming 30s time resolution          
             else:
                 array_cloud[indx[:, 0], indx[:, 1]] = CLOUD_VALUES["Not Classified"]
 
@@ -883,6 +1006,7 @@ class CloudProcessing:
             'Cloud classification based on cloudnet target classification.\nHydrometeor cluster classification algorithm. \n0: No Cloud, \n1: Liquid, \n2: Liquid-Precipitable, \n3: Ice, \n4: Ice-Precipitable, \n5: Mixed-Phase, \n6: Mixed-Phase-Precipitable, \n7: Not Classified'
         
         self.cluster_classification  = ds_cloud
+        self.time_duration_cloud_type = dic_time_duration
 
     def add_radar_lwp(self):
         self.cloud_props['lwp_radar'] = self.radar['lwp'].resample(time='30S', skipna=True).mean().interp(time=self.cloud_props.time, method='nearest')
@@ -925,52 +1049,116 @@ class CloudProcessing:
         self.mask_att = (mask_lwp & mask_corr) | (self.cloud_props['lwp_radar'] > lwp2_treshold)
         
         if make_plot:
-            fig = plt.figure(figsize=(15, 7))
-            gs = fig.add_gridspec(2, 2, width_ratios=[1, .02], height_ratios=[1, .6], wspace=0.02, hspace=0.2)
 
-            ax2 = fig.add_subplot(gs[1, 0])
-            self.cloud_props.cloud_thickness.plot(ax=ax2, color='b')
+            # -----------------------------------------------------------------------------
+            # Plot Target Classification Product (T.C.P) time serie
+            # -----------------------------------------------------------------------------
+            manual_colors = ["#FFFFFF","#007CFF", "#0A2658", "#FFFF00", "#4EF6C1",\
+                    "#D05BAC", "#BFBD8D", "#118527","#8794B3", "#DA6F49", "#88183E", "#DDDEDA"]
+            ncolors = len(manual_colors)
+            manual_cmap   = plt.cm.colors.ListedColormap(manual_colors)
 
-            ax3 = ax2.twinx()
-            self.cloud_props.lwp_radar.plot(ax=ax3, color='r')
-            ax3.spines['right'].set_color('red')
-            ax3.axhline(y=lwp_treshold, color='r', linestyle='--')
-            ax3.axhline(y=lwp2_treshold, color='k', linestyle='--')
+            color_names = ['Clear  sky',
+               'Droplets',
+               'Drizzle or rain',
+               'Drizzle & droplets',
+               'Ice',
+               'Ice & droplets',
+               'Melting ice',
+               'Melting & droplets',
+               'Aerosol',
+               'Insect',
+               'Aerosol & insect',
+               'No Data']
 
-            ax5 = ax2.twinx()
-            self.cloud_props.corr.plot(ax=ax5, color='g')
-            ax5.spines['right'].set_position(('outward', 50))  # Move the y-axis outward
-            ax5.spines['right'].set_color('green')
-            # plot horizontal line at zero correlation
-            ax5.axhline(y=corr_treshold, color='g', linestyle='--')
-            
-            # self.mask_att = (mask_lwp & mask_corr)
-            ax1 = fig.add_subplot(gs[0, 0], sharex=ax2)
+            fig = plt.figure(figsize=(12, 5))
+            gs  = fig.add_gridspec(1, 2, width_ratios=[1, .02], wspace=0.05, hspace=0.08)
+            ax2 = fig.add_subplot(gs[0, 0])
+            pc = ax2.pcolormesh(self.classification['time'], 
+                                self.classification['height']/1e3, 
+                                self.classification['target_classification'].T, 
+                                cmap=manual_cmap, 
+                                vmin=0, 
+                                vmax=ncolors)
+            # countour = ax2.contour(categorize['model_time'], categorize['model_height'][:]/1e3,
+            #                         categorize['temperature'][:].T - 273.15,
+            #                         levels=[-40, -25, -10, 0, 5], colors='black', linewidths=0.5)
+            # countour = ax1.contour(categorize['model_time'], categorize['model_height'][:]/1e3,
+            #                 categorize['temperature'][:].T - 273.15,
+            #                 levels=[-40, -25, -10, 0, 5], colors='black', linewidths=0.5)
+            # countour.clabel(inline=True, fmt='%2.1f'+r'$^{\circ}$C', fontsize=12)
+            ax2.set_ylabel('Height (km) a.s.l')
+            ax2.set_xlabel('Time (UTC)')
+            ax2.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+            # ax2.set_ylim([categorize['height'][0]/1e3, categorize['height'][-1]/1e3])
 
-            self.cluster_classification.cloud_classification.T.plot(ax=ax1, cmap=cloud_cmap, vmin=0, vmax=7, add_colorbar=False)
-            ax1.fill_between(self.cluster_classification.time.values, 0, 12000, where=self.mask_att, color='red', alpha=0.2) # removed areas due to attenuation
-            # self.cloud_props['corr'] = self.cloud_props['corr'].where(smask)
-            # self.cloud_props.cloud_base.plot(ax=ax1, color='r', linestyle='-')
-            # self.cloud_props.cloud_top.plot(ax=ax1, color='k', linestyle='-')
+            # ax2.set_title(f"Cloud Classification {date_str} - {site}")
+            ax2.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+            # ax2.set_xlim(data.time.values[0], data.time.values[-1])
+            ax2.grid()
+            cax = fig.add_subplot(gs[0, 1])
+            cbar = plt.colorbar(pc, cax=cax, ticks=[], orientation='vertical')
 
-            # Set up colorbar with ticks centered in each color
-            cbar_ax = fig.add_subplot(gs[0, 1])
-            n_colors = len(CLOUD_VALUES)
-            # Ticks at centers: 0.5, 1.5, ..., n-0.5
-            ticks = np.arange(n_colors) + 0.5
-            # Set boundaries so each color is centered
-            boundaries = np.arange(n_colors + 1)
-            norm = mpl.colors.BoundaryNorm(boundaries, cloud_cmap.N)
-            cb = mpl.colorbar.ColorbarBase(cbar_ax, cmap=cloud_cmap, norm=norm, boundaries=boundaries, ticks=ticks, orientation='vertical')
-            cb.ax.set_yticklabels(list(CLOUD_VALUES.keys()))
-            cb.ax.tick_params(length=0)  # Remove tick lines for clarity
+            for idx, (color, name) in enumerate(zip(manual_cmap.colors, color_names)):
+                rect = plt.Rectangle((0, idx), 1, 1, color=color)
+                cbar.ax.add_patch(rect)
+                cbar.ax.text(1.5, idx + 0.5, name, color='black', va='center', fontsize=14)
+            ax2.set_facecolor('white')
+            # ax2.set_ylim([0, ds_cloud['height'][-1]/1e3])
+            # fig.savefig(PATH_FIG + f"{date_str}_cloud_classification.png", dpi=700, bbox_inches='tight')
             plt.show()
+            # -----------------------------------------------------------------------------
+
+            # fig = plt.figure(figsize=(15, 7))
+            # gs = fig.add_gridspec(2, 2, width_ratios=[1, .02], height_ratios=[1, .6], wspace=0.02, hspace=0.2)
+
+            # ax2 = fig.add_subplot(gs[1, 0])
+            # self.cloud_props.cloud_thickness.plot(ax=ax2, color='b')
+
+            # ax3 = ax2.twinx()
+            # self.cloud_props.lwp_radar.plot(ax=ax3, color='r')
+            # ax3.spines['right'].set_color('red')
+            # ax3.axhline(y=lwp_treshold, color='r', linestyle='--')
+            # ax3.axhline(y=lwp2_treshold, color='k', linestyle='--')
+
+            # ax5 = ax2.twinx()
+            # self.cloud_props.corr.plot(ax=ax5, color='g')
+            # ax5.spines['right'].set_position(('outward', 50))  # Move the y-axis outward
+            # ax5.spines['right'].set_color('green')
+            # # plot horizontal line at zero correlation
+            # ax5.axhline(y=corr_treshold, color='g', linestyle='--')
+            
+            # # self.mask_att = (mask_lwp & mask_corr)
+            # ax1 = fig.add_subplot(gs[0, 0], sharex=ax2)
+
+            # self.cluster_classification.cloud_classification.T.plot(ax=ax1, cmap=cloud_cmap, vmin=0, vmax=7, add_colorbar=False)
+            # ax1.fill_between(self.cluster_classification.time.values, 0, 12000, where=self.mask_att, color='red', alpha=0.2) # removed areas due to attenuation
+            # # self.cloud_props['corr'] = self.cloud_props['corr'].where(smask)
+            # # self.cloud_props.cloud_base.plot(ax=ax1, color='r', linestyle='-')
+            # # self.cloud_props.cloud_top.plot(ax=ax1, color='k', linestyle='-')
+
+            # # Set up colorbar with ticks centered in each color
+            # cbar_ax = fig.add_subplot(gs[0, 1])
+            # n_colors = len(CLOUD_VALUES)
+            # # Ticks at centers: 0.5, 1.5, ..., n-0.5
+            # ticks = np.arange(n_colors) + 0.5
+            # # Set boundaries so each color is centered
+            # boundaries = np.arange(n_colors + 1)
+            # norm = mpl.colors.BoundaryNorm(boundaries, cloud_cmap.N)
+            # cb = mpl.colorbar.ColorbarBase(cbar_ax, cmap=cloud_cmap, norm=norm, boundaries=boundaries, ticks=ticks, orientation='vertical')
+            # cb.ax.set_yticklabels(list(CLOUD_VALUES.keys()))
+            # cb.ax.tick_params(length=0)  # Remove tick lines for clarity
+            # plt.show()
             
             fig, ax = plt.subplots(figsize=(12, 5))
 
             im = self.cluster_classification.cloud_classification.T.plot(ax=ax, cmap=cloud_cmap, vmin=0, vmax=7, add_colorbar=False)
             ax.fill_between(self.cluster_classification.time.values, 0, 12000, where=self.mask_att, color='red', alpha=0.2) # removed areas due to attenuation
             
+            # plot top and base cloud properties
+            self.cloud_props.cloud_base.plot(ax=ax, color='r', linestyle='-')
+            self.cloud_props.cloud_top.plot(ax=ax, color='k', linestyle='-')
+
             ax.grid(True, linestyle=':')
             ax.set_ylim(0, 12000)
             ax.set_ylabel('Height (km) a.s.l')
@@ -1146,7 +1334,114 @@ class CloudProcessing:
         self.cloud_occurrence["attenuation"] = xr.DataArray(data=self.mask_att.values, coords={'time': self.cloud_props.time}, dims='time')
         self.cloud_occurrence["attenuation"].attrs['long_name'] = 'Liquid attenuation QA flag'
         self.cloud_occurrence["attenuation"].attrs['description'] = 'Liquid attenuation QA flag. 1: High attenuation, 0: No attenuation'
+    
+    def compute_cloud_lwp_iwp(self, make_plot=False):
+        """
+        Compute LWP and IWP from cloud base and top.
+        """
+        # 
+        # integrate lwc and iwc between cloud base and cloud top
+        #
 
+        mask_boundaries = (self.lwc.height >= self.cloud_props["cloud_base"]) & (self.lwc.height <= self.cloud_props["cloud_top"])
+        
+        filtered_lwc    = self.lwc.where(mask_boundaries)
+        filtered_iwc    = self.iwc.where(mask_boundaries)
+
+        lwp_values = filtered_lwc.fillna(0.).integrate('height')
+        iwp_values = filtered_iwc.fillna(0.).integrate('height')
+        self.cloud_props['cloud_lwp'] = lwp_values
+        self.cloud_props['cloud_iwp'] = iwp_values
+
+        if make_plot:
+            fig, ax = plt.subplots(figsize=(12, 5))
+            im = self.cluster_classification.cloud_classification.T.plot(ax=ax, cmap=cloud_cmap, vmin=0, vmax=7, add_colorbar=False)
+            ax.fill_between(self.cluster_classification.time.values, 0, 12000, where=self.mask_att, color='red', alpha=0.2) # removed areas due to attenuation
+            # plot the base and top of the clouds
+            self.cloud_props.cloud_base.plot(ax=ax, color='r', linestyle='-')
+            self.cloud_props.cloud_top.plot(ax=ax, color='k', linestyle='-')
+
+            ax.grid(True, linestyle=':')
+            ax.set_ylim(0, 12000)
+            ax.set_ylabel('Height (km) a.s.l')
+            n_colors = len(CLOUD_VALUES)
+            ticks = np.arange(n_colors) + 0.5
+            boundaries = np.arange(n_colors + 1)
+            norm = mpl.colors.BoundaryNorm(boundaries, cloud_cmap.N)
+            cb = plt.colorbar(
+                mpl.cm.ScalarMappable(norm=norm, cmap=cloud_cmap),
+                ax=ax,
+                boundaries=boundaries,
+                ticks=ticks,
+                orientation='vertical',
+                pad=0.02
+            )
+            cb.ax.set_yticklabels(list(CLOUD_VALUES.keys()))
+            cb.ax.tick_params(length=0)
+            plt.show()
+
+            # Make the same plot but applying mask boundaries
+            fig, ax = plt.subplots(figsize=(12, 5))
+            im = self.cluster_classification.cloud_classification.where(mask_boundaries).T.plot(ax=ax, cmap=cloud_cmap, vmin=0, vmax=7, add_colorbar=False)
+            ax.fill_between(self.cluster_classification.time.values, 0, 12000, where=self.mask_att, color='red', alpha=0.2) # removed areas due to attenuation
+            
+            # plot the base and top of the clouds
+            self.cloud_props.cloud_base.plot(ax=ax, color='r', linestyle='-')
+            self.cloud_props.cloud_top.plot(ax=ax, color='k', linestyle='-')
+            ax.grid(True, linestyle=':')
+            ax.set_ylim(0, 12000)
+            ax.set_ylabel('Height (km) a.s.l')
+            n_colors = len(CLOUD_VALUES)
+            ticks = np.arange(n_colors) + 0.5
+            boundaries = np.arange(n_colors + 1)
+            norm = mpl.colors.BoundaryNorm(boundaries, cloud_cmap.N)
+            cb = plt.colorbar(
+                mpl.cm.ScalarMappable(norm=norm, cmap=cloud_cmap),
+                ax=ax,
+                boundaries=boundaries,
+                ticks=ticks,
+                orientation='vertical',
+                pad=0.02
+            )
+            cb.ax.set_yticklabels(list(CLOUD_VALUES.keys()))
+            cb.ax.tick_params(length=0)
+            plt.show()
+        
+            # Make the same plot above, but include a subplot with lwp and iwp below:
+            fig, ax = plt.subplots(2, 1, figsize=(12, 8), gridspec_kw={'height_ratios': [3, 1]})
+            im = self.cluster_classification.cloud_classification.where(mask_boundaries).T.plot(ax=ax[0], cmap=cloud_cmap, vmin=0, vmax=7, add_colorbar=False)
+            ax[0].fill_between(self.cluster_classification.time.values, 0, 12000, where=self.mask_att, color='red', alpha=0.2) # removed areas due to attenuation
+            # plot the base and top of the clouds
+            self.cloud_props.cloud_base.plot(ax=ax[0], color='r', linestyle='-')
+            self.cloud_props.cloud_top.plot(ax=ax[0], color='k', linestyle='-')
+            ax[0].grid(True, linestyle=':')
+            ax[0].set_ylim(0, 12000)
+            ax[0].set_ylabel('Height (km) a.s.l')
+            n_colors = len(CLOUD_VALUES)
+            ticks = np.arange(n_colors) + 0.5
+            boundaries = np.arange(n_colors + 1)
+            norm = mpl.colors.BoundaryNorm(boundaries, cloud_cmap.N)
+            cb = plt.colorbar(
+                mpl.cm.ScalarMappable(norm=norm, cmap=cloud_cmap),
+                ax=ax[0],
+                boundaries=boundaries,
+                ticks=ticks,    
+                orientation='vertical',
+                pad=0.02
+            )
+            cb.ax.set_yticklabels(list(CLOUD_VALUES.keys()))
+            cb.ax.tick_params(length=0)
+            # plot lwp and iwp in the second subplot
+            self.cloud_props['cloud_lwp'].plot(ax=ax[1], color='b', label='Cloud LWP')
+            self.cloud_props['cloud_iwp'].plot(ax=ax[1], color='g', label='Cloud IWP')
+            ax[1].set_ylabel('kg/m²')
+            ax[1].set_xlabel('Time (UTC)')
+            ax[1].grid()
+            # set log scale
+            # ax[1].set_yscale('log')
+            ax[1].legend()
+            plt.show()
+           
     def save_processed_data(self, path_to_save, products_to_store):
         date_str = self.time[0].dt.strftime('%Y%m%d').values.item()
 
@@ -1180,6 +1475,16 @@ class CloudProcessing:
             dir_path = os.path.join(path_to_save, "fit_parameters")
             ensure_dir(dir_path)
             self.count_verification.to_netcdf(os.path.join(dir_path, f"{date_str}_count_verification.nc"))
+        
+        if products_to_store['time_duration_cloud_type']:
+            dir_path = os.path.join(path_to_save, "time_duration_cloud_type")
+            ensure_dir(dir_path)
+            # Save as pickle file:
+            with open(os.path.join(dir_path, f"{date_str}_time_duration_cloud_type.pkl"), 'wb') as f:
+                pickle.dump(self.time_duration_cloud_type, f)
+            # # now read the pickle file and save it as a csv file:
+            # with open(os.path.join(dir_path, f"{date_str}_time_duration_cloud_type.pkl"), 'rb') as f:
+            #     time_duration_cloud_type = pickle.load(f)
 
 
 

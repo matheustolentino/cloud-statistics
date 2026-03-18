@@ -44,25 +44,26 @@ import pandas as pd
 plt.ion()
 plt.close('all')
 # Set the font to Times New Roman using LaTeX
-fontsize = 14
-plt.rcParams['font.family'] = 'serif'
-plt.rcParams['font.serif'] = ['Times New Roman'] + plt.rcParams['font.serif']
-
-# Set the fontsize for all elements in the plot
-plt.rcParams['font.size'] = fontsize
+# Define here plot configuration
+plt.rcParams['figure.figsize'] = (10, 5)
+plt.rcParams['font.size'] = 14
+plt.rcParams['axes.grid'] = True
+plt.rcParams['grid.alpha'] = 1
+plt.rcParams['grid.linestyle'] = '--'
+plt.rcParams['axes.titlepad'] = 20  # Raise title
 #from cloud_classes import Intersection_products, HMmodel, CloudProcess
 #-------------------------------------------------------------------------------------------------------
 # paths
 #-------------------------------------------------------------------------------------------------------
-PATH_CLASS        = '/media/matheustolen/Seagate Basic/cloudnet/classification/'
-PATH_CATE         = '/media/matheustolen/Seagate Basic/cloudnet/categorize/'
-PATH_RADAR        = '/media/matheustolen/Seagate Basic/cloudnet/radar/'
-PATH_FIG          = '/media/matheustolen/Seagate Basic/cloudnet/products/figures/'
+PATH_CLASS        = '/media/matheustolen/Seagate Basic/cloud-statistics-data/classification/'
+PATH_CATE         = '/media/matheustolen/Seagate Basic/cloud-statistics-data/categorize/'
+PATH_RADAR        = '/media/matheustolen/Seagate Basic/cloud-statistics-data/radar/'
+PATH_FIG          = '/media/matheustolen/Seagate Basic/cloud-statistics-data/products/figures/'
 PATH_FIG_DER_COMPARISON = '../figures/der_comparison/'
-PATH_CLOUDNET_LWC = '../../../output_retrievals/'
-PATH_CLOUDNET_IWC = '../../../output_retrievals/'
-PATH_CLOUDNET_DER = '../../../output_retrievals/'
-PATH_CLOUDNET_IER = '../../../output_retrievals/'
+PATH_CLOUDNET_LWC = '/home/matheustolen/Documentos/matheus_doctorado/output_retrievals/'
+PATH_CLOUDNET_IWC = '/home/matheustolen/Documentos/matheus_doctorado/output_retrievals/'
+PATH_CLOUDNET_DER = '/home/matheustolen/Documentos/matheus_doctorado/output_retrievals/'
+PATH_CLOUDNET_IER = '/home/matheustolen/Documentos/matheus_doctorado/output_retrievals/'
 PATH_GEN_CLOUDNET = "/home/matheustolen/Documentos/matheus_doctorado/output_retrievals/generated_cloudnet_product/"
 #-------------------------------------------------------------------------------------------------------
 # constants
@@ -802,7 +803,7 @@ def plot_cloud_comparison(df_class, categorize,  df_ze, cloud_filter, name_title
         axs.legend()
         fig.savefig(f"{PATH_FIG_DER_COMPARISON}{date_string}_{name_title}_der_comparison_hist.png", dpi=300, bbox_inches='tight')
         plt.show()
-        set_trace()
+        # set_trace()
 
         # plt.close('all')
 
@@ -928,8 +929,8 @@ def plot_cloud_mask_2(df_class, categorize, cloud_filter, name_title, color_name
             'height': df_class_filtered_complete_time.columns
         })
 
-        new_dataset.to_netcdf("./ds_mask_reindexed.nc")
-        set_trace()
+        # new_dataset.to_netcdf("./ds_mask_reindexed.nc")
+        # # set_trace()
 
 def plot_variable_inside_cloud(df_class, ds_ze, cloud_filter, name_title, color_names):
 
@@ -1478,9 +1479,9 @@ def process_cloud_data(date: datetime.datetime,
                         (ds_cloud['height']+GRANADA_ALTITUDE)/1e3, 
                         ds_cloud['cloud_classification'].T, 
                         cmap=cloud_cmap, vmin=0, vmax=len(cloud_category))
-    # for cloud in all_cloud_base.columns:
-    #     ax.scatter(all_cloud_base.index, (all_cloud_base[cloud]+GRANADA_ALTITUDE)/1e3, color='black', s=5)
-    #     ax.scatter(all_cloud_top.index, (all_cloud_top[cloud]+GRANADA_ALTITUDE)/1e3, color='red', s=5)
+    for cloud in all_cloud_base.columns:
+        ax.scatter(all_cloud_base.index, (all_cloud_base[cloud]+GRANADA_ALTITUDE)/1e3, color='red', s=3)
+        ax.scatter(all_cloud_top.index, (all_cloud_top[cloud]+GRANADA_ALTITUDE)/1e3, color='black', s=3)
 
     ax.set_ylabel('Height (km) a.s.l')
     ax.set_xlabel('Time (UTC)')
@@ -2248,8 +2249,8 @@ database_intersection  = common_prefix_of_filenames(paths, extension)
 start_date = min(database_intersection) # first date of database
 end_date   = max(database_intersection) # last date of database
 
-start_date = datetime.datetime(2023, 5, 6)
-end_date   = datetime.datetime(2023, 5, 6, 23, 59, 59)
+start_date = datetime.datetime(2021, 12, 22)
+end_date   = datetime.datetime(2021, 12, 22, 23, 59, 59)
 
 # start_date = datetime.datetime(2018, 6, 1)
 # end_date   = datetime.datetime(2018, 11, 1)
