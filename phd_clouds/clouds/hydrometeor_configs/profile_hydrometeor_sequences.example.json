@@ -1,0 +1,222 @@
+{
+  "nbins_between_cloud": 5,
+  "nbins_between_hydro": 1,
+  "nbins_cloud": 3,
+  "nbins_get_rain": 20,
+  "threshold_lwp_g_m2": 5000,
+  "no_hydrometeor_codes": [
+    "CLEAR_SKY",
+    "AERO_NO_CLOUD",
+    "INSECT_NO_CLOUD",
+    "AERO_WITH_INSECT_NO_CLOUD"
+  ],
+  "cloud_types": {
+    "Liquid": {
+      "codes": [
+        "CLOUD_LIQUID",
+        "DRIZZLE_OR_RAIN_LIQUID_DROPLETS"
+      ],
+      "phase": "single_phase",
+      "bridge_codes": [
+        "CLEAR_SKY",
+        "AERO_NO_CLOUD",
+        "INSECT_NO_CLOUD",
+        "AERO_WITH_INSECT_NO_CLOUD"
+      ],
+      "filter_species": [
+        {
+          "code": "DRIZZLE_OR_RAIN",
+          "gap_below_bins": 10000,
+          "gap_above_bins": 200
+        },
+        {
+          "code": "ICE_PARTICLES",
+          "gap_below_bins": 5,
+          "gap_above_bins": 5
+        },
+        {
+          "code": "ICE_WITH_SUP_WATER",
+          "gap_below_bins": 5,
+          "gap_above_bins": 5
+        },
+        {
+          "code": "MELTING_ICE",
+          "gap_below_bins": 5,
+          "gap_above_bins": 5
+        },
+        {
+          "code": "MELTING_ICE_LIQUID_DROPLETS",
+          "gap_below_bins": 5,
+          "gap_above_bins": 5
+        }
+      ],
+      "extend_base_through": null
+    },
+    "Ice": {
+      "codes": [
+        "ICE_PARTICLES"
+      ],
+      "phase": "single_phase",
+      "bridge_codes": [
+        "CLEAR_SKY",
+        "CLOUD_LIQUID",
+        "AERO_NO_CLOUD",
+        "INSECT_NO_CLOUD",
+        "AERO_WITH_INSECT_NO_CLOUD"
+      ],
+      "filter_species": [
+        {
+          "code": "CLOUD_LIQUID",
+          "gap_below_bins": 5,
+          "gap_above_bins": 5
+        },
+        {
+          "code": "DRIZZLE_OR_RAIN",
+          "gap_below_bins": 10000,
+          "gap_above_bins": 200
+        },
+        {
+          "code": "DRIZZLE_OR_RAIN_LIQUID_DROPLETS",
+          "gap_below_bins": 5,
+          "gap_above_bins": 5
+        },
+        {
+          "code": "ICE_WITH_SUP_WATER",
+          "gap_below_bins": 5,
+          "gap_above_bins": 5
+        },
+        {
+          "code": "MELTING_ICE",
+          "gap_below_bins": 5,
+          "gap_above_bins": 5
+        },
+        {
+          "code": "MELTING_ICE_LIQUID_DROPLETS",
+          "gap_below_bins": 5,
+          "gap_above_bins": 5
+        }
+      ],
+      "extend_base_through": null
+    },
+    "Mixed_phase": {
+      "codes": [
+        "CLOUD_LIQUID",
+        "ICE_PARTICLES",
+        "ICE_WITH_SUP_WATER",
+        "MELTING_ICE",
+        "MELTING_ICE_LIQUID_DROPLETS"
+      ],
+      "phase": "mixed_phase",
+      "bridge_codes": [
+        "CLEAR_SKY",
+        "DRIZZLE_OR_RAIN",
+        "AERO_NO_CLOUD",
+        "INSECT_NO_CLOUD",
+        "AERO_WITH_INSECT_NO_CLOUD"
+      ],
+      "filter_species": [
+        {
+          "code": "DRIZZLE_OR_RAIN",
+          "gap_below_bins": 10000,
+          "gap_above_bins": 200
+        },
+        {
+          "code": "DRIZZLE_OR_RAIN_LIQUID_DROPLETS",
+          "gap_below_bins": 5,
+          "gap_above_bins": 5
+        }
+      ],
+      "extend_base_through": null
+    },
+    "Pre_liquid": {
+      "codes": [
+        "CLOUD_LIQUID",
+        "DRIZZLE_OR_RAIN_LIQUID_DROPLETS"
+      ],
+      "phase": "single_phase",
+      "bridge_codes": [
+        "CLEAR_SKY",
+        "AERO_NO_CLOUD",
+        "INSECT_NO_CLOUD",
+        "AERO_WITH_INSECT_NO_CLOUD"
+      ],
+      "filter_species": [
+        {
+          "code": "ICE_PARTICLES",
+          "gap_below_bins": 5,
+          "gap_above_bins": 5
+        },
+        {
+          "code": "ICE_WITH_SUP_WATER",
+          "gap_below_bins": 5,
+          "gap_above_bins": 5
+        },
+        {
+          "code": "MELTING_ICE",
+          "gap_below_bins": 5,
+          "gap_above_bins": 5
+        },
+        {
+          "code": "MELTING_ICE_LIQUID_DROPLETS",
+          "gap_below_bins": 5,
+          "gap_above_bins": 5
+        }
+      ],
+      "extend_base_through": {
+        "codes": [
+          "DRIZZLE_OR_RAIN"
+        ],
+        "max_gap_bins": 20
+      }
+    },
+    "Pre_mixed_phase": {
+      "codes": [
+        "CLOUD_LIQUID",
+        "ICE_PARTICLES",
+        "ICE_WITH_SUP_WATER",
+        "MELTING_ICE",
+        "MELTING_ICE_LIQUID_DROPLETS"
+      ],
+      "phase": "mixed_phase",
+      "bridge_codes": [
+        "CLEAR_SKY",
+        "DRIZZLE_OR_RAIN",
+        "AERO_NO_CLOUD",
+        "INSECT_NO_CLOUD",
+        "AERO_WITH_INSECT_NO_CLOUD"
+      ],
+      "filter_species": [],
+      "extend_base_through": {
+        "codes": [
+          "DRIZZLE_OR_RAIN",
+          "DRIZZLE_OR_RAIN_LIQUID_DROPLETS"
+        ],
+        "max_gap_bins": 20
+      }
+    }
+  },
+  "hydro_types": {
+    "Liquid": [
+      "CLOUD_LIQUID",
+      "DRIZZLE_OR_RAIN",
+      "DRIZZLE_OR_RAIN_LIQUID_DROPLETS"
+    ],
+    "Ice": [
+      "ICE_PARTICLES"
+    ],
+    "Mixed_phase": [
+      "ICE_WITH_SUP_WATER",
+      "MELTING_ICE",
+      "MELTING_ICE_LIQUID_DROPLETS"
+    ],
+    "Total": [
+      "CLOUD_LIQUID",
+      "DRIZZLE_OR_RAIN",
+      "DRIZZLE_OR_RAIN_LIQUID_DROPLETS",
+      "ICE_PARTICLES",
+      "ICE_WITH_SUP_WATER",
+      "MELTING_ICE",
+      "MELTING_ICE_LIQUID_DROPLETS"
+    ]
+  }
+}

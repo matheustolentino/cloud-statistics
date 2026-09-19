@@ -1,0 +1,27 @@
+{
+  "min_cloud_pixels": 100,
+  "min_rain_pixels": 10,
+  "min_liquid_percentage": 70,
+  "min_ice_percentage": 90,
+  "filter_abl_ice_clouds": true,
+  "thick_threshold": 700,
+  "base_threshold": 4000,
+  "fit_params": {
+    "small_than": 0.2,
+    "larger_than": 0.8
+  },
+  "attenuation": {
+    "time_roll": "10T",
+    "lwp_threshold": 0.8,
+    "corr_threshold": -0.5,
+    "lwp2_threshold": 1
+  },
+  "products_to_save": {
+    "cloud_occurrence": true,
+    "cloud_props": true,
+    "cloud_type": true,
+    "fit_params": false,
+    "count_verification": false,
+    "time_duration_cloud_type": true
+  }
+}
